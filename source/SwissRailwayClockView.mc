@@ -16,7 +16,8 @@ import Toybox.WatchUi;
 //! This implements an analog watch face
 //! Original design by Austen Harbour
 class AnalogView extends WatchUi.WatchFace {
-    private var _isAwake as Boolean?; // TODO: NEEDS INITIALIZATION BUT HOW
+    private var _isAwake as Boolean? = null;
+    private var _hasPartialUpdates as Boolean;
     private var _offscreenBuffer as BufferedBitmap?;
     private var _screenCenterPoint as Array<Number>?;
     private var _clockRadius as Float = 0.0;
@@ -28,10 +29,12 @@ class AnalogView extends WatchUi.WatchFace {
     private var _hourHand as Array<Float>      = [0.8482, 0.1257, 0.0995, -0.2304];	
     private var _minuteHand as Array<Float>    = [1.1257, 0.1047, 0.0733, -0.2356];	
     private var _secondHand as Array<Float>    = [0.9319, 0.0314, 0.0314, -0.3246, 0.1047];
+    private var _boundingBox as Array<Float>   = [_secondHand[0] + _secondHand[4], 3 * _secondHand[4], 3 * _secondHand[4], _secondHand[3]];
 
     //! Initialize variables for this view
     public function initialize() {
         WatchFace.initialize();
+        _hasPartialUpdates = (WatchUi.WatchFace has :onPartialUpdate);
     }
 
     //! Load resources and configure the layout of the watchface for this device
@@ -48,13 +51,14 @@ class AnalogView extends WatchUi.WatchFace {
 
         // Convert the clock geometry data to pixels
         for (var i = 0; i < 4; i++) {
-            _bigTickMark[i]   = ( Math.round(_bigTickMark[i] * _clockRadius) );
-            _smallTickMark[i] = Math.round(_smallTickMark[i] * _clockRadius) as Float;
-            _hourHand[i]      = Math.round(_hourHand[i] * _clockRadius) as Float;
-            _minuteHand[i]    = Math.round(_minuteHand[i] * _clockRadius) as Float;
-            _secondHand[i]    = Math.round(_secondHand[i] * _clockRadius) as Float;
+            _bigTickMark[i]   = Math.round(_bigTickMark[i] * _clockRadius);
+            _smallTickMark[i] = Math.round(_smallTickMark[i] * _clockRadius);
+            _hourHand[i]      = Math.round(_hourHand[i] * _clockRadius);
+            _minuteHand[i]    = Math.round(_minuteHand[i] * _clockRadius);
+            _secondHand[i]    = Math.round(_secondHand[i] * _clockRadius);
+            _boundingBox[i]   = Math.round(_boundingBox[i] * _clockRadius);
         }
-        _secondHand[4] = Math.round(_secondHand[4] as Float * _clockRadius) as Float;
+        _secondHand[4] = Math.round(_secondHand[4] as Float * _clockRadius);
 
         // If this device supports BufferedBitmap, allocate the buffers we use for drawing
         // Allocate a full screen size buffer with a palette of only 4 colors to draw
@@ -88,6 +92,10 @@ class AnalogView extends WatchUi.WatchFace {
 
         System.println("onUpdate"); // DEBUG
 
+        if (_isAwake == null) {
+            // TODO: Are we awake?? -> Set the flag
+        }
+        
         var targetDc = dc;
         if (null != _offscreenBuffer) {
             // If we have an offscreen buffer that we are using to draw the background,
@@ -124,17 +132,18 @@ class AnalogView extends WatchUi.WatchFace {
             dc.drawBitmap(0, 0, _offscreenBuffer);
         }
 
-        // Draw the second hand directly in the full update method.
-        var secondAngle = clockTime.sec / 60.0 * 2 * Math.PI;
-        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon(generatePolygonCoords(_secondHand, secondAngle));
-        var secondCircleCenter = [
-                (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * Math.sin(secondAngle) + 0.5) as Number,
-                (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * Math.cos(secondAngle) + 0.5) as Number 
-            ];
-        dc.fillCircle(secondCircleCenter[0], secondCircleCenter[1], _secondHand[4]);
-
-        // TODO: SET CLIP? Maybe not. Then, when onPartialUpdate is called for the first time, it will install the entire bg?
+        if (_isAwake == true or _hasPartialUpdates == true) {
+            // Draw the second hand directly in the full update method.
+            var secondAngle = clockTime.sec / 60.0 * 2 * Math.PI;
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.fillPolygon(generatePolygonCoords(_secondHand, secondAngle));
+            var secondCircleCenter = [
+                    (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * Math.sin(secondAngle) + 0.5) as Number,
+                    (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * Math.cos(secondAngle) + 0.5) as Number 
+                ];
+            dc.fillCircle(secondCircleCenter[0], secondCircleCenter[1], _secondHand[4]);
+            // TODO: SET CLIP? Maybe not. Then, when onPartialUpdate is called for the first time, it will install the entire bg?
+        }
     }
 
     //! Handle the partial update event
@@ -163,24 +172,23 @@ class AnalogView extends WatchUi.WatchFace {
         dc.fillCircle(secondCircleCenter[0], secondCircleCenter[1], _secondHand[4]);
 
         // Update the clipping rectangle to the new location of the second hand.
-        var boundingBox = [_secondHand[0] + _secondHand[4], 3 * _secondHand[4], 3 * _secondHand[4], _secondHand[3]];
-        var boundingBoxPoints = generatePolygonCoords(boundingBox, secondAngle);
+        var boundingBoxCoords = generatePolygonCoords(_boundingBox, secondAngle);
         var minX = 65536;
         var minY = 65536;
         var maxX = 0;
         var maxY = 0;
         for (var i = 0; i < 4; i++) {
-            if (boundingBoxPoints[i][0] < minX) {
-                minX = boundingBoxPoints[i][0];
+            if (boundingBoxCoords[i][0] < minX) {
+                minX = boundingBoxCoords[i][0];
             }
-            if (boundingBoxPoints[i][1] < minY) {
-                minY = boundingBoxPoints[i][1];
+            if (boundingBoxCoords[i][1] < minY) {
+                minY = boundingBoxCoords[i][1];
             }
-            if (boundingBoxPoints[i][0] > maxX) {
-                maxX = boundingBoxPoints[i][0];
+            if (boundingBoxCoords[i][0] > maxX) {
+                maxX = boundingBoxCoords[i][0];
             }
-            if (boundingBoxPoints[i][1] > maxY) {
-                maxY = boundingBoxPoints[i][1];
+            if (boundingBoxCoords[i][1] > maxY) {
+                maxY = boundingBoxCoords[i][1];
             }
         }
         // Add one pixel on each side for good measure
@@ -233,6 +241,10 @@ class AnalogView extends WatchUi.WatchFace {
         _isAwake = true;
     }
 
+    //! Turn off partial updates
+    public function setPartialUpdates(pu as Boolean) as Void {
+        _hasPartialUpdates = pu;
+    }
 }
 
 //! Receives watch face events
@@ -255,6 +267,7 @@ class AnalogDelegate extends WatchUi.WatchFaceDelegate {
     public function onPowerBudgetExceeded(powerInfo as WatchFacePowerInfo) as Void {
         System.println("Average execution time: " + powerInfo.executionTimeAverage);
         System.println("Allowed execution time: " + powerInfo.executionTimeLimit);
-        // TODO: TURN OFF SECONDS
+
+        _view.setPartialUpdates(false);
     }
 }
