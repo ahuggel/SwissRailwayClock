@@ -31,6 +31,9 @@ class AnalogView extends WatchUi.WatchFace {
     private var _secondHand as Array<Float>    = [0.9319, 0.0314, 0.0314, -0.3246, 0.1047];
     private var _boundingBox as Array<Float>   = [_secondHand[0] + _secondHand[4], 3 * _secondHand[4], 3 * _secondHand[4], _secondHand[3]];
 
+    // Sinus lookup table for each second
+    private var _sin as Array<Float> = new [60];
+
     //! Initialize variables for this view
     public function initialize() {
         WatchFace.initialize();
@@ -59,6 +62,11 @@ class AnalogView extends WatchUi.WatchFace {
             _boundingBox[i]   = Math.round(_boundingBox[i] * _clockRadius);
         }
         _secondHand[4] = Math.round(_secondHand[4] as Float * _clockRadius);
+
+        // Initialise sinus lookup table 
+        for (var i = 0; i < 60; i++) {
+            _sin[i] = Math.sin(i / 60.0 * 2 * Math.PI);
+        }
 
         // If this device supports BufferedBitmap, allocate the buffers we use for drawing
         // Allocate a full screen size buffer with a palette of only 4 colors to draw
@@ -115,7 +123,7 @@ class AnalogView extends WatchUi.WatchFace {
         // Draw tick marks around the edges of the screen
         targetDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < 60; i++) {
-            targetDc.fillPolygon(generatePolygonCoords(i % 5 ? _smallTickMark : _bigTickMark, i / 60.0 * 2 * Math.PI));
+            targetDc.fillPolygon(generatePolygonCoords(i % 5 ? _smallTickMark : _bigTickMark, i));
         }
 
         var clockTime = System.getClockTime();
@@ -125,21 +133,21 @@ class AnalogView extends WatchUi.WatchFace {
         targetDc.fillPolygon(generatePolygonCoords(_hourHand, hourHandAngle));
 
         // Draw the minute hand.
-        targetDc.fillPolygon(generatePolygonCoords(_minuteHand, clockTime.min / 60.0 * 2 * Math.PI));
+        targetDc.fillPolygon(generatePolygonCoords(_minuteHand, clockTime.min));
 
         // Output the offscreen buffer to the main display if required.
         if (null != _offscreenBuffer) {
             dc.drawBitmap(0, 0, _offscreenBuffer);
         }
 
-        if (_isAwake == true or _hasPartialUpdates == true) {
+        // TODO: If _isAwake is null it uses _hasPartialUpdates 
+        if (true == _isAwake or true == _hasPartialUpdates) {
             // Draw the second hand directly in the full update method.
-            var secondAngle = clockTime.sec / 60.0 * 2 * Math.PI;
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-            dc.fillPolygon(generatePolygonCoords(_secondHand, secondAngle));
+            dc.fillPolygon(generatePolygonCoords(_secondHand, clockTime.sec));
             var secondCircleCenter = [
-                    (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * Math.sin(secondAngle) + 0.5) as Number,
-                    (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * Math.cos(secondAngle) + 0.5) as Number 
+                    (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * _sin[clockTime.sec] + 0.5) as Number,
+                    (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * _sin[(clockTime.sec + 15) % 60] + 0.5) as Number 
                 ];
             dc.fillCircle(secondCircleCenter[0], secondCircleCenter[1], _secondHand[4]);
             // TODO: SET CLIP? Maybe not. Then, when onPartialUpdate is called for the first time, it will install the entire bg?
@@ -153,7 +161,7 @@ class AnalogView extends WatchUi.WatchFace {
         System.println("onPartialUpdate"); // DEBUG
 
         // If we have an offscreen buffer, output it to the main display.
-        // Note that this will only affect the clipped region, if there is one, to delete the second hand
+        // Note that this will only affect the clipped region, if there is one, to delete the second hand.
         if (null != _offscreenBuffer) {
             dc.drawBitmap(0, 0, _offscreenBuffer);
         }
@@ -162,17 +170,16 @@ class AnalogView extends WatchUi.WatchFace {
         var clockTime = System.getClockTime();
 
         // Draw the second hand to the screen.
-        var secondAngle = clockTime.sec / 60.0 * 2 * Math.PI;
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon(generatePolygonCoords(_secondHand, secondAngle));
+        dc.fillPolygon(generatePolygonCoords(_secondHand, clockTime.sec));
         var secondCircleCenter = [
-                (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * Math.sin(secondAngle) + 0.5) as Number,
-                (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * Math.cos(secondAngle) + 0.5) as Number 
+                (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * _sin[clockTime.sec] + 0.5) as Number,
+                (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * _sin[(clockTime.sec + 15) % 60] + 0.5) as Number 
             ];
         dc.fillCircle(secondCircleCenter[0], secondCircleCenter[1], _secondHand[4]);
 
         // Update the clipping rectangle to the new location of the second hand.
-        var boundingBoxCoords = generatePolygonCoords(_boundingBox, secondAngle);
+        var boundingBoxCoords = generatePolygonCoords(_boundingBox, clockTime.sec);
         var minX = 65536;
         var minY = 65536;
         var maxX = 0;
@@ -204,9 +211,9 @@ class AnalogView extends WatchUi.WatchFace {
     //!        shape[1] Width of the polygon at the tail of the hand or tick mark
     //!        shape[2] Width of the polygon at the tip of the hand or tick mark
     //!        shape[3] Distance from the center of the watch to the tail side (negative for a watch hand with a tail) of the polygon
-    //! @param angle Angle of the hand in radians
+    //! @param angle Angle of the hand in radians (Float) or in minutes (Number, between 0 and 59)
     //! @return The coordinates of the polygon (watch hand or tick mark)
-    private function generatePolygonCoords(shape as Array<Numeric>, angle as Float) as Array< Array<Number> > {
+    private function generatePolygonCoords(shape as Array<Numeric>, angle as Float or Number) as Array< Array<Number> > {
         // Map out the coordinates of the polygon (trapezoid)
         var coords = [[-(shape[1] / 2), -shape[3]] as Array<Number>,
                       [-(shape[2] / 2), -(shape[3] + shape[0])] as Array<Number>,
@@ -214,10 +221,21 @@ class AnalogView extends WatchUi.WatchFace {
                       [shape[1] / 2, -shape[3]] as Array<Number>] as Array< Array<Number> >;
 
         // Rotate the coordinates
-        var result = new Array< Array<Number> >[4];
-        var cos = Math.cos(angle);
-        var sin = Math.sin(angle);
+        var cos = 0.0;
+        var sin = 0.0;
+        switch (angle) {
+            case instanceof Float:
+                sin = Math.sin(angle);
+                cos = Math.cos(angle);
+                break;
+            case instanceof Number:
+                System.println("using sin/cos lookup tables"); // DEBUG
+                sin = _sin[angle];
+                cos = _sin[(angle + 15) % 60];
+                break;
+        }
 
+        var result = new Array< Array<Number> >[4];
         for (var i = 0; i < 4; i++) {
             var x = (coords[i][0] * cos - coords[i][1] * sin + 0.5) as Number;
             var y = (coords[i][0] * sin + coords[i][1] * cos + 0.5) as Number;
