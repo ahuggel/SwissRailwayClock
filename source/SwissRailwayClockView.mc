@@ -16,41 +16,39 @@ import Toybox.WatchUi;
 //! This implements an analog watch face
 //! Original design by Austen Harbour
 class AnalogView extends WatchUi.WatchFace {
-    private var _isAwake as Boolean? = null;
-    private var _hasPartialUpdates as Boolean;
+    private var _isAwake as Boolean;
+    private var _doPartialUpdates as Boolean;
     private var _offscreenBuffer as BufferedBitmap?;
-    private var _screenCenterPoint as Array<Number>?;
-    private var _clockRadius as Float = 0.0;
+    private var _screenCenterPoint as Array<Number> = [0, 0] as Array<Number>;
+    private var _clockRadius as Number = 0;
+    private var _DEBUG_maxClipArea as Number = 0;
 
     // Geometry of the clock, relative to the radius of the clock face.
     //                                            height, width1, width2, radius, circle
-    private var _bigTickMark as Array<Float>   = [0.2408, 0.0733, 0.0733,  0.6963];	
-    private var _smallTickMark as Array<Float> = [0.0733, 0.0262, 0.0262,  0.8639];	
-    private var _hourHand as Array<Float>      = [0.8482, 0.1257, 0.0995, -0.2304];	
-    private var _minuteHand as Array<Float>    = [1.1257, 0.1047, 0.0733, -0.2356];	
-    private var _secondHand as Array<Float>    = [0.9319, 0.0314, 0.0314, -0.3246, 0.1047];
-    private var _boundingBox as Array<Float>   = [_secondHand[0] + _secondHand[4], 3 * _secondHand[4], 3 * _secondHand[4], _secondHand[3]];
+    private var _bigTickMark as Array<Float>   = [0.2408, 0.0733, 0.0733,  0.6963] as Array<Float>;	
+    private var _smallTickMark as Array<Float> = [0.0733, 0.0262, 0.0262,  0.8639] as Array<Float>;
+    private var _hourHand as Array<Float>      = [0.8482, 0.1257, 0.0995, -0.2304] as Array<Float>;
+    private var _minuteHand as Array<Float>    = [1.1257, 0.1047, 0.0733, -0.2356] as Array<Float>;
+    private var _secondHand as Array<Float>    = [0.9319, 0.0314, 0.0314, -0.3246, 0.1047] as Array<Float>;
 
     // Sinus lookup table for each second
-    private var _sin as Array<Float> = new [60];
+    private var _sin as Array<Float> = new Array<Float>[60];
 
     //! Initialize variables for this view
     public function initialize() {
         WatchFace.initialize();
-        _hasPartialUpdates = (WatchUi.WatchFace has :onPartialUpdate);
+        _isAwake = true; // TODO: Lacking a better way to initialise this..
+        _doPartialUpdates = (WatchUi.WatchFace has :onPartialUpdate);
     }
 
     //! Load resources and configure the layout of the watchface for this device
     //! @param dc Device context
     public function onLayout(dc as Dc) as Void {
-
-        System.println("onLayout"); // DEBUG
-
         var width = dc.getWidth();
         var height = dc.getHeight();
 
         _screenCenterPoint = [width / 2, height / 2] as Array<Number>;
-        _clockRadius = _screenCenterPoint[0] < _screenCenterPoint[1] ? _screenCenterPoint[0] : _screenCenterPoint[1] as Float;
+        _clockRadius = _screenCenterPoint[0] < _screenCenterPoint[1] ? _screenCenterPoint[0] : _screenCenterPoint[1];
 
         // Convert the clock geometry data to pixels
         for (var i = 0; i < 4; i++) {
@@ -59,7 +57,6 @@ class AnalogView extends WatchUi.WatchFace {
             _hourHand[i]      = Math.round(_hourHand[i] * _clockRadius);
             _minuteHand[i]    = Math.round(_minuteHand[i] * _clockRadius);
             _secondHand[i]    = Math.round(_secondHand[i] * _clockRadius);
-            _boundingBox[i]   = Math.round(_boundingBox[i] * _clockRadius);
         }
         _secondHand[4] = Math.round(_secondHand[4] as Float * _clockRadius);
 
@@ -98,11 +95,10 @@ class AnalogView extends WatchUi.WatchFace {
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
 
-        System.println("onUpdate"); // DEBUG
+        System.println("Type of _DEBUG_maxClipArea is " + typeName(_DEBUG_maxClipArea));
+        System.println("Biggest clipping region: " + _DEBUG_maxClipArea);
 
-        if (_isAwake == null) {
-            // TODO: Are we awake?? -> Set the flag
-        }
+        // TODO: Are we awake?? -> Set the flag
         
         var targetDc = dc;
         if (null != _offscreenBuffer) {
@@ -140,26 +136,20 @@ class AnalogView extends WatchUi.WatchFace {
             dc.drawBitmap(0, 0, _offscreenBuffer);
         }
 
-        // TODO: If _isAwake is null it uses _hasPartialUpdates 
-        if (true == _isAwake or true == _hasPartialUpdates) {
-            // Draw the second hand directly in the full update method.
-            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-            dc.fillPolygon(generatePolygonCoords(_secondHand, clockTime.sec));
-            var secondCircleCenter = [
-                    (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * _sin[clockTime.sec] + 0.5) as Number,
-                    (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * _sin[(clockTime.sec + 15) % 60] + 0.5) as Number 
-                ];
-            dc.fillCircle(secondCircleCenter[0], secondCircleCenter[1], _secondHand[4]);
-            // TODO: SET CLIP? Maybe not. Then, when onPartialUpdate is called for the first time, it will install the entire bg?
+        if (!_isAwake and _doPartialUpdates) {
+            // Set the clipping rectangle to the new location of the second hand.
+            setClippingRegion(dc, clockTime.sec);
+        }
+
+        if (_isAwake or _doPartialUpdates) {
+            // Draw the second hand to the screen.
+            drawSecondHand(dc, clockTime.sec);
         }
     }
 
     //! Handle the partial update event
     //! @param dc Device context
     public function onPartialUpdate(dc as Dc) as Void {
-
-        System.println("onPartialUpdate"); // DEBUG
-
         // If we have an offscreen buffer, output it to the main display.
         // Note that this will only affect the clipped region, if there is one, to delete the second hand.
         if (null != _offscreenBuffer) {
@@ -169,17 +159,32 @@ class AnalogView extends WatchUi.WatchFace {
 
         var clockTime = System.getClockTime();
 
-        // Draw the second hand to the screen.
-        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon(generatePolygonCoords(_secondHand, clockTime.sec));
-        var secondCircleCenter = [
-                (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * _sin[clockTime.sec] + 0.5) as Number,
-                (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * _sin[(clockTime.sec + 15) % 60] + 0.5) as Number 
-            ];
-        dc.fillCircle(secondCircleCenter[0], secondCircleCenter[1], _secondHand[4]);
+        // Set the clipping rectangle to the new location of the second hand.
+        setClippingRegion(dc, clockTime.sec);
 
-        // Update the clipping rectangle to the new location of the second hand.
-        var boundingBoxCoords = generatePolygonCoords(_boundingBox, clockTime.sec);
+        // Draw the second hand to the screen.
+        drawSecondHand(dc, clockTime.sec);
+    }
+
+    //! Draw the second hand
+    //! @param dc Device context
+    //! @param second The current second 
+    private function drawSecondHand(dc as Dc, second as Number) as Void {
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+        dc.fillPolygon(generatePolygonCoords(_secondHand, second));
+        var secondCircleCenter = [
+                (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * _sin[second] + 0.5).toNumber(),
+                (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * _sin[(second + 15) % 60] + 0.5).toNumber() 
+            ] as Array<Number>;
+        dc.fillCircle(secondCircleCenter[0], secondCircleCenter[1], _secondHand[4]);
+    }
+
+    //! Set the clipping rectangle to the location of the second hand.
+    //! @param dc Device context
+    //! @param second The current second 
+    private function setClippingRegion(dc as Dc, second as Number) as Void {
+        var boundingBox = [_secondHand[0] + _secondHand[4], 1 * _secondHand[4], 1 * _secondHand[4], _secondHand[3]] as Array<Float>;
+        var boundingBoxCoords = generatePolygonCoords(boundingBox, second);
         var minX = 65536;
         var minY = 65536;
         var maxX = 0;
@@ -200,6 +205,11 @@ class AnalogView extends WatchUi.WatchFace {
         }
         // Add one pixel on each side for good measure
         dc.setClip(minX - 1, minY - 1, maxX + 1 - (minX - 1), maxY + 1 - (minY - 1));
+
+        var clipArea = ((maxX + 1 - (minX - 1)) * (maxY + 1 - (minY - 1))) as Number;
+        if (clipArea > _DEBUG_maxClipArea) {
+            _DEBUG_maxClipArea = clipArea;
+        }
     }
 
     //! This function is used to generate the screen coordinates of the four corners of a polygon (trapezoid),
@@ -229,16 +239,14 @@ class AnalogView extends WatchUi.WatchFace {
                 cos = Math.cos(angle);
                 break;
             case instanceof Number:
-                System.println("using sin/cos lookup tables"); // DEBUG
                 sin = _sin[angle];
-                cos = _sin[(angle + 15) % 60];
+                cos = _sin[(angle as Number + 15) % 60];
                 break;
         }
-
         var result = new Array< Array<Number> >[4];
         for (var i = 0; i < 4; i++) {
-            var x = (coords[i][0] * cos - coords[i][1] * sin + 0.5) as Number;
-            var y = (coords[i][0] * sin + coords[i][1] * cos + 0.5) as Number;
+            var x = (coords[i][0] * cos - coords[i][1] * sin + 0.5).toNumber();
+            var y = (coords[i][0] * sin + coords[i][1] * cos + 0.5).toNumber();
 
             result[i] = [_screenCenterPoint[0] + x, _screenCenterPoint[1] + y];
         }
@@ -260,8 +268,8 @@ class AnalogView extends WatchUi.WatchFace {
     }
 
     //! Turn off partial updates
-    public function setPartialUpdates(pu as Boolean) as Void {
-        _hasPartialUpdates = pu;
+    public function setPartialUpdates(doPartialUpdates as Boolean) as Void {
+        _doPartialUpdates = doPartialUpdates;
     }
 }
 
@@ -289,3 +297,44 @@ class AnalogDelegate extends WatchUi.WatchFaceDelegate {
         _view.setPartialUpdates(false);
     }
 }
+
+    // DEBUG
+    function typeName(obj) {
+        if (obj instanceof Toybox.Lang.Number) {
+            return "Number";
+        } else if (obj instanceof Toybox.Lang.Long) {
+            return "Long";
+        } else if (obj instanceof Toybox.Lang.Float) {
+            return "Float";
+        } else if (obj instanceof Toybox.Lang.Double) {
+            return "Double";
+        } else if (obj instanceof Toybox.Lang.Boolean) {
+            return "Boolean";
+        } else if (obj instanceof Toybox.Lang.String) {
+            return "String";
+        } else if (obj instanceof Toybox.Lang.Array) {
+            var s = "Array [";
+            for (var i = 0; i < obj.size(); ++i) {
+                s += typeName(obj);
+                s += ", ";
+            }
+            s += "]";
+            return s;
+        } else if (obj instanceof Toybox.Lang.Dictionary) {
+            var s = "Dictionary{";
+            var keys = obj.keys();
+            var vals = obj.values();
+            for (var i = 0; i < keys.size(); ++i) {
+                s += keys;
+                s += ": ";
+                s += vals;
+                s += ", ";
+            }
+            s += "}";
+            return s;
+        } else if (obj instanceof Toybox.Time.Gregorian.Info) {
+            return "Gregorian.Info";
+        } else {
+            return "???";
+        }
+    }
