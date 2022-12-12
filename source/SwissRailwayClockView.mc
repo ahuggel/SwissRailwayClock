@@ -25,11 +25,11 @@ class AnalogView extends WatchUi.WatchFace {
 
     // Geometry of the clock, relative to the radius of the clock face.
     //                                            height, width1, width2, radius, circle
-    private var _bigTickMark as Array<Float>   = [0.2408, 0.0733, 0.0733,  0.6963] as Array<Float>;	
-    private var _smallTickMark as Array<Float> = [0.0733, 0.0262, 0.0262,  0.8639] as Array<Float>;
+    private var _bigTickMark as Array<Float>   = [0.2304, 0.0681, 0.0681,  0.7068] as Array<Float>;	
+    private var _smallTickMark as Array<Float> = [0.0681, 0.0262, 0.0262,  0.8691] as Array<Float>;
     private var _hourHand as Array<Float>      = [0.8482, 0.1257, 0.0995, -0.2304] as Array<Float>;
     private var _minuteHand as Array<Float>    = [1.1257, 0.1047, 0.0733, -0.2356] as Array<Float>;
-    private var _secondHand as Array<Float>    = [0.9319, 0.0314, 0.0314, -0.3246, 0.1047] as Array<Float>;
+    private var _secondHand as Array<Float>    = [0.9372, 0.0314, 0.0314, -0.3246, 0.0995] as Array<Float>;
 
     // Sinus lookup table for each second
     private var _sin as Array<Float> = new Array<Float>[60];
