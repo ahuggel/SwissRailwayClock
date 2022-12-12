@@ -254,7 +254,9 @@ class AnalogView extends WatchUi.WatchFace {
     //! Set the isAwake flag to let onUpdate know it should render the second hand.
     public function onExitSleep() as Void {
         _isAwake = true;
-        _useAntiAliasing = true;
+        if (Toybox.Graphics.Dc has :setAntiAlias) {
+            _useAntiAliasing = true;
+        }
     }
 
     //! Turn off partial updates
