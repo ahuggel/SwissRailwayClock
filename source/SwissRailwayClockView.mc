@@ -16,9 +16,10 @@ import Toybox.WatchUi;
 //! This implements an analog watch face
 //! Original design by Austen Harbour
 class AnalogView extends WatchUi.WatchFace {
-    private var _isAwake as Boolean;
+    private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
     private var _doPartialUpdates as Boolean;
-    private var _offscreenBuffer as BufferedBitmap?;
+    private var _offscreenBuffer as BufferedBitmap? = null;
+    private var _useAntiAliasing as Boolean = false;
     private var _screenCenterPoint as Array<Number> = [0, 0] as Array<Number>;
     private var _clockRadius as Number = 0;
 
@@ -36,8 +37,11 @@ class AnalogView extends WatchUi.WatchFace {
     //! Initialize variables for this view
     public function initialize() {
         WatchFace.initialize();
-        _isAwake = true; // TODO: Lacking a better way to initialise this..
         _doPartialUpdates = (WatchUi.WatchFace has :onPartialUpdate);
+        // Initialise sinus lookup table 
+        for (var i = 0; i < 60; i++) {
+            _sin[i] = Math.sin(i / 60.0 * 2 * Math.PI);
+        }
     }
 
     //! Load resources and configure the layout of the watchface for this device
@@ -45,10 +49,8 @@ class AnalogView extends WatchUi.WatchFace {
     public function onLayout(dc as Dc) as Void {
         var width = dc.getWidth();
         var height = dc.getHeight();
-
         _screenCenterPoint = [width / 2, height / 2] as Array<Number>;
         _clockRadius = _screenCenterPoint[0] < _screenCenterPoint[1] ? _screenCenterPoint[0] : _screenCenterPoint[1];
-
         // Convert the clock geometry data to pixels
         for (var i = 0; i < 4; i++) {
             _bigTickMark[i]   = Math.round(_bigTickMark[i] * _clockRadius);
@@ -59,16 +61,14 @@ class AnalogView extends WatchUi.WatchFace {
         }
         _secondHand[4] = Math.round(_secondHand[4] as Float * _clockRadius);
 
-        // Initialise sinus lookup table 
-        for (var i = 0; i < 60; i++) {
-            _sin[i] = Math.sin(i / 60.0 * 2 * Math.PI);
+        if (Toybox.Graphics.Dc has :setAntiAlias) {
+            _useAntiAliasing = true;
+            dc.setAntiAlias(true);
         }
-
         // If this device supports BufferedBitmap, allocate the buffers we use for drawing
         // Allocate a full screen size buffer with a palette of only 4 colors to draw
         // the background image of the watchface.  This is used to facilitate blanking
         // the second hand during partial updates of the display
-        _offscreenBuffer = null;
         if (Graphics has :BufferedBitmap) {
             var bbmo = {
                 :width=>width,
@@ -93,15 +93,12 @@ class AnalogView extends WatchUi.WatchFace {
     //! Handle the update event
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
-
-        // TODO: Are we awake?? -> Set the flag
-        
+        dc.clearClip();
         var targetDc = dc;
-        if (null != _offscreenBuffer) {
+        if (!_useAntiAliasing and null != _offscreenBuffer) {
             // If we have an offscreen buffer that we are using to draw the background,
             // set the draw context of that buffer as our target.
             targetDc = _offscreenBuffer.getDc();
-            dc.clearClip();
         }
         var width = targetDc.getWidth();
         var height = targetDc.getHeight();
@@ -128,7 +125,7 @@ class AnalogView extends WatchUi.WatchFace {
         targetDc.fillPolygon(generatePolygonCoords(_minuteHand, clockTime.min));
 
         // Output the offscreen buffer to the main display if required.
-        if (null != _offscreenBuffer) {
+        if (!_useAntiAliasing and null != _offscreenBuffer) {
             dc.drawBitmap(0, 0, _offscreenBuffer);
         }
 
@@ -249,6 +246,7 @@ class AnalogView extends WatchUi.WatchFace {
     //! Set the isAwake flag to let onUpdate know it should stop rendering the second hand.
     public function onEnterSleep() as Void {
         _isAwake = false;
+        _useAntiAliasing = false;
         WatchUi.requestUpdate();
     }
 
@@ -256,6 +254,7 @@ class AnalogView extends WatchUi.WatchFace {
     //! Set the isAwake flag to let onUpdate know it should render the second hand.
     public function onExitSleep() as Void {
         _isAwake = true;
+        _useAntiAliasing = true;
     }
 
     //! Turn off partial updates
