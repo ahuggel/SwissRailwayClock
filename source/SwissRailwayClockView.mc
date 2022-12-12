@@ -21,7 +21,6 @@ class AnalogView extends WatchUi.WatchFace {
     private var _offscreenBuffer as BufferedBitmap?;
     private var _screenCenterPoint as Array<Number> = [0, 0] as Array<Number>;
     private var _clockRadius as Number = 0;
-    private var _DEBUG_maxClipArea as Number = 0;
 
     // Geometry of the clock, relative to the radius of the clock face.
     //                                            height, width1, width2, radius, circle
@@ -95,9 +94,6 @@ class AnalogView extends WatchUi.WatchFace {
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
 
-        System.println("Type of _DEBUG_maxClipArea is " + typeName(_DEBUG_maxClipArea));
-        System.println("Biggest clipping region: " + _DEBUG_maxClipArea);
-
         // TODO: Are we awake?? -> Set the flag
         
         var targetDc = dc;
@@ -136,11 +132,6 @@ class AnalogView extends WatchUi.WatchFace {
             dc.drawBitmap(0, 0, _offscreenBuffer);
         }
 
-        if (!_isAwake and _doPartialUpdates) {
-            // Set the clipping rectangle to the new location of the second hand.
-            setClippingRegion(dc, clockTime.sec);
-        }
-
         if (_isAwake or _doPartialUpdates) {
             // Draw the second hand to the screen.
             drawSecondHand(dc, clockTime.sec);
@@ -159,57 +150,57 @@ class AnalogView extends WatchUi.WatchFace {
 
         var clockTime = System.getClockTime();
 
-        // Set the clipping rectangle to the new location of the second hand.
-        setClippingRegion(dc, clockTime.sec);
-
         // Draw the second hand to the screen.
         drawSecondHand(dc, clockTime.sec);
     }
 
-    //! Draw the second hand
+    //! Set the clipping region and draw the second hand
     //! @param dc Device context
     //! @param second The current second 
     private function drawSecondHand(dc as Dc, second as Number) as Void {
-        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon(generatePolygonCoords(_secondHand, second));
+
+        var secondHandCoords = generatePolygonCoords(_secondHand, second);
         var secondCircleCenter = [
                 (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * _sin[second] + 0.5).toNumber(),
                 (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * _sin[(second + 15) % 60] + 0.5).toNumber() 
             ] as Array<Number>;
-        dc.fillCircle(secondCircleCenter[0], secondCircleCenter[1], _secondHand[4]);
-    }
+        var radius = _secondHand[4].toNumber();
 
-    //! Set the clipping rectangle to the location of the second hand.
-    //! @param dc Device context
-    //! @param second The current second 
-    private function setClippingRegion(dc as Dc, second as Number) as Void {
-        var boundingBox = [_secondHand[0] + _secondHand[4], 1 * _secondHand[4], 1 * _secondHand[4], _secondHand[3]] as Array<Float>;
-        var boundingBoxCoords = generatePolygonCoords(boundingBox, second);
-        var minX = 65536;
-        var minY = 65536;
-        var maxX = 0;
-        var maxY = 0;
-        for (var i = 0; i < 4; i++) {
-            if (boundingBoxCoords[i][0] < minX) {
-                minX = boundingBoxCoords[i][0];
+        if (!_isAwake) {
+            // Set the clipping region
+            var boundingBoxCoords = [ 
+                secondHandCoords[0], secondHandCoords[1], secondHandCoords[2], secondHandCoords[3],
+                [ secondCircleCenter[0] - radius, secondCircleCenter[1] - radius ],
+                [ secondCircleCenter[0] + radius, secondCircleCenter[1] - radius ],
+                [ secondCircleCenter[0] + radius, secondCircleCenter[1] + radius ],
+                [ secondCircleCenter[0] - radius, secondCircleCenter[1] + radius ]
+            ] as Array< Array<Number> >;
+            var minX = 65536;
+            var minY = 65536;
+            var maxX = 0;
+            var maxY = 0;
+            for (var i = 0; i < boundingBoxCoords.size(); i++) {
+                if (boundingBoxCoords[i][0] < minX) {
+                    minX = boundingBoxCoords[i][0];
+                }
+                if (boundingBoxCoords[i][1] < minY) {
+                    minY = boundingBoxCoords[i][1];
+                }
+                if (boundingBoxCoords[i][0] > maxX) {
+                    maxX = boundingBoxCoords[i][0];
+                }
+                if (boundingBoxCoords[i][1] > maxY) {
+                    maxY = boundingBoxCoords[i][1];
+                }
             }
-            if (boundingBoxCoords[i][1] < minY) {
-                minY = boundingBoxCoords[i][1];
-            }
-            if (boundingBoxCoords[i][0] > maxX) {
-                maxX = boundingBoxCoords[i][0];
-            }
-            if (boundingBoxCoords[i][1] > maxY) {
-                maxY = boundingBoxCoords[i][1];
-            }
+            // Add one pixel on each side for good measure
+            dc.setClip(minX - 1, minY - 1, maxX + 1 - (minX - 1), maxY + 1 - (minY - 1));
         }
-        // Add one pixel on each side for good measure
-        dc.setClip(minX - 1, minY - 1, maxX + 1 - (minX - 1), maxY + 1 - (minY - 1));
 
-        var clipArea = ((maxX + 1 - (minX - 1)) * (maxY + 1 - (minY - 1))) as Number;
-        if (clipArea > _DEBUG_maxClipArea) {
-            _DEBUG_maxClipArea = clipArea;
-        }
+        // Draw the second hand
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+        dc.fillPolygon(secondHandCoords);
+        dc.fillCircle(secondCircleCenter[0], secondCircleCenter[1], radius);
     }
 
     //! This function is used to generate the screen coordinates of the four corners of a polygon (trapezoid),
