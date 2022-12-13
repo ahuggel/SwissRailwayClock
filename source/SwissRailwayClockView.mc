@@ -20,13 +20,13 @@ class AnalogView extends WatchUi.WatchFace {
     private var _screenCenterPoint as Array<Number> = [0, 0] as Array<Number>;
     private var _clockRadius as Number = 0;
 
-    // Geometry of the clock, relative to the radius of the clock face.
+    // Geometry of the clock, as a percentage of the diameter of the clock face.
     //                                            height, width1, width2, radius, circle
-    private var _bigTickMark as Array<Float>   = [0.2304, 0.0681, 0.0681,  0.7068] as Array<Float>;	
-    private var _smallTickMark as Array<Float> = [0.0681, 0.0262, 0.0262,  0.8691] as Array<Float>;
-    private var _hourHand as Array<Float>      = [0.8482, 0.1257, 0.0995, -0.2304] as Array<Float>;
-    private var _minuteHand as Array<Float>    = [1.1257, 0.1047, 0.0733, -0.2356] as Array<Float>;
-    private var _secondHand as Array<Float>    = [0.9372, 0.0314, 0.0314, -0.3246, 0.0995] as Array<Float>;
+    private var _bigTickMark as Array<Float>   = [12.0, 3.5, 3.5, 36.5] as Array<Float>;	
+    private var _smallTickMark as Array<Float> = [ 3.5, 1.4, 1.4, 45.0] as Array<Float>;
+    private var _hourHand as Array<Float>      = [44.0, 6.3, 5.1,-12.0] as Array<Float>;
+    private var _minuteHand as Array<Float>    = [57.8, 5.2, 3.7,-12.0] as Array<Float>;
+    private var _secondHand as Array<Float>    = [47.9, 1.4, 1.4,-16.5, 5.1] as Array<Float>;
 
     // Sinus lookup table for each second
     private var _sin as Array<Float> = new Array<Float>[60];
@@ -51,13 +51,13 @@ class AnalogView extends WatchUi.WatchFace {
         _clockRadius = _screenCenterPoint[0] < _screenCenterPoint[1] ? _screenCenterPoint[0] : _screenCenterPoint[1];
         // Convert the clock geometry data to pixels
         for (var i = 0; i < 4; i++) {
-            _bigTickMark[i]   = Math.round(_bigTickMark[i] * _clockRadius);
-            _smallTickMark[i] = Math.round(_smallTickMark[i] * _clockRadius);
-            _hourHand[i]      = Math.round(_hourHand[i] * _clockRadius);
-            _minuteHand[i]    = Math.round(_minuteHand[i] * _clockRadius);
-            _secondHand[i]    = Math.round(_secondHand[i] * _clockRadius);
+            _bigTickMark[i]   = Math.round(_bigTickMark[i] * _clockRadius / 50.0);
+            _smallTickMark[i] = Math.round(_smallTickMark[i] * _clockRadius / 50.0);
+            _hourHand[i]      = Math.round(_hourHand[i] * _clockRadius / 50.0);
+            _minuteHand[i]    = Math.round(_minuteHand[i] * _clockRadius / 50.0);
+            _secondHand[i]    = Math.round(_secondHand[i] * _clockRadius / 50.0);
         }
-        _secondHand[4] = Math.round(_secondHand[4] as Float * _clockRadius);
+        _secondHand[4] = Math.round(_secondHand[4] as Float * _clockRadius / 50.0);
 
         // If this device supports BufferedBitmap, allocate the buffers we use for drawing
         // Allocate a full screen size buffer with a palette of only 4 colors to draw
