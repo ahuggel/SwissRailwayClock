@@ -1,4 +1,7 @@
 //
+// Swiss Railway Clock
+// https://www.eguide.ch/de/objekt/sbb-bahnhofsuhr/
+//
 // Copyright 2022 by Andreas Huggel
 // 
 // Based on the Garmin Analog sample program, there may be some terminology from that left.
@@ -14,19 +17,28 @@ import Toybox.WatchUi;
 
 //! This implements the Swiss Railway Clock watch face
 class AnalogView extends WatchUi.WatchFace {
+    enum { M_LIGHT, M_DARK } // Color modes
+    enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS } // Colors
+
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
     private var _offscreenBuffer as BufferedBitmap? = null;
+    private var _screenShape as Number;
     private var _screenCenterPoint as Array<Number> = [0, 0] as Array<Number>;
     private var _clockRadius as Number = 0;
+    private var _colorMode as Number = M_LIGHT;
+    private var _colors as Array< Array<Number> > = [
+        [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED],
+        [Graphics.COLOR_WHITE, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE]
+    ] as Array< Array<Number> >;
 
     // Geometry of the clock, as a percentage of the diameter of the clock face.
     //                                            height, width1, width2, radius, circle
-    private var _bigTickMark as Array<Float>   = [12.0, 3.5, 3.5, 36.5] as Array<Float>;	
-    private var _smallTickMark as Array<Float> = [ 3.5, 1.4, 1.4, 45.0] as Array<Float>;
-    private var _hourHand as Array<Float>      = [44.0, 6.3, 5.1,-12.0] as Array<Float>;
-    private var _minuteHand as Array<Float>    = [57.8, 5.2, 3.7,-12.0] as Array<Float>;
-    private var _secondHand as Array<Float>    = [47.9, 1.4, 1.4,-16.5, 5.1] as Array<Float>;
+    private var _bigTickMark   as Array<Float> = [  12.0,    3.5,    3.5,   36.5]        as Array<Float>;	
+    private var _smallTickMark as Array<Float> = [   3.5,    1.4,    1.4,   45.0]        as Array<Float>;
+    private var _hourHand      as Array<Float> = [  44.0,    6.3,    5.1,  -12.0]        as Array<Float>;
+    private var _minuteHand    as Array<Float> = [  57.8,    5.2,    3.7,  -12.0]        as Array<Float>;
+    private var _secondHand    as Array<Float> = [  47.9,    1.4,    1.4,  -16.5,   5.1] as Array<Float>;
 
     // Sinus lookup table for each second
     private var _sin as Array<Float> = new Array<Float>[60];
@@ -36,6 +48,7 @@ class AnalogView extends WatchUi.WatchFace {
         WatchFace.initialize();
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         _doPartialUpdates = (WatchUi.WatchFace has :onPartialUpdate);
+        _screenShape = System.getDeviceSettings().screenShape;
         // Initialise sinus lookup table 
         for (var i = 0; i < 60; i++) {
             _sin[i] = Math.sin(i / 60.0 * 2 * Math.PI);
@@ -60,7 +73,7 @@ class AnalogView extends WatchUi.WatchFace {
         _secondHand[4] = Math.round(_secondHand[4] as Float * _clockRadius / 50.0);
 
         // If this device supports BufferedBitmap, allocate the buffers we use for drawing
-        // Allocate a full screen size buffer with a palette of only 4 colors to draw
+        // Allocate a full screen size buffer with a palette of only a few colors to draw
         // the background image of the watchface.  This is used to facilitate blanking
         // the second hand during partial updates of the display
         if (Graphics has :BufferedBitmap) {
@@ -68,10 +81,8 @@ class AnalogView extends WatchUi.WatchFace {
                 :width=>width,
 	            :height=>height,
 	            :palette=>[
-                    Graphics.COLOR_BLACK,
-                    Graphics.COLOR_WHITE,
-                    Graphics.COLOR_LT_GRAY,
-                    Graphics.COLOR_DK_GRAY
+                    _colors[_colorMode][C_FOREGROUND],
+                    _colors[_colorMode][C_BACKGROUND]
                 ]
             };
             // CIQ 4 devices *need* to use createBufferBitmaps() 
@@ -119,19 +130,30 @@ class AnalogView extends WatchUi.WatchFace {
         var width = targetDc.getWidth();
         var height = targetDc.getHeight();
 
-        // Fill the entire background with black and draw a white circle in the center
-        targetDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_WHITE);
-        targetDc.fillRectangle(0, 0, width, height);
-        targetDc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
-        targetDc.fillCircle(_screenCenterPoint[0], _screenCenterPoint[1], _clockRadius);
+        var clockTime = System.getClockTime();
+        // TODO: Should have a setting for this
+        _colorMode = M_LIGHT;
+        if (clockTime.hour > 19 or clockTime.hour < 7) {
+            _colorMode = M_DARK;
+        }
+
+        if (System.SCREEN_SHAPE_ROUND == _screenShape) {
+            // Fill the entire background with the background color (white)
+            targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
+            targetDc.fillRectangle(0, 0, width, height);
+        } else {
+            // Fill the entire background with black and draw a circle with the background color (white)
+            targetDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+            targetDc.fillRectangle(0, 0, width, height);
+            targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
+            targetDc.fillCircle(_screenCenterPoint[0], _screenCenterPoint[1], _clockRadius);
+        }
 
         // Draw tick marks around the edges of the screen
-        targetDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+        targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < 60; i++) {
             targetDc.fillPolygon(generatePolygonCoords(i % 5 ? _smallTickMark : _bigTickMark, i));
         }
-
-        var clockTime = System.getClockTime();
 
         // Draw the hour hand. Convert it to minutes and compute the angle.
         var hourHandAngle = (((clockTime.hour % 12) * 60) + clockTime.min) / (12 * 60.0) * 2 * Math.PI;
@@ -211,7 +233,7 @@ class AnalogView extends WatchUi.WatchFace {
         dc.setClip(minX - 1, minY - 1, maxX + 1 - (minX - 1), maxY + 1 - (minY - 1));
 
         // Draw the second hand
-        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_colors[_colorMode][C_SECONDS], Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(secondHandCoords);
         dc.fillCircle(secondCircleCenter[0], secondCircleCenter[1], radius);
     }
