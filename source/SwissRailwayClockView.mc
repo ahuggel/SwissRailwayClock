@@ -95,6 +95,13 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         }
     }
 
+    //! Called when this View is brought to the foreground. Restore
+    //! the state of this View and prepare it to be shown. This includes
+    //! loading resources into memory.
+    public function onShow() as Void {
+        // TODO: do something
+    }
+
     //! Handle the update event. This function is called
     //! 1) every second when the device is awake,
     //! 2) every full minute in low-power mode, and
