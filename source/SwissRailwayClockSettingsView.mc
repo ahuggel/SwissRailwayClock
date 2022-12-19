@@ -10,7 +10,7 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 //! Initial app settings view
-class AnalogSettingsView extends WatchUi.View {
+class SwissRailwayClockSettingsView extends WatchUi.View {
 
     //! Constructor
     public function initialize() {
@@ -30,7 +30,7 @@ class AnalogSettingsView extends WatchUi.View {
 }
 
 //! Input handler for the initial app settings view
-class AnalogSettingsDelegate extends WatchUi.BehaviorDelegate {
+class SwissRailwayClockSettingsDelegate extends WatchUi.BehaviorDelegate {
 
     //! Constructor
     public function initialize() {
@@ -40,7 +40,7 @@ class AnalogSettingsDelegate extends WatchUi.BehaviorDelegate {
     //! Handle the menu event
     //! @return true if handled, false otherwise
     public function onMenu() as Boolean {
-        var menu = new $.AnalogSettingsMenu();
+        var menu = new $.SwissRailwayClockSettingsMenu();
         var boolean = Storage.getValue(1) ? true : false;
         menu.addItem(new WatchUi.ToggleMenuItem("Settings1", null, 1, boolean, null));
 
@@ -53,7 +53,7 @@ class AnalogSettingsDelegate extends WatchUi.BehaviorDelegate {
         boolean = Storage.getValue(4) ? true : false;
         menu.addItem(new WatchUi.ToggleMenuItem("Settings4", null, 4, boolean, null));
 
-        WatchUi.pushView(menu, new $.AnalogSettingsMenuDelegate(), WatchUi.SLIDE_IMMEDIATE);
+        WatchUi.pushView(menu, new $.SwissRailwayClockSettingsMenuDelegate(), WatchUi.SLIDE_IMMEDIATE);
         return true;
     }
 }

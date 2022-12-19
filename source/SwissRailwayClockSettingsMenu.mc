@@ -9,7 +9,7 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 //! The app settings menu
-class AnalogSettingsMenu extends WatchUi.Menu2 {
+class SwissRailwayClockSettingsMenu extends WatchUi.Menu2 {
 
     //! Constructor
     public function initialize() {
@@ -18,7 +18,7 @@ class AnalogSettingsMenu extends WatchUi.Menu2 {
 }
 
 //! Input handler for the app settings menu
-class AnalogSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
+class SwissRailwayClockSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
 
     //! Constructor
     public function initialize() {
