@@ -2,7 +2,7 @@ bin/SwissRailwayClock.prg
 bin/SwissRailwayClock.prg.debug.xml
 bin/internal-mir/Rez.mir
 bin/mir/source/SwissRailwayClockApp.mir
-bin/mir/source/SwissRailwayClockGoalView.mir
 bin/mir/source/SwissRailwayClockSettingsMenu.mir
 bin/mir/source/SwissRailwayClockSettingsView.mir
 bin/mir/source/SwissRailwayClockView.mir
+SwissRailwayClock.code-workspace
