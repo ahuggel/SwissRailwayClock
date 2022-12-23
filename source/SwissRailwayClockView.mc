@@ -4,7 +4,7 @@
 //
 // Copyright 2022 by Andreas Huggel
 // 
-// Based on the Garmin Analog sample program, there may be some terminology from that left.
+// This started from the Garmin Analog sample program; there may be some terminology from that left.
 // That sample program is Copyright 2016-2021 by Garmin Ltd. or its subsidiaries.
 // Subject to Garmin SDK License Agreement and Wearables Application Developer Agreement.
 //
@@ -31,7 +31,8 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
     private var _smallTickMark as Array<Float> = [   3.5,    1.4,    1.4,   45.0]        as Array<Float>;
     private var _hourHand      as Array<Float> = [  44.0,    6.3,    5.1,  -12.0]        as Array<Float>;
     private var _minuteHand    as Array<Float> = [  57.8,    5.2,    3.7,  -12.0]        as Array<Float>;
-    private var _secondHand    as Array<Float> = [  47.9,    1.4,    1.4,  -16.5,   5.1] as Array<Float>;
+//    private var _secondHand    as Array<Float> = [  47.9,    1.4,    1.4,  -16.5,   5.1] as Array<Float>;
+    private var _secondHand    as Array<Float> = [  44.9,    1.4,    1.4,  -13.5,   5.1] as Array<Float>;
 
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
@@ -42,7 +43,7 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
     private var _colorMode as Number = M_LIGHT;
     private var _sin as Array<Float> = new Array<Float>[60]; // Sinus/Cosinus lookup table for each second
 
-    //! Initialize variables for this view
+    //! Constructor. Initialize the variables for this view.
     public function initialize() {
         WatchFace.initialize();
 
@@ -72,7 +73,7 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
             offscreenDc.setAntiAlias(true);
         }
 
-        // Initialize sinus lookup table 
+        // Initialize the sinus lookup table 
         for (var i = 0; i < 60; i++) {
             _sin[i] = Math.sin(i / 60.0 * 2 * Math.PI);
         }
@@ -99,11 +100,10 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         }
     }
 
-    //! Called when this View is brought to the foreground. Restore
-    //! the state of this View and prepare it to be shown. This includes
-    //! loading resources into memory.
+    //! Called when this View is brought to the foreground. Restore the state of this view and
+    //! prepare it to be shown. This includes loading resources into memory.
     public function onShow() as Void {
-        // TODO: do something
+        // TODO: do we need to do anything here?
     }
 
     //! Handle the update event. This function is called
@@ -112,17 +112,18 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
     //! 3) it's also triggered when the device goes into low-power mode (from onEnterSleep()).
     //!
     //! Dependent on the power state of the device, we need to be more or less careful regarding
-    //! the cost of (mainly) the drawing operations used. The processing logic is as follows.
-    //! If available, anti-aliasing is used for both, the main screen and the off-screen buffer.
+    //! the cost of (mainly) the drawing operations used. If available, anti-aliasing is used 
+    //! for both, the main display and the off-screen buffer. The processing logic is as follows.
     //!
     //! When awake: 
-    //! onUpdate(): Draw the entire screen every second, directly into the provided device context.
+    //! onUpdate(): Draw the entire screen every second, directly on the main display.
     //!
     //! In low-power mode:
-    //! onUpdate(): Draw the entire screen into the off-screen buffer. If we can do partial
-    //!             updates, draw the second hand.
-    //! onPartialUpdate(): Use the buffered bitmap to blank out the second hand and re-draw
-    //!             the second hand at the new position directly into the provided device context.
+    //! onUpdate(): Draw the screen into the off-screen buffer and then output the buffer
+    //!             to the main display. If partial updates are enabled, also draw the second 
+    //!             hand, directly on the main display.
+    //! onPartialUpdate(): Use (part of) the off-screen buffer to blank out the second hand and 
+    //!             re-draw the second hand at the new position, directly on the main display.
     //!
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
@@ -172,19 +173,18 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
             targetDc.fillPolygon(generatePolygonCoords(i % 5 ? _smallTickMark : _bigTickMark, i));
         }
 
-        // Draw the hour hand. Convert it to minutes and compute the angle.
+        // Draw the hour hand
         var hourHandAngle = (((clockTime.hour % 12) * 60) + clockTime.min) / (12 * 60.0) * 2 * Math.PI;
         targetDc.fillPolygon(generatePolygonCoords(_hourHand, hourHandAngle));
 
-        // Draw the minute hand.
+        // Draw the minute hand
         targetDc.fillPolygon(generatePolygonCoords(_minuteHand, clockTime.min));
 
-        // Output the offscreen buffer to the main display if required.
         if (!_isAwake) {
+            // Output the offscreen buffer to the main display
             dc.drawBitmap(0, 0, _offscreenBuffer);
         }
 
-        // Draw the second hand
         if (_isAwake or _doPartialUpdates) {
             drawSecondHand(dc, clockTime.sec);
         }
@@ -212,7 +212,6 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
                 (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * sin + 0.5).toNumber(),
                 (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * cos + 0.5).toNumber() 
             ] as Array<Number>;
-
         var secondHandCoords = generatePolygonCoords(_secondHand, second);
         var radius = _secondHand[4].toNumber();
 
@@ -290,17 +289,16 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
 
             result[i] = [_screenCenterPoint[0] + x, _screenCenterPoint[1] + y];
         }
-
         return result;
     }
 
-    //! This method is called when the device re-enters sleep mode.
+    //! This method is called when the device re-enters sleep mode
     public function onEnterSleep() as Void {
         _isAwake = false;
         WatchUi.requestUpdate();
     }
 
-    //! This method is called when the device exits sleep mode.
+    //! This method is called when the device exits sleep mode
     public function onExitSleep() as Void {
         _isAwake = true;
     }
