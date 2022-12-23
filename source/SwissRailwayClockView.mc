@@ -13,23 +13,16 @@ import Toybox.Lang;
 import Toybox.Math;
 import Toybox.System;
 import Toybox.Time;
+import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
 
 //! This implements the Swiss Railway Clock watch face
 class SwissRailwayClockView extends WatchUi.WatchFace {
     enum { M_LIGHT, M_DARK } // Color modes
-    enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS } // Colors
-
-    private var _isAwake as Boolean;
-    private var _doPartialUpdates as Boolean;
-    private var _offscreenBuffer as BufferedBitmap? = null;
-    private var _screenShape as Number;
-    private var _screenCenterPoint as Array<Number> = [0, 0] as Array<Number>;
-    private var _clockRadius as Number = 0;
-    private var _colorMode as Number = M_LIGHT;
+    enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
     private var _colors as Array< Array<Number> > = [
-        [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED],
-        [Graphics.COLOR_WHITE, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE]
+        [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED, Graphics.COLOR_DK_GRAY],
+        [Graphics.COLOR_WHITE, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_LT_GRAY]
     ] as Array< Array<Number> >;
 
     // Geometry of the clock, as a percentage of the diameter of the clock face.
@@ -40,16 +33,46 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
     private var _minuteHand    as Array<Float> = [  57.8,    5.2,    3.7,  -12.0]        as Array<Float>;
     private var _secondHand    as Array<Float> = [  47.9,    1.4,    1.4,  -16.5,   5.1] as Array<Float>;
 
-    // Sinus lookup table for each second
-    private var _sin as Array<Float> = new Array<Float>[60];
+    private var _isAwake as Boolean;
+    private var _doPartialUpdates as Boolean;
+    private var _offscreenBuffer as BufferedBitmap;
+    private var _screenShape as Number;
+    private var _screenCenterPoint as Array<Number> = [0, 0] as Array<Number>;
+    private var _clockRadius as Number = 0;
+    private var _colorMode as Number = M_LIGHT;
+    private var _sin as Array<Float> = new Array<Float>[60]; // Sinus/Cosinus lookup table for each second
 
     //! Initialize variables for this view
     public function initialize() {
         WatchFace.initialize();
+
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         _doPartialUpdates = (WatchUi.WatchFace has :onPartialUpdate);
         _screenShape = System.getDeviceSettings().screenShape;
-        // Initialise sinus lookup table 
+
+        // Allocate the buffer we use for drawing the watchface, hour and minute hands in low-power mode, 
+        // using BufferedBitmap (API Level 2.3.0).
+        // This is a full-colored buffer (with no palette), as we have enough memory and it makes drawing 
+        // text with anti-aliased fonts much more straightforward.
+        // Doing this in initialize() rather than onLayout() so _offscreenBuffer does not need to be 
+        // nullable, which makes the type checker complain less.
+        var bbmo = {
+            :width=>System.getDeviceSettings().screenWidth,
+	        :height=>System.getDeviceSettings().screenHeight
+        };
+        // CIQ 4 devices *need* to use createBufferBitmaps() 
+  	    if (Graphics has :createBufferedBitmap) {
+    		var bbRef = Graphics.createBufferedBitmap(bbmo);
+			_offscreenBuffer = bbRef.get();
+    	} else {
+    		_offscreenBuffer = new Graphics.BufferedBitmap(bbmo);
+		}
+        if (Toybox.Graphics.Dc has :setAntiAlias) {
+            var offscreenDc = _offscreenBuffer.getDc();
+            offscreenDc.setAntiAlias(true);
+        }
+
+        // Initialize sinus lookup table 
         for (var i = 0; i < 60; i++) {
             _sin[i] = Math.sin(i / 60.0 * 2 * Math.PI);
         }
@@ -71,27 +94,8 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
             _secondHand[i]    = Math.round(_secondHand[i] * _clockRadius / 50.0);
         }
         _secondHand[4] = Math.round(_secondHand[4] as Float * _clockRadius / 50.0);
-
-        // If this device supports BufferedBitmap, allocate the buffers we use for drawing
-        // Allocate a full screen size buffer with a palette of only a few colors to draw
-        // the background image of the watchface.  This is used to facilitate blanking
-        // the second hand during partial updates of the display
-        if (Graphics has :BufferedBitmap) {
-            var bbmo = {
-                :width=>width,
-	            :height=>height,
-	            :palette=>[
-                    _colors[_colorMode][C_FOREGROUND],
-                    _colors[_colorMode][C_BACKGROUND]
-                ]
-            };
-            // CIQ 4 devices *need* to use createBufferBitmaps() 
-  	        if (Graphics has :createBufferedBitmap) {
-    			var bbRef = Graphics.createBufferedBitmap(bbmo);
-    			_offscreenBuffer = bbRef.get();
-    		} else {
-    			_offscreenBuffer = new Graphics.BufferedBitmap(bbmo);
-			}
+        if (Toybox.Graphics.Dc has :setAntiAlias) {
+            dc.setAntiAlias(true);
         }
     }
 
@@ -105,33 +109,27 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
     //! Handle the update event. This function is called
     //! 1) every second when the device is awake,
     //! 2) every full minute in low-power mode, and
-    //! 3) it's also triggered when the device goes into low-power mode (see onEnterSleep()) 
-    //!    and (maybe) when it wakes up (see onExitSleep()).
+    //! 3) it's also triggered when the device goes into low-power mode (from onEnterSleep()).
     //!
-    //! Dependent on the power state of the device, we have to be more or less careful regarding
+    //! Dependent on the power state of the device, we need to be more or less careful regarding
     //! the cost of (mainly) the drawing operations used. The processing logic is as follows.
+    //! If available, anti-aliasing is used for both, the main screen and the off-screen buffer.
     //!
     //! When awake: 
-    //! onUpdate(): Draw the entire screen every second, directly into the provided device context,
-    //!             and using anti-aliasing if available.
+    //! onUpdate(): Draw the entire screen every second, directly into the provided device context.
     //!
     //! In low-power mode:
-    //! onUpdate(): Draw the entire screen. Do not use anti-aliasing, but use the off-screen buffer
-    //!             if we have one. Draw the second hand, if we have an off-screen buffer and we
-    //!             can do partial updates.
-    //! onPartialUpdate(): Use the buffered bitmap as the background and only draw the 
-    //!             second hand. If we do not have a buffer, do not draw the second hand.
+    //! onUpdate(): Draw the entire screen into the off-screen buffer. If we can do partial
+    //!             updates, draw the second hand.
+    //! onPartialUpdate(): Use the buffered bitmap to blank out the second hand and re-draw
+    //!             the second hand at the new position directly into the provided device context.
     //!
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
         dc.clearClip();
-        if (Toybox.Graphics.Dc has :setAntiAlias) {
-            dc.setAntiAlias(_isAwake);
-        }
         var targetDc = dc;
-        if (!_isAwake and null != _offscreenBuffer) {
-            // We only use the buffer in low-power mode. If we do not have a buffer, 
-            // we won't draw a second hand in low-power mode.
+        if (!_isAwake) {
+            // Only use the buffer in low-power mode
             targetDc = _offscreenBuffer.getDc();
         }
         var width = targetDc.getWidth();
@@ -144,6 +142,7 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
             _colorMode = M_DARK;
         }
 
+        // Fill the background
         if (System.SCREEN_SHAPE_ROUND == _screenShape) {
             // Fill the entire background with the background color (white)
             targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
@@ -154,6 +153,17 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
             targetDc.fillRectangle(0, 0, width, height);
             targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
             targetDc.fillCircle(_screenCenterPoint[0], _screenCenterPoint[1], _clockRadius);
+        }
+
+        // Draw the date string, with or without day of the week
+        var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
+        targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
+        if (false) {
+            var dateStr = Lang.format("$1$", [info.day.format("%02d")]);
+            targetDc.drawText(width*0.75, height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
+        } else {
+            var dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
+            targetDc.drawText(width/2, height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
         }
 
         // Draw tick marks around the edges of the screen
@@ -170,12 +180,12 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         targetDc.fillPolygon(generatePolygonCoords(_minuteHand, clockTime.min));
 
         // Output the offscreen buffer to the main display if required.
-        if (!_isAwake and null != _offscreenBuffer) {
+        if (!_isAwake) {
             dc.drawBitmap(0, 0, _offscreenBuffer);
         }
 
         // Draw the second hand
-        if (_isAwake or (null != _offscreenBuffer and _doPartialUpdates)) {
+        if (_isAwake or _doPartialUpdates) {
             drawSecondHand(dc, clockTime.sec);
         }
     }
@@ -184,15 +194,11 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
     //! in low-power mode. See onUpdate() for the full story.
     //! @param dc Device context
     public function onPartialUpdate(dc as Dc) as Void {
-        // If we have an offscreen buffer, output it to the main display and draw the second hand.
+        // Output the offscreen buffer to the main display and draw the second hand.
         // Note that this will only affect the clipped region, to delete the second hand.
-        if (null != _offscreenBuffer) {
-            dc.drawBitmap(0, 0, _offscreenBuffer);
-
-            // Draw the second hand to the screen.
-            var clockTime = System.getClockTime();
-            drawSecondHand(dc, clockTime.sec);
-        }
+        dc.drawBitmap(0, 0, _offscreenBuffer);
+        var clockTime = System.getClockTime();
+        drawSecondHand(dc, clockTime.sec);
     }
 
     //! Set the clipping region and draw the second hand
