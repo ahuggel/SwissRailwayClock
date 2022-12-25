@@ -31,8 +31,8 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
     private var _smallTickMark as Array<Float> = [   3.5,    1.4,    1.4,   45.0]        as Array<Float>;
     private var _hourHand      as Array<Float> = [  44.0,    6.3,    5.1,  -12.0]        as Array<Float>;
     private var _minuteHand    as Array<Float> = [  57.8,    5.2,    3.7,  -12.0]        as Array<Float>;
-//    private var _secondHand    as Array<Float> = [  47.9,    1.4,    1.4,  -16.5,   5.1] as Array<Float>;
-    private var _secondHand    as Array<Float> = [  44.9,    1.4,    1.4,  -13.5,   5.1] as Array<Float>;
+    private var _secondHand    as Array<Float> = [  47.9,    1.4,    1.4,  -16.5,   5.1] as Array<Float>;
+// TODO: shorter second hand, if the original one doesn't work in low-power mode -   private var _secondHand    as Array<Float> = [  44.9,    1.4,    1.4,  -13.5,   5.1] as Array<Float>;
 
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
@@ -43,6 +43,8 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
     private var _colorMode as Number = M_LIGHT;
     private var _sin as Array<Float> = new Array<Float>[60]; // Sinus/Cosinus lookup table for each second
 
+    private var _image; // TODO as what??
+    
     //! Constructor. Initialize the variables for this view.
     public function initialize() {
         WatchFace.initialize();
@@ -64,7 +66,7 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         // CIQ 4 devices *need* to use createBufferBitmaps() 
   	    if (Graphics has :createBufferedBitmap) {
     		var bbRef = Graphics.createBufferedBitmap(bbmo);
-			_offscreenBuffer = bbRef.get();
+			_offscreenBuffer = bbRef.get() as BufferedBitmap;
     	} else {
     		_offscreenBuffer = new Graphics.BufferedBitmap(bbmo);
 		}
@@ -103,7 +105,21 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
     //! Called when this View is brought to the foreground. Restore the state of this view and
     //! prepare it to be shown. This includes loading resources into memory.
     public function onShow() as Void {
-        // TODO: do we need to do anything here?
+        System.println("onShow()");
+
+        switch (settings.selection("image")) {
+            case "Leaves":
+                _image = WatchUi.loadResource(Rez.Drawables.Leaves);
+                break;
+            case "Candle":
+                _image = WatchUi.loadResource(Rez.Drawables.Candle);
+                break;
+            case "Hat":
+                _image = WatchUi.loadResource(Rez.Drawables.Hat);
+                break;
+            case "None":
+                break;
+        }
     }
 
     //! Handle the update event. This function is called
@@ -137,10 +153,19 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         var height = targetDc.getHeight();
 
         var clockTime = System.getClockTime();
-        // TODO: Should have a setting for this
-        _colorMode = M_LIGHT;
-        if (clockTime.hour > 19 or clockTime.hour < 7) {
-            _colorMode = M_DARK;
+        switch (settings.selection("darkMode")) {
+            case "Auto":
+                _colorMode = M_LIGHT;
+                if (clockTime.hour > 19 or clockTime.hour < 7) {
+                    _colorMode = M_DARK;
+                }
+                break;
+            case "Off":
+                _colorMode = M_LIGHT;
+                break;
+            case "On":
+                _colorMode = M_DARK;
+                break;
         }
 
         // Fill the background
@@ -156,15 +181,35 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
             targetDc.fillCircle(_screenCenterPoint[0], _screenCenterPoint[1], _clockRadius);
         }
 
-        // Draw the date string, with or without day of the week
+        // Show the background image
+        switch (settings.selection("image")) {
+            case "Leaves":
+                targetDc.drawBitmap(50, 60, _image);
+                break;
+            case "Candle":
+                targetDc.drawBitmap(50, 30, _image);
+                break;
+            case "Hat":
+                targetDc.drawBitmap(55, 35, _image);
+                break;
+            case "None":
+                break;
+        }
+
+        // Draw the date string
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
         targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-        if (false) {
-            var dateStr = Lang.format("$1$", [info.day.format("%02d")]);
-            targetDc.drawText(width*0.75, height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
-        } else {
-            var dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
-            targetDc.drawText(width/2, height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
+        switch (settings.selection("dateDisplay")) {
+            case "Off":
+                break;
+            case "Day Only": 
+                var dateStr = Lang.format("$1$", [info.day.format("%02d")]);
+                targetDc.drawText(width*0.75, height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
+                break;
+            case "Weekday and Day":
+                dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
+                targetDc.drawText(width/2, height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
+                break;
         }
 
         // Draw tick marks around the edges of the screen
