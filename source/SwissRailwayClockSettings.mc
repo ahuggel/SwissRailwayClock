@@ -4,7 +4,10 @@
 //
 // Copyright 2022 by Andreas Huggel
 // 
-
+// This started from the Garmin Analog sample program; there may be some terminology from that left.
+// That sample program is Copyright 2016-2021 by Garmin Ltd. or its subsidiaries.
+// Subject to Garmin SDK License Agreement and Wearables Application Developer Agreement.
+//
 import Toybox.Application.Storage;
 import Toybox.Lang;
 import Toybox.System;
@@ -13,13 +16,18 @@ import Toybox.WatchUi;
 //! Global variable that keeps track of the settings and makes them available to the app.
 var settings as SwissRailwayClockSettings = new $.SwissRailwayClockSettings();
 
+//! This class maintains application settings and synchronises them to persistent storage.
+//! For clarity, it currently only interfaces via setting ids and setting names.
+//! TODO: should there be some kind of onSettingsChanged callback mechanism?
 class SwissRailwayClockSettings {
+    // "darkMode" - setting id
+    // "Dark Mode" - setting name
+    // "Auto", "Off", "On" - setting options, the selected option is the selection
+    // 0, 1, 2 - setting index
     private var _darkModeIdx as Number;
     private var _darkModeOptions as Array<String> = ["Auto", "Off", "On"] as Array<String>;
-
     private var _dateDisplayIdx as Number;
     private var _dateDisplayOptions as Array<String> = ["Off", "Day Only", "Weekday and Day"] as Array<String>;
-
     private var _imageIdx as Number;
     private var _imageOptions as Array<String> = ["None", "Candle", "Leaves", "Hat"] as Array<String>;
 
@@ -38,11 +46,6 @@ class SwissRailwayClockSettings {
             _imageIdx = 0;
         }
     }
-
-    // "darkMode" - setting id
-    // "Dark Mode" - setting name
-    // "Auto", "Off", "On" - setting options, the selected option is the selection
-    // 0, 1, 2 - setting index
 
     //! Return the selected option for the specified setting.
     //!@param id Setting
@@ -63,26 +66,23 @@ class SwissRailwayClockSettings {
         return option;
     }
 
-    //! Return the selected option for the specified setting.
+    //! Advance the setting to the next value.
     //!@param id Setting
-    //!@return 
-    public function setNext(id as String) as Number {
-        var idx = -1;
+    public function setNext(id as String) as Void {
         switch (id) {
             case "darkMode":
                 _darkModeIdx = (_darkModeIdx + 1) % _darkModeOptions.size();
-                idx = _darkModeIdx;
+                Storage.setValue(id, _darkModeIdx);
                 break;
             case "dateDisplay":
                 _dateDisplayIdx = (_dateDisplayIdx + 1) % _dateDisplayOptions.size();
-                idx = _dateDisplayIdx;
+                Storage.setValue(id, _dateDisplayIdx);
                 break;
             case "image":
                 _imageIdx = (_imageIdx + 1) % _imageOptions.size();
-                idx = _imageIdx;
+                Storage.setValue(id, _imageIdx);
                 break;
         }
-        return idx;
     }
 }
 
@@ -99,7 +99,6 @@ class SwissRailwayClockSettingsMenu extends WatchUi.Menu2 {
 
 //! Input handler for the app settings menu
 class SwissRailwayClockSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
-
     //! Constructor
     public function initialize() {
         Menu2InputDelegate.initialize();
@@ -109,8 +108,7 @@ class SwissRailwayClockSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     //! @param menuItem The menu item selected
     public function onSelect(menuItem as MenuItem) as Void {
         var id = menuItem.getId() as String;
-        var idx = settings.setNext(id);
-        Storage.setValue(id, idx);
+        settings.setNext(id);
         menuItem.setSubLabel(settings.selection(id));
   	}
   	

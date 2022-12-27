@@ -16,7 +16,7 @@ import Toybox.Time;
 import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
 
-//! This implements the Swiss Railway Clock watch face
+//! Implements the Swiss Railway Clock watch face
 class SwissRailwayClockView extends WatchUi.WatchFace {
     enum { M_LIGHT, M_DARK } // Color modes
     enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
@@ -43,8 +43,10 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
     private var _colorMode as Number = M_LIGHT;
     private var _sin as Array<Float> = new Array<Float>[60]; // Sinus/Cosinus lookup table for each second
 
-    private var _image; // TODO as what??
-    
+    private var _imgLeaves; // TODO as what??
+    private var _imgCandle; // TODO as what??
+    private var _imgHat;    // TODO as what??
+
     //! Constructor. Initialize the variables for this view.
     public function initialize() {
         WatchFace.initialize();
@@ -100,26 +102,17 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         if (Toybox.Graphics.Dc has :setAntiAlias) {
             dc.setAntiAlias(true);
         }
+
+        // TODO: Only load the selected image? Can we "unload" whatever is no longer selected?
+        _imgLeaves = WatchUi.loadResource(Rez.Drawables.Leaves);
+        _imgCandle = WatchUi.loadResource(Rez.Drawables.Candle);
+        _imgHat = WatchUi.loadResource(Rez.Drawables.Hat);
     }
 
     //! Called when this View is brought to the foreground. Restore the state of this view and
     //! prepare it to be shown. This includes loading resources into memory.
     public function onShow() as Void {
-        System.println("onShow()");
-
-        switch (settings.selection("image")) {
-            case "Leaves":
-                _image = WatchUi.loadResource(Rez.Drawables.Leaves);
-                break;
-            case "Candle":
-                _image = WatchUi.loadResource(Rez.Drawables.Candle);
-                break;
-            case "Hat":
-                _image = WatchUi.loadResource(Rez.Drawables.Hat);
-                break;
-            case "None":
-                break;
-        }
+        // TODO: Should we do something here?
     }
 
     //! Handle the update event. This function is called
@@ -151,8 +144,9 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         }
         var width = targetDc.getWidth();
         var height = targetDc.getHeight();
-
         var clockTime = System.getClockTime();
+
+        // Set the color mode
         switch (settings.selection("darkMode")) {
             case "Auto":
                 _colorMode = M_LIGHT;
@@ -184,13 +178,13 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         // Show the background image
         switch (settings.selection("image")) {
             case "Leaves":
-                targetDc.drawBitmap(50, 60, _image);
+                targetDc.drawBitmap(50, 60, _imgLeaves);
                 break;
             case "Candle":
-                targetDc.drawBitmap(50, 30, _image);
+                targetDc.drawBitmap(50, 30, _imgCandle);
                 break;
             case "Hat":
-                targetDc.drawBitmap(55, 35, _image);
+                targetDc.drawBitmap(55, 35, _imgHat);
                 break;
             case "None":
                 break;
@@ -348,7 +342,7 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         _isAwake = true;
     }
 
-    //! Turn partial updates on or off
+    //! Indicate if partial updates are on or off (only used with false)
     public function setPartialUpdates(doPartialUpdates as Boolean) as Void {
         _doPartialUpdates = doPartialUpdates;
     }
