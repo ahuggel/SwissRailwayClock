@@ -52,7 +52,7 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         WatchFace.initialize();
 
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
-        _doPartialUpdates = (WatchUi.WatchFace has :onPartialUpdate);
+        _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
         _screenShape = System.getDeviceSettings().screenShape;
 
         // Allocate the buffer we use for drawing the watchface, hour and minute hands in low-power mode, 
@@ -147,17 +147,17 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         var clockTime = System.getClockTime();
 
         // Set the color mode
-        switch (settings.selection("darkMode")) {
-            case "Auto":
+        switch (settings.getValue("darkMode")) {
+            case settings.S_DARK_MODE_AUTO:
                 _colorMode = M_LIGHT;
                 if (clockTime.hour > 19 or clockTime.hour < 7) {
                     _colorMode = M_DARK;
                 }
                 break;
-            case "Off":
+            case settings.S_DARK_MODE_OFF:
                 _colorMode = M_LIGHT;
                 break;
-            case "On":
+            case settings.S_DARK_MODE_ON:
                 _colorMode = M_DARK;
                 break;
         }
@@ -176,31 +176,31 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         }
 
         // Show the background image
-        switch (settings.selection("image")) {
-            case "Leaves":
+        switch (settings.getValue("image")) {
+            case settings.S_IMAGE_LEAVES:
                 targetDc.drawBitmap(50, 60, _imgLeaves);
                 break;
-            case "Candle":
+            case settings.S_IMAGE_CANDLE:
                 targetDc.drawBitmap(50, 30, _imgCandle);
                 break;
-            case "Hat":
+            case settings.S_IMAGE_HAT:
                 targetDc.drawBitmap(55, 35, _imgHat);
                 break;
-            case "None":
+            case settings.S_IMAGE_NONE:
                 break;
         }
 
         // Draw the date string
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
         targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-        switch (settings.selection("dateDisplay")) {
-            case "Off":
+        switch (settings.getValue("dateDisplay")) {
+            case settings.S_DATE_DISPLAY_OFF:
                 break;
-            case "Day Only": 
+            case settings.S_DATE_DISPLAY_DAY_ONLY: 
                 var dateStr = Lang.format("$1$", [info.day.format("%02d")]);
                 targetDc.drawText(width*0.75, height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                 break;
-            case "Weekday and Day":
+            case settings.S_DATE_DISPLAY_WEEKDAY_AND_DAY:
                 dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
                 targetDc.drawText(width/2, height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                 break;

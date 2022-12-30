@@ -24,12 +24,17 @@ class SwissRailwayClockSettings {
     // "Dark Mode" - setting name
     // "Auto", "Off", "On" - setting options, the selected option is the selection
     // 0, 1, 2 - setting index
-    private var _darkModeIdx as Number;
+    enum { S_DARK_MODE_AUTO, S_DARK_MODE_OFF, S_DARK_MODE_ON }
+    enum { S_DATE_DISPLAY_OFF, S_DATE_DISPLAY_DAY_ONLY, S_DATE_DISPLAY_WEEKDAY_AND_DAY }
+    enum { S_IMAGE_NONE, S_IMAGE_CANDLE, S_IMAGE_LEAVES, S_IMAGE_HAT }
+
     private var _darkModeOptions as Array<String> = ["Auto", "Off", "On"] as Array<String>;
-    private var _dateDisplayIdx as Number;
     private var _dateDisplayOptions as Array<String> = ["Off", "Day Only", "Weekday and Day"] as Array<String>;
-    private var _imageIdx as Number;
     private var _imageOptions as Array<String> = ["None", "Candle", "Leaves", "Hat"] as Array<String>;
+
+    private var _darkModeIdx as Number;
+    private var _dateDisplayIdx as Number;
+    private var _imageIdx as Number;
 
     //! Constructor
     public function initialize() {
@@ -47,10 +52,10 @@ class SwissRailwayClockSettings {
         }
     }
 
-    //! Return the selected option for the specified setting.
+    //! Return the current label for the specified setting.
     //!@param id Setting
-    //!@return The currently selected option
-    public function selection(id as String) as String {
+    //!@return Label of the currently selected option
+    public function getLabel(id as String) as String {
         var option = "";
         switch (id) {
             case "darkMode":
@@ -64,6 +69,25 @@ class SwissRailwayClockSettings {
                 break;
         }
         return option;
+    }
+
+    //! Return the current value of the specified setting.
+    //!@param id Setting
+    //!@return The current value of the setting
+    public function getValue(id as String) as Number {
+        var idx = -1;
+        switch (id) {
+            case "darkMode":
+                idx = _darkModeIdx;
+                break;
+            case "dateDisplay":
+                idx = _dateDisplayIdx;
+                break;
+            case "image":
+                idx = _imageIdx;
+                break;
+        }
+        return idx;
     }
 
     //! Advance the setting to the next value.
@@ -91,9 +115,9 @@ class SwissRailwayClockSettingsMenu extends WatchUi.Menu2 {
     //! Constructor
     public function initialize() {
         Menu2.initialize({:title=>"Settings"});
-        Menu2.addItem(new WatchUi.MenuItem("Dark Mode", settings.selection("darkMode"), "darkMode", {}));
-        Menu2.addItem(new WatchUi.MenuItem("Date Display", settings.selection("dateDisplay"), "dateDisplay", {}));
-        Menu2.addItem(new WatchUi.MenuItem("X-Mas Image", settings.selection("image"), "image", {}));
+        Menu2.addItem(new WatchUi.MenuItem("Dark Mode", settings.getLabel("darkMode"), "darkMode", {}));
+        Menu2.addItem(new WatchUi.MenuItem("Date Display", settings.getLabel("dateDisplay"), "dateDisplay", {}));
+        Menu2.addItem(new WatchUi.MenuItem("X-Mas Image", settings.getLabel("image"), "image", {}));
     }
 }
 
@@ -109,7 +133,7 @@ class SwissRailwayClockSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     public function onSelect(menuItem as MenuItem) as Void {
         var id = menuItem.getId() as String;
         settings.setNext(id);
-        menuItem.setSubLabel(settings.selection(id));
+        menuItem.setSubLabel(settings.getLabel(id));
   	}
   	
   	public function onBack() as Void {
