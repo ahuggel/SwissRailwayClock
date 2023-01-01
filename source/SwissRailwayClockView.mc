@@ -150,7 +150,8 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         switch (settings.getValue("darkMode")) {
             case settings.S_DARK_MODE_AUTO:
                 _colorMode = M_LIGHT;
-                if (clockTime.hour > 19 or clockTime.hour < 7) {
+                var time = clockTime.hour * 60 + clockTime.min;
+                if (time >= settings.getValue("dmOn") or time < settings.getValue("dmOff")) {
                     _colorMode = M_DARK;
                 }
                 break;
@@ -248,9 +249,9 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         var sin = _sin[second];
         var cos = _sin[(second + 15) % 60];
         var secondCircleCenter = [
-                (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * sin + 0.5).toNumber(),
-                (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * cos + 0.5).toNumber() 
-            ] as Array<Number>;
+            (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * sin + 0.5).toNumber(),
+            (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * cos + 0.5).toNumber() 
+        ] as Array<Number>;
         var secondHandCoords = generatePolygonCoords(_secondHand, second);
         var radius = _secondHand[4].toNumber();
 
