@@ -1,0 +1,4 @@
+-An almost perfect clone of the iconic Swiss Railway Clock design (it follows the original design with just a few tweaks)
+-A straightforward analog watchface with a generous amount of code comments, much easier to read than any other sample you've seen
+-A complete implementation of on-device settings with a Menu2 and a settings class which synchronizes the settings to storage
+

@@ -43,9 +43,9 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
     private var _colorMode as Number = M_LIGHT;
     private var _sin as Array<Float> = new Array<Float>[60]; // Sinus/Cosinus lookup table for each second
 
-    private var _imgLeaves; // TODO as what??
-    private var _imgCandle; // TODO as what??
-    private var _imgHat;    // TODO as what??
+    private var _image = null; // TODO as what??
+    private var _loadedImage as Number = settings.S_IMAGE_NONE; // Remember which image has been loaded
+    private var _imgCoords as Array<Number> = [0, 0] as Array<Number>;
 
     //! Constructor. Initialize the variables for this view.
     public function initialize() {
@@ -102,17 +102,34 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         if (Toybox.Graphics.Dc has :setAntiAlias) {
             dc.setAntiAlias(true);
         }
-
-        // TODO: Only load the selected image? Can we "unload" whatever is no longer selected?
-        _imgLeaves = WatchUi.loadResource(Rez.Drawables.Leaves);
-        _imgCandle = WatchUi.loadResource(Rez.Drawables.Candle);
-        _imgHat = WatchUi.loadResource(Rez.Drawables.Hat);
     }
 
     //! Called when this View is brought to the foreground. Restore the state of this view and
     //! prepare it to be shown. This includes loading resources into memory.
     public function onShow() as Void {
-        // TODO: Should we do something here?
+        // Load the selected background image if required
+        var selectedImage = settings.getValue("image");
+        if (selectedImage != _loadedImage) {
+            _loadedImage = selectedImage;
+            _image = null; // This seems to help purging any already loaded image
+            _imgCoords = [0, 0] as Array<Number>;
+            switch (selectedImage) {
+                case settings.S_IMAGE_LEAVES:
+                    _image = WatchUi.loadResource(Rez.Drawables.Leaves);
+                    _imgCoords = [50, 60] as Array<Number>;
+                    break;
+                case settings.S_IMAGE_CANDLE:
+                    _image = WatchUi.loadResource(Rez.Drawables.Candle);
+                    _imgCoords = [50, 30] as Array<Number>;
+                    break;
+                case settings.S_IMAGE_HAT:
+                    _image = WatchUi.loadResource(Rez.Drawables.Hat);
+                    _imgCoords = [55, 35] as Array<Number>;
+                    break;
+                case settings.S_IMAGE_NONE:
+                    break;
+            }
+        }
     }
 
     //! Handle the update event. This function is called
@@ -177,18 +194,8 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
         }
 
         // Show the background image
-        switch (settings.getValue("image")) {
-            case settings.S_IMAGE_LEAVES:
-                targetDc.drawBitmap(50, 60, _imgLeaves);
-                break;
-            case settings.S_IMAGE_CANDLE:
-                targetDc.drawBitmap(50, 30, _imgCandle);
-                break;
-            case settings.S_IMAGE_HAT:
-                targetDc.drawBitmap(55, 35, _imgHat);
-                break;
-            case settings.S_IMAGE_NONE:
-                break;
+        if (_loadedImage != settings.S_IMAGE_NONE) {
+            targetDc.drawBitmap(_imgCoords[0], _imgCoords[1], _image);
         }
 
         // Draw the date string

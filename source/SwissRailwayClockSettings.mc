@@ -224,13 +224,17 @@ class SwissRailwayClockSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
   	}
 }
 
+// A simple time picker. It's only a class so that we can implement onLayout(), to
+// fix some display issues on both my fr955 device and the sim, otherwise we could
+// just use Picker itself.
+// Also, it depends on the global settings class, which is not nice. That could be
+// fixed easily, however the delegate also has the same issue and is more 
+// difficult to fix.
+// The result sort of works but doesn't look good at all. Too bad, Garmin doesn't make
+// their time picker available (the one that is used to set an alarm on the fr955).
 class TimePicker extends WatchUi.Picker {
-    private var _id as String;
-
     //! Constructor
     public function initialize(id as String) {
-        _id = id;
-
         var title = new WatchUi.Text({
             :text=>settings.getName(id),
             :font=>Graphics.FONT_SMALL,
@@ -244,8 +248,8 @@ class TimePicker extends WatchUi.Picker {
         factories[1] = new WatchUi.Text({
             :text=>":",
             :font=>Graphics.FONT_MEDIUM,
-            :locX=>WatchUi.LAYOUT_HALIGN_CENTER, 
-            :locY=>WatchUi.LAYOUT_VALIGN_CENTER, 
+            :locX=>WatchUi.LAYOUT_HALIGN_CENTER,
+            :locY=>WatchUi.LAYOUT_VALIGN_CENTER,
             :color=>Graphics.COLOR_WHITE 
         });
         factories[2] = new TimeFactory(TimeFactory.T_MINUTE);
@@ -296,11 +300,11 @@ class TimeFactory extends WatchUi.PickerFactory {
         });
     }
 
-    function getValue(item as Number) as Object? {
+    public function getValue(item as Number) as Object? {
         return item;
     }
 
-    function getSize() as Number { 
+    public function getSize() as Number { 
         return _stop + 1;
     }
 }
