@@ -22,10 +22,8 @@ class ClockSettings {
 
     private var _darkModeOptions as Array<String> = ["Auto", "Off", "On"] as Array<String>;
     private var _dateDisplayOptions as Array<String> = ["Off", "Day Only", "Weekday and Day"] as Array<String>;
-
     private var _darkModeIdx as Number;
     private var _dateDisplayIdx as Number;
-
     private var _dmOnTime as Number;
     private var _dmOffTime as Number;
 
@@ -150,7 +148,7 @@ class SettingsMenu extends WatchUi.Menu2 {
         Menu2.initialize({:title=>"Settings"});
         Menu2.addItem(new WatchUi.MenuItem(settings.getName("dateDisplay"), settings.getLabel("dateDisplay"), "dateDisplay", {}));
         Menu2.addItem(new WatchUi.MenuItem(settings.getName("darkMode"), settings.getLabel("darkMode"), "darkMode", {}));
-        // Add the settings for the dark mode on and off times only if dark mode is set to "Auto"
+        // Add menu items for the dark mode on and off times only if dark mode is set to "Auto"
         if (settings.S_DARK_MODE_AUTO == settings.getValue("darkMode")) {
             Menu2.addItem(new WatchUi.MenuItem(settings.getName("dmOn"), settings.getLabel("dmOn"), "dmOn", {}));
             Menu2.addItem(new WatchUi.MenuItem(settings.getName("dmOff"), settings.getLabel("dmOff"), "dmOff", {}));
@@ -162,12 +160,12 @@ class SettingsMenu extends WatchUi.Menu2 {
         // Update sub labels in case the dark mode on or off time changed
         var idx = findItemById("dmOn");
         if (-1 != idx) {
-            var menuItem = getItem(idx);
+            var menuItem = getItem(idx) as MenuItem;
             menuItem.setSubLabel(settings.getLabel("dmOn"));
         }
         idx = findItemById("dmOff");
         if (-1 != idx) {
-            var menuItem = getItem(idx);
+            var menuItem = getItem(idx) as MenuItem;
             menuItem.setSubLabel(settings.getLabel("dmOff"));
         }
     }
@@ -201,7 +199,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 // Advance to the next option and show the selected option as the sub label
                 settings.setNext(id);
                 menuItem.setSubLabel(settings.getLabel(id));
-                // If "Auto" is selected, add the menu items to set the dark mode on and off times, else delete them
+                // If "Auto" is selected, add menu items to set the dark mode on and off times, else delete them
                 if (settings.S_DARK_MODE_AUTO == settings.getValue(id)) {
                     _menu.addItem(new WatchUi.MenuItem(settings.getName("dmOn"), settings.getLabel("dmOn"), "dmOn", {}));
                     _menu.addItem(new WatchUi.MenuItem(settings.getName("dmOff"), settings.getLabel("dmOff"), "dmOff", {}));

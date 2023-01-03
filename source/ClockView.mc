@@ -32,7 +32,8 @@ class ClockView extends WatchUi.WatchFace {
     private var _hourHand      as Array<Float> = [  44.0,    6.3,    5.1,  -12.0]        as Array<Float>;
     private var _minuteHand    as Array<Float> = [  57.8,    5.2,    3.7,  -12.0]        as Array<Float>;
     private var _secondHand    as Array<Float> = [  47.9,    1.4,    1.4,  -16.5,   5.1] as Array<Float>;
-// TODO: shorter second hand, if the original one doesn't work in low-power mode -   private var _secondHand    as Array<Float> = [  44.9,    1.4,    1.4,  -13.5,   5.1] as Array<Float>;
+// TODO: Use a second hand with a shorter tail, if the original one doesn't work in low-power mode
+//  private var _secondHand    as Array<Float> = [  44.9,    1.4,    1.4,  -13.5,   5.1] as Array<Float>;
 
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
@@ -53,7 +54,7 @@ class ClockView extends WatchUi.WatchFace {
 
         // Allocate the buffer we use for drawing the watchface, hour and minute hands in low-power mode, 
         // using BufferedBitmap (API Level 2.3.0).
-        // This is a full-colored buffer (with no palette), as we have enough memory and it makes drawing 
+        // This is a full-colored buffer (with no palette), as we have enough memory :) and it makes drawing 
         // text with anti-aliased fonts much more straightforward.
         // Doing this in initialize() rather than onLayout() so _offscreenBuffer does not need to be 
         // nullable, which makes the type checker complain less.
@@ -349,6 +350,7 @@ class ClockDelegate extends WatchUi.WatchFaceDelegate {
     }
 }
 
+/*
     // DEBUG
     function typeName(obj) {
         if (obj instanceof Toybox.Lang.Number) {
@@ -389,3 +391,4 @@ class ClockDelegate extends WatchUi.WatchFaceDelegate {
             return "???";
         }
     }
+*/

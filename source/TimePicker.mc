@@ -19,8 +19,8 @@ import Toybox.WatchUi;
 // fixed easily, however the delegate also has the same issue and is more
 // difficult to fix.
 // The result sort of works but doesn't look good at all. It's really too bad that 
-// Garmin doesn't make their own time picker available (the one that is used to set 
-// an alarm on the fr955) as an API. It looks great and would allow developers to build
+// Garmin doesn't make their own time picker available as an API. The one that is 
+// used to set an alarm on the fr955 looks great and would allow developers to build
 // apps with a more consistent look and feel.
 class TimePicker extends WatchUi.Picker {
     //! Constructor
@@ -108,7 +108,7 @@ class TimePickerDelegate extends WatchUi.PickerDelegate {
     }
 
     public function onAccept(values as Array<Number?>) as Boolean {
-        settings.setValue(_id, values[0] * 60 + values[2]);
+        settings.setValue(_id, values[0] as Number * 60 + values[2] as Number);
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         return true;
     }
