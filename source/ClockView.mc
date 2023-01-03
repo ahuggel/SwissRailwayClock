@@ -43,10 +43,6 @@ class ClockView extends WatchUi.WatchFace {
     private var _colorMode as Number = M_LIGHT;
     private var _sin as Array<Float> = new Array<Float>[60]; // Sinus/Cosinus lookup table for each second
 
-    private var _image = null; // TODO as what??
-    private var _loadedImage as Number = settings.S_IMAGE_NONE; // Remember which image has been loaded
-    private var _imgCoords as Array<Number> = [0, 0] as Array<Number>;
-
     //! Constructor. Initialize the variables for this view.
     public function initialize() {
         WatchFace.initialize();
@@ -107,29 +103,6 @@ class ClockView extends WatchUi.WatchFace {
     //! Called when this View is brought to the foreground. Restore the state of this view and
     //! prepare it to be shown. This includes loading resources into memory.
     public function onShow() as Void {
-        // Load the selected background image if required
-        var selectedImage = settings.getValue("image");
-        if (selectedImage != _loadedImage) {
-            _loadedImage = selectedImage;
-            _image = null; // This seems to help purging any already loaded image
-            _imgCoords = [0, 0] as Array<Number>;
-            switch (selectedImage) {
-                case settings.S_IMAGE_LEAVES:
-                    _image = WatchUi.loadResource(Rez.Drawables.Leaves);
-                    _imgCoords = [50, 60] as Array<Number>;
-                    break;
-                case settings.S_IMAGE_CANDLE:
-                    _image = WatchUi.loadResource(Rez.Drawables.Candle);
-                    _imgCoords = [50, 30] as Array<Number>;
-                    break;
-                case settings.S_IMAGE_HAT:
-                    _image = WatchUi.loadResource(Rez.Drawables.Hat);
-                    _imgCoords = [55, 35] as Array<Number>;
-                    break;
-                case settings.S_IMAGE_NONE:
-                    break;
-            }
-        }
     }
 
     //! Handle the update event. This function is called
@@ -191,11 +164,6 @@ class ClockView extends WatchUi.WatchFace {
             targetDc.fillRectangle(0, 0, width, height);
             targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
             targetDc.fillCircle(_screenCenterPoint[0], _screenCenterPoint[1], _clockRadius);
-        }
-
-        // Show the background image
-        if (_loadedImage != settings.S_IMAGE_NONE) {
-            targetDc.drawBitmap(_imgCoords[0], _imgCoords[1], _image);
         }
 
         // Draw the date string

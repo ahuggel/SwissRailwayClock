@@ -25,15 +25,12 @@ var settings as ClockSettings = new $.ClockSettings();
 class ClockSettings {
     enum { S_DARK_MODE_AUTO, S_DARK_MODE_OFF, S_DARK_MODE_ON }
     enum { S_DATE_DISPLAY_OFF, S_DATE_DISPLAY_DAY_ONLY, S_DATE_DISPLAY_WEEKDAY_AND_DAY }
-    enum { S_IMAGE_NONE, S_IMAGE_CANDLE, S_IMAGE_LEAVES, S_IMAGE_HAT }
 
     private var _darkModeOptions as Array<String> = ["Auto", "Off", "On"] as Array<String>;
     private var _dateDisplayOptions as Array<String> = ["Off", "Day Only", "Weekday and Day"] as Array<String>;
-    private var _imageOptions as Array<String> = ["None", "Candle", "Leaves", "Hat"] as Array<String>;
 
     private var _darkModeIdx as Number;
     private var _dateDisplayIdx as Number;
-    private var _imageIdx as Number;
 
     private var _dmOnTime as Number;
     private var _dmOffTime as Number;
@@ -47,10 +44,6 @@ class ClockSettings {
         _dateDisplayIdx = Storage.getValue("dateDisplay") as Number;
         if (_dateDisplayIdx == null) {
             _dateDisplayIdx = 0;
-        }
-        _imageIdx = Storage.getValue("image") as Number;
-        if (_imageIdx == null) {
-            _imageIdx = 0;
         }
         _dmOnTime = Storage.getValue("dmOn") as Number;
         if (_dmOnTime == null) {
@@ -74,9 +67,6 @@ class ClockSettings {
             case "dateDisplay":
                 option = _dateDisplayOptions[_dateDisplayIdx];
                 break;
-            case "image":
-                option = _imageOptions[_imageIdx];
-                break;
             case "dmOn":
                 option = (_dmOnTime / 60).toNumber() + ":" + (_dmOnTime % 60).format("%02d");
                 break;
@@ -99,9 +89,6 @@ class ClockSettings {
             case "dateDisplay":
                 value = _dateDisplayIdx;
                 break;
-            case "image":
-                value = _imageIdx;
-                break;
             case "dmOn":
                 value = _dmOnTime;
                 break;
@@ -122,9 +109,6 @@ class ClockSettings {
                 break;
             case "dateDisplay":
                 name = "Date Display";
-                break;
-            case "image":
-                name = "Theme image";
                 break;
             case "dmOn":
                 name = "Turn On";
@@ -148,10 +132,6 @@ class ClockSettings {
                 _dateDisplayIdx = (_dateDisplayIdx + 1) % _dateDisplayOptions.size();
                 Storage.setValue(id, _dateDisplayIdx);
                 break;
-            case "image":
-                _imageIdx = (_imageIdx + 1) % _imageOptions.size();
-                Storage.setValue(id, _imageIdx);
-                break;
         }
     }
 
@@ -174,7 +154,7 @@ class SettingsMenu extends WatchUi.Menu2 {
     //! Constructor
     public function initialize() {
         Menu2.initialize({:title=>"Settings"});
-        var ids = ["darkMode", "dmOn", "dmOff", "dateDisplay", "image"] as Array<String>;
+        var ids = ["dateDisplay", "darkMode", "dmOn", "dmOff"] as Array<String>;
         for (var i = 0; i < ids.size(); i++ ) {
             Menu2.addItem(new WatchUi.MenuItem(settings.getName(ids[i]), settings.getLabel(ids[i]), ids[i], {}));
         }
@@ -206,9 +186,8 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     public function onSelect(menuItem as MenuItem) as Void {
         var id = menuItem.getId() as String;
         switch (id) {
-            case "darkMode":
             case "dateDisplay":
-            case "image":
+            case "darkMode":
                 // Advance to the next option and show the selected option as the sub label
                 settings.setNext(id);
                 menuItem.setSubLabel(settings.getLabel(id));
