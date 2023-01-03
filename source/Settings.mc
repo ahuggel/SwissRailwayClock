@@ -16,12 +16,6 @@ import Toybox.WatchUi;
 var settings as ClockSettings = new $.ClockSettings();
 
 //! This class maintains application settings and synchronises them to persistent storage.
-//! For clarity, it currently only interfaces via setting ids and setting names.
-//! TODO: should there be some kind of onSettingsChanged callback mechanism?
-// "darkMode" - setting id
-// "Dark Mode" - setting name
-// "Auto", "Off", "On" - setting options, the selected option is the selection
-// 0, 1, 2 - setting index
 class ClockSettings {
     enum { S_DARK_MODE_AUTO, S_DARK_MODE_OFF, S_DARK_MODE_ON }
     enum { S_DATE_DISPLAY_OFF, S_DATE_DISPLAY_DAY_ONLY, S_DATE_DISPLAY_WEEKDAY_AND_DAY }
@@ -154,27 +148,39 @@ class SettingsMenu extends WatchUi.Menu2 {
     //! Constructor
     public function initialize() {
         Menu2.initialize({:title=>"Settings"});
-        var ids = ["dateDisplay", "darkMode", "dmOn", "dmOff"] as Array<String>;
-        for (var i = 0; i < ids.size(); i++ ) {
-            Menu2.addItem(new WatchUi.MenuItem(settings.getName(ids[i]), settings.getLabel(ids[i]), ids[i], {}));
+        Menu2.addItem(new WatchUi.MenuItem(settings.getName("dateDisplay"), settings.getLabel("dateDisplay"), "dateDisplay", {}));
+        Menu2.addItem(new WatchUi.MenuItem(settings.getName("darkMode"), settings.getLabel("darkMode"), "darkMode", {}));
+        // Add the settings for the dark mode on and off times only if dark mode is set to "Auto"
+        if (settings.S_DARK_MODE_AUTO == settings.getValue("darkMode")) {
+            Menu2.addItem(new WatchUi.MenuItem(settings.getName("dmOn"), settings.getLabel("dmOn"), "dmOn", {}));
+            Menu2.addItem(new WatchUi.MenuItem(settings.getName("dmOff"), settings.getLabel("dmOff"), "dmOff", {}));
         }
     }
 
     public function onShow() as Void {
-        // Update sub labels in case any of the time picker settings changed
-        var menuItem = getItem(findItemById("dmOn"));
-        menuItem.setSubLabel(settings.getLabel("dmOn"));
-        menuItem = getItem(findItemById("dmOff"));
-        menuItem.setSubLabel(settings.getLabel("dmOff"));
         Menu2.onShow();
+        // Update sub labels in case the dark mode on or off time changed
+        var idx = findItemById("dmOn");
+        if (-1 != idx) {
+            var menuItem = getItem(idx);
+            menuItem.setSubLabel(settings.getLabel("dmOn"));
+        }
+        idx = findItemById("dmOff");
+        if (-1 != idx) {
+            var menuItem = getItem(idx);
+            menuItem.setSubLabel(settings.getLabel("dmOff"));
+        }
     }
 }
 
 //! Input handler for the app settings menu
 class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
+    private var _menu as SettingsMenu;
+
     //! Constructor
-    public function initialize() {
+    public function initialize(menu as SettingsMenu) {
         Menu2InputDelegate.initialize();
+        _menu = menu;
     }
 
   	public function onBack() as Void {
@@ -187,11 +193,25 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         var id = menuItem.getId() as String;
         switch (id) {
             case "dateDisplay":
-            case "darkMode":
                 // Advance to the next option and show the selected option as the sub label
                 settings.setNext(id);
                 menuItem.setSubLabel(settings.getLabel(id));
                 break;
+            case "darkMode":
+                // Advance to the next option and show the selected option as the sub label
+                settings.setNext(id);
+                menuItem.setSubLabel(settings.getLabel(id));
+                // If "Auto" is selected, add the menu items to set the dark mode on and off times, else delete them
+                if (settings.S_DARK_MODE_AUTO == settings.getValue(id)) {
+                    _menu.addItem(new WatchUi.MenuItem(settings.getName("dmOn"), settings.getLabel("dmOn"), "dmOn", {}));
+                    _menu.addItem(new WatchUi.MenuItem(settings.getName("dmOff"), settings.getLabel("dmOff"), "dmOff", {}));
+                } else {
+                    var idx = _menu.findItemById("dmOn");
+                    if (-1 != idx) { _menu.deleteItem(idx); }
+                    idx = _menu.findItemById("dmOff");
+                    if (-1 != idx) { _menu.deleteItem(idx); }
+                }
+                break;    
             case "dmOn":
             case "dmOff":
                 // Let the user select the time

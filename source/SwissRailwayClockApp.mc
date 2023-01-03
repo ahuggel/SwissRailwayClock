@@ -39,7 +39,7 @@ class SwissRailwayClockApp extends Application.AppBase {
     //! @return Array Pair [View, Delegate]
     public function getSettingsView() as Array<Views or InputDelegates>? {
         var view = new $.SettingsMenu();
-        var delegate = new $.SettingsMenuDelegate();
+        var delegate = new $.SettingsMenuDelegate(view);
         return [view, delegate] as Array<Views or InputDelegates>;
     }
 }
