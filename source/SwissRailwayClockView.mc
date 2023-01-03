@@ -17,7 +17,7 @@ import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
 
 //! Implements the Swiss Railway Clock watch face
-class SwissRailwayClockView extends WatchUi.WatchFace {
+class ClockView extends WatchUi.WatchFace {
     enum { M_LIGHT, M_DARK } // Color modes
     enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
     private var _colors as Array< Array<Number> > = [
@@ -357,12 +357,12 @@ class SwissRailwayClockView extends WatchUi.WatchFace {
 }
 
 //! Receives watch face events
-class SwissRailwayClockDelegate extends WatchUi.WatchFaceDelegate {
-    private var _view as SwissRailwayClockView;
+class ClockDelegate extends WatchUi.WatchFaceDelegate {
+    private var _view as ClockView;
 
     //! Constructor
     //! @param view The analog view
-    public function initialize(view as SwissRailwayClockView) {
+    public function initialize(view as ClockView) {
         WatchFaceDelegate.initialize();
         _view = view;
     }

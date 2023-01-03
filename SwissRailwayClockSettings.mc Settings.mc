@@ -15,7 +15,7 @@ import Toybox.System;
 import Toybox.WatchUi;
 
 //! Global variable that keeps track of the settings and makes them available to the app.
-var settings as SwissRailwayClockSettings = new $.SwissRailwayClockSettings();
+var settings as ClockSettings = new $.ClockSettings();
 
 //! This class maintains application settings and synchronises them to persistent storage.
 //! For clarity, it currently only interfaces via setting ids and setting names.
@@ -24,7 +24,7 @@ var settings as SwissRailwayClockSettings = new $.SwissRailwayClockSettings();
 // "Dark Mode" - setting name
 // "Auto", "Off", "On" - setting options, the selected option is the selection
 // 0, 1, 2 - setting index
-class SwissRailwayClockSettings {
+class ClockSettings {
     enum { S_DARK_MODE_AUTO, S_DARK_MODE_OFF, S_DARK_MODE_ON }
     enum { S_DATE_DISPLAY_OFF, S_DATE_DISPLAY_DAY_ONLY, S_DATE_DISPLAY_WEEKDAY_AND_DAY }
     enum { S_IMAGE_NONE, S_IMAGE_CANDLE, S_IMAGE_LEAVES, S_IMAGE_HAT }
@@ -172,7 +172,7 @@ class SwissRailwayClockSettings {
 }
 
 //! The app settings menu
-class SwissRailwayClockSettingsMenu extends WatchUi.Menu2 {
+class SettingsMenu extends WatchUi.Menu2 {
     //! Constructor
     public function initialize() {
         Menu2.initialize({:title=>"Settings"});
@@ -193,7 +193,7 @@ class SwissRailwayClockSettingsMenu extends WatchUi.Menu2 {
 }
 
 //! Input handler for the app settings menu
-class SwissRailwayClockSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
+class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     //! Constructor
     public function initialize() {
         Menu2InputDelegate.initialize();

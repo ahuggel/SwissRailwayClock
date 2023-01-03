@@ -2,3 +2,10 @@
 -A straightforward analog watchface with a generous amount of code comments, much easier to read than any other sample you've seen
 -A complete implementation of on-device settings with a Menu2 and a settings class which synchronizes the settings to storage
 
+Todo:
+-Low power mode for bigger screens (Fenix 6X, 7X)
+-Probably just remove the background images, or only keep them for 240pixel screens
+
+
+
+
