@@ -4,7 +4,3 @@
  a simple time picker
 -A global settings class that synchronizes the selected options to persistent storage and makes them available across the app
 -Compiles without warnings with the compiler type checking level set to "Strict" 
-
-Todo:
--Low power mode for bigger screens (Fenix 6X, 7X)
--Probably just remove the background images, or only keep them for 240pixel screens

@@ -32,16 +32,18 @@ class ClockView extends WatchUi.WatchFace {
     private var _hourHand      as Array<Float> = [  44.0,    6.3,    5.1,  -12.0]        as Array<Float>;
     private var _minuteHand    as Array<Float> = [  57.8,    5.2,    3.7,  -12.0]        as Array<Float>;
     private var _secondHand    as Array<Float> = [  47.9,    1.4,    1.4,  -16.5,   5.1] as Array<Float>;
-// TODO: Use a second hand with a shorter tail, if the original one doesn't work in low-power mode
-//  private var _secondHand    as Array<Float> = [  44.9,    1.4,    1.4,  -13.5,   5.1] as Array<Float>;
+    // A second hand with a shorter tail, for use in low-power mode on devices with a larger screen
+    private var _secondHand2   as Array<Float> = [  44.9,    1.4,    1.4,  -13.5,   5.1] as Array<Float>;
 
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
-    private var _offscreenBuffer as BufferedBitmap;
+    private var _colorMode as Number;
     private var _screenShape as Number;
-    private var _screenCenterPoint as Array<Number> = [0, 0] as Array<Number>;
-    private var _clockRadius as Number = 0;
-    private var _colorMode as Number = M_LIGHT;
+    private var _width as Number;
+    private var _height as Number;
+    private var _screenCenter as Array<Number>;
+    private var _clockRadius as Number;
+    private var _offscreenBuffer as BufferedBitmap;
     private var _sin as Array<Float> = new Array<Float>[60]; // Sinus/Cosinus lookup table for each second
 
     //! Constructor. Initialize the variables for this view.
@@ -50,7 +52,12 @@ class ClockView extends WatchUi.WatchFace {
 
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
+        _colorMode = M_LIGHT;
         _screenShape = System.getDeviceSettings().screenShape;
+        _width = System.getDeviceSettings().screenWidth;
+        _height = System.getDeviceSettings().screenHeight;
+        _screenCenter = [_width/2, _height/2] as Array<Number>;
+        _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
 
         // Allocate the buffer we use for drawing the watchface, hour and minute hands in low-power mode, 
         // using BufferedBitmap (API Level 2.3.0).
@@ -58,10 +65,7 @@ class ClockView extends WatchUi.WatchFace {
         // text with anti-aliased fonts much more straightforward.
         // Doing this in initialize() rather than onLayout() so _offscreenBuffer does not need to be 
         // nullable, which makes the type checker complain less.
-        var bbmo = {
-            :width=>System.getDeviceSettings().screenWidth,
-	        :height=>System.getDeviceSettings().screenHeight
-        };
+        var bbmo = { :width=>_width, :height=>_height };
         // CIQ 4 devices *need* to use createBufferBitmaps() 
   	    if (Graphics has :createBufferedBitmap) {
     		var bbRef = Graphics.createBufferedBitmap(bbmo);
@@ -69,24 +73,13 @@ class ClockView extends WatchUi.WatchFace {
     	} else {
     		_offscreenBuffer = new Graphics.BufferedBitmap(bbmo);
 		}
-        if (Toybox.Graphics.Dc has :setAntiAlias) {
-            var offscreenDc = _offscreenBuffer.getDc();
-            offscreenDc.setAntiAlias(true);
-        }
 
-        // Initialize the sinus lookup table 
+        // Initialize the sinus lookup table. I don't think the lookup table makes a real
+        // difference in terms of computing power needed, but it allows for neater interfaces 
         for (var i = 0; i < 60; i++) {
             _sin[i] = Math.sin(i / 60.0 * 2 * Math.PI);
         }
-    }
 
-    //! Load resources and configure the layout of the watchface for this device
-    //! @param dc Device context
-    public function onLayout(dc as Dc) as Void {
-        var width = dc.getWidth();
-        var height = dc.getHeight();
-        _screenCenterPoint = [width / 2, height / 2] as Array<Number>;
-        _clockRadius = _screenCenterPoint[0] < _screenCenterPoint[1] ? _screenCenterPoint[0] : _screenCenterPoint[1];
         // Convert the clock geometry data to pixels
         for (var i = 0; i < 4; i++) {
             _bigTickMark[i]   = Math.round(_bigTickMark[i] * _clockRadius / 50.0);
@@ -94,10 +87,19 @@ class ClockView extends WatchUi.WatchFace {
             _hourHand[i]      = Math.round(_hourHand[i] * _clockRadius / 50.0);
             _minuteHand[i]    = Math.round(_minuteHand[i] * _clockRadius / 50.0);
             _secondHand[i]    = Math.round(_secondHand[i] * _clockRadius / 50.0);
+            _secondHand2[i]   = Math.round(_secondHand2[i] * _clockRadius / 50.0);
         }
-        _secondHand[4] = Math.round(_secondHand[4] as Float * _clockRadius / 50.0);
+        _secondHand[4]  = Math.round(_secondHand[4] as Float * _clockRadius / 50.0);
+        _secondHand2[4] = Math.round(_secondHand2[4] as Float * _clockRadius / 50.0);
+    }
+
+    //! Load resources and configure the layout of the watchface for this device
+    //! @param dc Device context
+    public function onLayout(dc as Dc) as Void {
         if (Toybox.Graphics.Dc has :setAntiAlias) {
             dc.setAntiAlias(true);
+            var offscreenDc = _offscreenBuffer.getDc();
+            offscreenDc.setAntiAlias(true);
         }
     }
 
@@ -133,8 +135,6 @@ class ClockView extends WatchUi.WatchFace {
             // Only use the buffer in low-power mode
             targetDc = _offscreenBuffer.getDc();
         }
-        var width = targetDc.getWidth();
-        var height = targetDc.getHeight();
         var clockTime = System.getClockTime();
 
         // Set the color mode
@@ -156,15 +156,15 @@ class ClockView extends WatchUi.WatchFace {
 
         // Fill the background
         if (System.SCREEN_SHAPE_ROUND == _screenShape) {
-            // Fill the entire background with the background color (white)
+            // Fill the entire background with the background color
             targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
-            targetDc.fillRectangle(0, 0, width, height);
+            targetDc.fillRectangle(0, 0, _width, _height);
         } else {
-            // Fill the entire background with black and draw a circle with the background color (white)
+            // Fill the entire background with black and draw a circle with the background color
             targetDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-            targetDc.fillRectangle(0, 0, width, height);
+            targetDc.fillRectangle(0, 0, _width, _height);
             targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
-            targetDc.fillCircle(_screenCenterPoint[0], _screenCenterPoint[1], _clockRadius);
+            targetDc.fillCircle(_screenCenter[0], _screenCenter[1], _clockRadius);
         }
 
         // Draw the date string
@@ -175,11 +175,11 @@ class ClockView extends WatchUi.WatchFace {
                 break;
             case settings.S_DATE_DISPLAY_DAY_ONLY: 
                 var dateStr = Lang.format("$1$", [info.day.format("%02d")]);
-                targetDc.drawText(width*0.75, height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
+                targetDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                 break;
             case settings.S_DATE_DISPLAY_WEEKDAY_AND_DAY:
                 dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
-                targetDc.drawText(width/2, height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
+                targetDc.drawText(_width/2, _height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                 break;
         }
 
@@ -221,15 +221,21 @@ class ClockView extends WatchUi.WatchFace {
     //! @param dc Device context
     //! @param second The current second 
     private function drawSecondHand(dc as Dc, second as Number) as Void {
+
+        // Hack: In low-power mode and on larger screens, use a second hand with a
+        // clipped tail, in order to stay within the power budget
+        var secondHand = _secondHand;
+        if (!_isAwake and (_width > 240 or _height > 240)) { secondHand = _secondHand2; }
+
         // Compute the center of the second hand circle, at the tip of the second hand
         var sin = _sin[second];
         var cos = _sin[(second + 15) % 60];
         var secondCircleCenter = [
-            (_screenCenterPoint[0] + (_secondHand[0] + _secondHand[3]) * sin + 0.5).toNumber(),
-            (_screenCenterPoint[1] - (_secondHand[0] + _secondHand[3]) * cos + 0.5).toNumber() 
+            (_screenCenter[0] + (secondHand[0] + secondHand[3]) * sin + 0.5).toNumber(),
+            (_screenCenter[1] - (secondHand[0] + secondHand[3]) * cos + 0.5).toNumber() 
         ] as Array<Number>;
-        var secondHandCoords = generatePolygonCoords(_secondHand, second);
-        var radius = _secondHand[4].toNumber();
+        var secondHandCoords = generatePolygonCoords(secondHand, second);
+        var radius = secondHand[4].toNumber();
 
         // Set the clipping region
         var boundingBoxCoords = [ 
@@ -280,10 +286,10 @@ class ClockView extends WatchUi.WatchFace {
     //! @return The coordinates of the polygon (watch hand or tick mark)
     private function generatePolygonCoords(shape as Array<Numeric>, angle as Float or Number) as Array< Array<Number> > {
         // Map out the coordinates of the polygon (trapezoid)
-        var coords = [[-(shape[1] / 2), -shape[3]] as Array<Number>,
+        var coords = [[-(shape[1] / 2),  -shape[3]            ] as Array<Number>,
                       [-(shape[2] / 2), -(shape[3] + shape[0])] as Array<Number>,
-                      [shape[2] / 2, -(shape[3] + shape[0])] as Array<Number>,
-                      [shape[1] / 2, -shape[3]] as Array<Number>] as Array< Array<Number> >;
+                      [  shape[2] / 2,  -(shape[3] + shape[0])] as Array<Number>,
+                      [  shape[1] / 2,   -shape[3]            ] as Array<Number>] as Array< Array<Number> >;
 
         // Rotate the coordinates
         var sin = 0.0;
@@ -302,8 +308,7 @@ class ClockView extends WatchUi.WatchFace {
         for (var i = 0; i < 4; i++) {
             var x = (coords[i][0] * cos - coords[i][1] * sin + 0.5).toNumber();
             var y = (coords[i][0] * sin + coords[i][1] * cos + 0.5).toNumber();
-
-            result[i] = [_screenCenterPoint[0] + x, _screenCenterPoint[1] + y];
+            result[i] = [_screenCenter[0] + x, _screenCenter[1] + y];
         }
         return result;
     }
