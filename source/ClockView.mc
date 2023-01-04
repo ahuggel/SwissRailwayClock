@@ -225,7 +225,9 @@ class ClockView extends WatchUi.WatchFace {
         // Hack: In low-power mode and on larger screens, use a second hand with a
         // clipped tail, in order to stay within the power budget
         var secondHand = _secondHand;
-        if (!_isAwake and (_width > 240 or _height > 240)) { secondHand = _secondHand2; }
+        if (!_isAwake and (_width > 260 or _height > 260)) {
+            secondHand = _secondHand2; 
+        }
 
         // Compute the center of the second hand circle, at the tip of the second hand
         var sin = _sin[second];
