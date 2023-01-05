@@ -43,6 +43,7 @@ class ClockView extends WatchUi.WatchFace {
     // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates)
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
+    private var _2Pi as Float;
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
     private var _colorMode as Number;
@@ -52,12 +53,12 @@ class ClockView extends WatchUi.WatchFace {
     private var _screenCenter as Array<Number>;
     private var _clockRadius as Number;
     private var _offscreenBuffer as BufferedBitmap;
-    private var _sin as Array<Float> = new Array<Float>[60]; // Sinus/Cosinus lookup table for each second
 
     //! Constructor. Initialize the variables for this view.
     public function initialize() {
         WatchFace.initialize();
 
+        _2Pi = 2 * Math.PI;
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
         _colorMode = M_LIGHT;
@@ -81,12 +82,6 @@ class ClockView extends WatchUi.WatchFace {
     	} else {
     		_offscreenBuffer = new Graphics.BufferedBitmap(bbmo);
 		}
-
-        // Initialize the sinus lookup table. I doubt the lookup table makes a real difference
-        // in terms of computing power needed, but it allows for neater interfaces
-        for (var i = 0; i < 60; i++) {
-            _sin[i] = Math.sin(i / 60.0 * 2 * Math.PI);
-        }
 
         // Geometry of the hands and tick marks of the clock, as percentages of the diameter of the
         // clock face. Each of these shapes is a polygon (trapezoid), defined by
@@ -223,15 +218,15 @@ class ClockView extends WatchUi.WatchFace {
         // Draw tick marks around the edges of the screen
         targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < 60; i++) {
-            targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i));
+            targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * _2Pi));
         }
 
         // Draw the hour hand
-        var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * 2 * Math.PI;
+        var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * _2Pi;
         targetDc.fillPolygon(rotateCoords(S_HOURHAND, hourHandAngle));
 
         // Draw the minute hand
-        targetDc.fillPolygon(rotateCoords(S_MINUTEHAND, clockTime.min));
+        targetDc.fillPolygon(rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * _2Pi));
 
         if (!_isAwake) {
             // Output the offscreen buffer to the main display
@@ -267,13 +262,14 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         // Compute the center of the second hand circle, at the tip of the second hand
-        var sin = _sin[second];
-        var cos = _sin[(second + 15) % 60];
+        var angle = second / 60.0 * _2Pi;
+        var sin = Math.sin(angle);
+        var cos = Math.cos(angle);
         var circleCenter = [
             (_screenCenter[0] + (_shapes[secondHand][0] + _shapes[secondHand][3]) * sin + 0.5).toNumber(),
             (_screenCenter[1] - (_shapes[secondHand][0] + _shapes[secondHand][3]) * cos + 0.5).toNumber() 
         ] as Array<Number>;
-        var secondHandCoords = rotateCoords(secondHand, second);
+        var secondHandCoords = rotateCoords(secondHand, angle);
 
         // Set the clipping region for the second hand
         var clipCoords = [ 
@@ -313,21 +309,11 @@ class ClockView extends WatchUi.WatchFace {
     //! Rotate the four corner coordinates of a polygon used to draw a watch hand or a tick mark.
     //! 0 degrees is at the 12 o'clock position, and increases in the clockwise direction.
     //! @param shape Index of the shape
-    //! @param angle Angle of the hand in radians (Float) or in minutes (Number, between 0 and 59)
+    //! @param angle Rotation angle in radians
     //! @return The rotated coordinates of the polygon (watch hand or tick mark)
-    private function rotateCoords(shape as Number, angle as Float or Number) as Array< Array<Number> > {
-        var sin = 0.0;
-        var cos = 0.0;
-        switch (angle) {
-            case instanceof Float:
-                sin = Math.sin(angle);
-                cos = Math.cos(angle);
-                break;
-            case instanceof Number:
-                sin = _sin[angle];
-                cos = _sin[(angle as Number + 15) % 60];
-                break;
-        }
+    private function rotateCoords(shape as Number, angle as Float) as Array< Array<Number> > {
+        var sin = Math.sin(angle);
+        var cos = Math.cos(angle);
         var shapeIdx = shape * 8;
         var result = new Array< Array<Number> >[4];
         for (var i = 0; i < 4; i++) {
