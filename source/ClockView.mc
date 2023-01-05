@@ -184,6 +184,18 @@ class ClockView extends WatchUi.WatchFace {
                 _colorMode = M_DARK;
                 break;
         }
+        if (!_isAwake) {
+            switch (settings.getValue("lowPower")) {
+                case settings.S_LOW_POWER_AUTO:
+                    break;
+                case settings.S_LOW_POWER_DARK:
+                    _colorMode = M_DARK;
+                    break;
+                case settings.S_LOW_POWER_LIGHT:
+                    _colorMode = M_LIGHT;
+                    break;
+            }
+        }
 
         // Draw the background
         if (System.SCREEN_SHAPE_ROUND == _screenShape) {

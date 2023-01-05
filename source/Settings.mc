@@ -29,11 +29,14 @@ var settings as ClockSettings = new $.ClockSettings();
 class ClockSettings {
     enum { S_DARK_MODE_AUTO, S_DARK_MODE_OFF, S_DARK_MODE_ON }
     enum { S_DATE_DISPLAY_OFF, S_DATE_DISPLAY_DAY_ONLY, S_DATE_DISPLAY_WEEKDAY_AND_DAY }
+    enum { S_LOW_POWER_AUTO, S_LOW_POWER_DARK, S_LOW_POWER_LIGHT }
 
     private var _darkModeOptions as Array<String> = ["Auto", "Off", "On"] as Array<String>;
     private var _dateDisplayOptions as Array<String> = ["Off", "Day Only", "Weekday and Day"] as Array<String>;
+    private var _lowPowerOptions as Array<String> = ["Auto", "Use Dark Mode", "Dark Mode Off"] as Array<String>;
     private var _darkModeIdx as Number;
     private var _dateDisplayIdx as Number;
+    private var _lowPowerIdx as Number;
     private var _dmOnTime as Number;
     private var _dmOffTime as Number;
 
@@ -46,6 +49,10 @@ class ClockSettings {
         _dateDisplayIdx = Storage.getValue("dateDisplay") as Number;
         if (_dateDisplayIdx == null) {
             _dateDisplayIdx = 0;
+        }
+        _lowPowerIdx = Storage.getValue("lowPower") as Number;
+        if (_lowPowerIdx == null) {
+            _lowPowerIdx = 0;
         }
         _dmOnTime = Storage.getValue("dmOn") as Number;
         if (_dmOnTime == null) {
@@ -69,6 +76,9 @@ class ClockSettings {
             case "dateDisplay":
                 option = _dateDisplayOptions[_dateDisplayIdx];
                 break;
+            case "lowPower":
+                option = _lowPowerOptions[_lowPowerIdx];
+                break;
             case "dmOn":
                 option = (_dmOnTime / 60).toNumber() + ":" + (_dmOnTime % 60).format("%02d");
                 break;
@@ -91,6 +101,9 @@ class ClockSettings {
             case "dateDisplay":
                 value = _dateDisplayIdx;
                 break;
+            case "lowPower":
+                value = _lowPowerIdx;
+                break;
             case "dmOn":
                 value = _dmOnTime;
                 break;
@@ -111,6 +124,9 @@ class ClockSettings {
                 break;
             case "dateDisplay":
                 name = "Date Display";
+                break;
+            case "lowPower":
+                name = "In Low-Power";
                 break;
             case "dmOn":
                 name = "Turn On";
@@ -133,6 +149,10 @@ class ClockSettings {
             case "dateDisplay":
                 _dateDisplayIdx = (_dateDisplayIdx + 1) % _dateDisplayOptions.size();
                 Storage.setValue(id, _dateDisplayIdx);
+                break;
+            case "lowPower":
+                _lowPowerIdx = (_lowPowerIdx + 1) % _lowPowerOptions.size();
+                Storage.setValue(id, _lowPowerIdx);
                 break;
         }
     }
@@ -163,6 +183,7 @@ class SettingsMenu extends WatchUi.Menu2 {
             Menu2.addItem(new WatchUi.MenuItem(settings.getName("dmOn"), settings.getLabel("dmOn"), "dmOn", {}));
             Menu2.addItem(new WatchUi.MenuItem(settings.getName("dmOff"), settings.getLabel("dmOff"), "dmOff", {}));
         }
+        Menu2.addItem(new WatchUi.MenuItem(settings.getName("lowPower"), settings.getLabel("lowPower"), "lowPower", {}));
     }
 
     public function onShow() as Void {
@@ -201,6 +222,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         var id = menuItem.getId() as String;
         switch (id) {
             case "dateDisplay":
+            case "lowPower":
                 // Advance to the next option and show the selected option as the sub label
                 settings.setNext(id);
                 menuItem.setSubLabel(settings.getLabel(id));
@@ -211,8 +233,11 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 menuItem.setSubLabel(settings.getLabel(id));
                 // If "Auto" is selected, add menu items to set the dark mode on and off times, else delete them
                 if (settings.S_DARK_MODE_AUTO == settings.getValue(id)) {
+                    var idx = _menu.findItemById("lowPower");
+                    if (-1 != idx) { _menu.deleteItem(idx); }
                     _menu.addItem(new WatchUi.MenuItem(settings.getName("dmOn"), settings.getLabel("dmOn"), "dmOn", {}));
                     _menu.addItem(new WatchUi.MenuItem(settings.getName("dmOff"), settings.getLabel("dmOff"), "dmOff", {}));
+                    _menu.addItem(new WatchUi.MenuItem(settings.getName("lowPower"), settings.getLabel("lowPower"), "lowPower", {}));
                 } else {
                     var idx = _menu.findItemById("dmOn");
                     if (-1 != idx) { _menu.deleteItem(idx); }
