@@ -1,5 +1,5 @@
 /*
-   Swiss Railway Clock - an Analog Watchface for Garmin watches
+   Swiss Railway Clock - an analog watchface for Garmin watches
 
    Copyright 2023 Andreas Huggel
 
@@ -28,6 +28,7 @@ import Toybox.WatchUi;
 
 //! Implements the Swiss Railway Clock watch face
 class ClockView extends WatchUi.WatchFace {
+    
     enum { M_LIGHT, M_DARK } // Color modes
     enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
     private var _colors as Array< Array<Number> > = [
@@ -36,7 +37,7 @@ class ClockView extends WatchUi.WatchFace {
     ] as Array< Array<Number> >;
 
     // List of watchface shapes, used as indexes
-    enum { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SECONDHAND2, S_SIZE }
+    enum { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
     // A 2 dimensional array for the geometry of the watchface shapes (because the initialisation is more intuitive that way)
     private var _shapes as Array< Array< Float > > = new Array< Array<Float> >[S_SIZE];
     private var _secondCircleRadius as Number; // Radius of the second hand circle
@@ -90,17 +91,18 @@ class ClockView extends WatchUi.WatchFace {
         // - the width at the tip of the hand or tick mark,
         // - the distance from the center of the clock to the tail side (negative for a watch hand 
         //   with a tail).
-        // In addition, the second hand has a circle, which is defined separately, a bit later
-        //
+        // In addition, the second hand has a circle, which is defined separately.
+        // See docs/1508_CHD151_foto_b.jpg for the original design. The numbers used here deviate from 
+        // that only slightly.
         //                          height, width1, width2, radius
         _shapes[S_BIGTICKMARK]   = [  12.0,    3.5,    3.5,   36.5];	
         _shapes[S_SMALLTICKMARK] = [   3.5,    1.4,    1.4,   45.0];
         _shapes[S_HOURHAND]      = [  44.0,    6.3,    5.1,  -12.0];
         _shapes[S_MINUTEHAND]    = [  57.8,    5.2,    3.7,  -12.0];
         _shapes[S_SECONDHAND]    = [  47.9,    1.4,    1.4,  -16.5];
-        // A second hand with a shorter tail, for use in low-power mode on devices with a larger screen,
-        // to stay within the power budget
-        _shapes[S_SECONDHAND2]   = [  44.9,    1.4,    1.4,  -13.5];
+
+        // The radius of the second hand circle in pixels, calculated from the percentage of the clock face diameter
+        _secondCircleRadius = Math.round(5.1 * _clockRadius / 50.0) as Number;
 
         // Convert the clock geometry data to pixels
         for (var s = 0; s < S_SIZE; s++) {
@@ -120,14 +122,12 @@ class ClockView extends WatchUi.WatchFace {
             _coords[s*8 + 6] =  (_shapes[s][1] / 2 + 0.5).toNumber();
             _coords[s*8 + 7] = -(_shapes[s][3] + 0.5).toNumber();
         }
-
-        // The radius of the second hand circle in pixels, calculated from the percentage of the clock face diameter
-        _secondCircleRadius = Math.round(5.1 * _clockRadius / 50.0) as Number;
     }
 
     //! Load resources and configure the layout of the watchface for this device
     //! @param dc Device context
     public function onLayout(dc as Dc) as Void {
+        // If available, enable anti-aliasing for both, the main display and the off-screen buffer 
         if (Toybox.Graphics.Dc has :setAntiAlias) {
             dc.setAntiAlias(true);
             var offscreenDc = _offscreenBuffer.getDc();
@@ -146,8 +146,7 @@ class ClockView extends WatchUi.WatchFace {
     //! 3) it's also triggered when the device goes into low-power mode (from onEnterSleep()).
     //!
     //! Depending on the power state of the device, we need to be more or less careful regarding
-    //! the cost of (mainly) the drawing operations used. If available, anti-aliasing is used 
-    //! for both, the main display and the off-screen buffer. The processing logic is as follows.
+    //! the cost of (mainly) the drawing operations used. The processing logic is as follows.
     //!
     //! When awake: 
     //! onUpdate(): Draw the entire screen every second, directly on the main display.
@@ -186,7 +185,7 @@ class ClockView extends WatchUi.WatchFace {
                 break;
         }
 
-        // Fill the background
+        // Draw the background
         if (System.SCREEN_SHAPE_ROUND == _screenShape) {
             // Fill the entire background with the background color
             targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
@@ -195,8 +194,10 @@ class ClockView extends WatchUi.WatchFace {
             // Fill the entire background with black and draw a circle with the background color
             targetDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
             targetDc.fillRectangle(0, 0, _width, _height);
-            targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
-            targetDc.fillCircle(_screenCenter[0], _screenCenter[1], _clockRadius);
+            if (_colors[_colorMode][C_BACKGROUND] != Graphics.COLOR_BLACK) {
+                targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
+                targetDc.fillCircle(_screenCenter[0], _screenCenter[1], _clockRadius);
+            }
         }
 
         // Draw the date string
@@ -253,23 +254,15 @@ class ClockView extends WatchUi.WatchFace {
     //! @param dc Device context
     //! @param second The current second 
     private function drawSecondHand(dc as Dc, second as Number) as Void {
-
-        // Hack: In low-power mode and on larger screens, use a second hand with a
-        // clipped tail, in order to stay within the power budget
-        var secondHand = S_SECONDHAND;
-        if (!_isAwake and (_width > 260 or _height > 260)) {
-            secondHand = S_SECONDHAND2; 
-        }
-
-        // Compute the center of the second hand circle, at the tip of the second hand
         var angle = second / 60.0 * _2Pi;
+        // Compute the center of the second hand circle, at the tip of the second hand
         var sin = Math.sin(angle);
         var cos = Math.cos(angle);
         var circleCenter = [
-            (_screenCenter[0] + (_shapes[secondHand][0] + _shapes[secondHand][3]) * sin + 0.5).toNumber(),
-            (_screenCenter[1] - (_shapes[secondHand][0] + _shapes[secondHand][3]) * cos + 0.5).toNumber() 
+            (_screenCenter[0] + (_shapes[S_SECONDHAND][0] + _shapes[S_SECONDHAND][3]) * sin + 0.5).toNumber(),
+            (_screenCenter[1] - (_shapes[S_SECONDHAND][0] + _shapes[S_SECONDHAND][3]) * cos + 0.5).toNumber() 
         ] as Array<Number>;
-        var secondHandCoords = rotateCoords(secondHand, angle);
+        var secondHandCoords = rotateCoords(S_SECONDHAND, angle);
 
         // Set the clipping region for the second hand
         var clipCoords = [ 

@@ -1,6 +1,5 @@
 /*
-   Swiss Railway Clock
-   https://www.eguide.ch/de/objekt/sbb-bahnhofsuhr/
+   Swiss Railway Clock - an analog watchface for Garmin watches
 
    Copyright 2023 Andreas Huggel
 
