@@ -1,13 +1,23 @@
-//
-// Swiss Railway Clock
-// https://www.eguide.ch/de/objekt/sbb-bahnhofsuhr/
-//
-// Copyright 2022 by Andreas Huggel
-// 
-// This started from the Garmin Analog sample program; there may be some terminology from that left.
-// That sample program is Copyright 2016-2021 by Garmin Ltd. or its subsidiaries.
-// Subject to Garmin SDK License Agreement and Wearables Application Developer Agreement.
-//
+/*
+   Swiss Railway Clock - an Analog Watchface for Garmin watches
+
+   Copyright 2023 Andreas Huggel
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+   and associated documentation files (the "Software"), to deal in the Software without 
+   restriction, including without limitation the rights to use, copy, modify, merge, publish, 
+   distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the 
+   Software is furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all copies or 
+   substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING 
+   BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
+   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
+   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
@@ -32,7 +42,8 @@ class ClockView extends WatchUi.WatchFace {
     private var _hourHand      as Array<Float> = [  44.0,    6.3,    5.1,  -12.0]        as Array<Float>;
     private var _minuteHand    as Array<Float> = [  57.8,    5.2,    3.7,  -12.0]        as Array<Float>;
     private var _secondHand    as Array<Float> = [  47.9,    1.4,    1.4,  -16.5,   5.1] as Array<Float>;
-    // A second hand with a shorter tail, for use in low-power mode on devices with a larger screen
+    // A second hand with a shorter tail, for use in low-power mode on devices with a larger screen,
+    // to stay within the power budget
     private var _secondHand2   as Array<Float> = [  44.9,    1.4,    1.4,  -13.5,   5.1] as Array<Float>;
 
     private var _isAwake as Boolean;
@@ -65,7 +76,7 @@ class ClockView extends WatchUi.WatchFace {
         // text with anti-aliased fonts much more straightforward.
         // Doing this in initialize() rather than onLayout() so _offscreenBuffer does not need to be 
         // nullable, which makes the type checker complain less.
-        var bbmo = { :width=>_width, :height=>_height };
+        var bbmo = {:width=>_width, :height=>_height};
         // CIQ 4 devices *need* to use createBufferBitmaps() 
   	    if (Graphics has :createBufferedBitmap) {
     		var bbRef = Graphics.createBufferedBitmap(bbmo);
@@ -74,8 +85,8 @@ class ClockView extends WatchUi.WatchFace {
     		_offscreenBuffer = new Graphics.BufferedBitmap(bbmo);
 		}
 
-        // Initialize the sinus lookup table. I don't think the lookup table makes a real
-        // difference in terms of computing power needed, but it allows for neater interfaces 
+        // Initialize the sinus lookup table. I doubt the lookup table makes a real difference
+        // in terms of computing power needed, but it allows for neater interfaces
         for (var i = 0; i < 60; i++) {
             _sin[i] = Math.sin(i / 60.0 * 2 * Math.PI);
         }
@@ -113,7 +124,7 @@ class ClockView extends WatchUi.WatchFace {
     //! 2) every full minute in low-power mode, and
     //! 3) it's also triggered when the device goes into low-power mode (from onEnterSleep()).
     //!
-    //! Dependent on the power state of the device, we need to be more or less careful regarding
+    //! Depending on the power state of the device, we need to be more or less careful regarding
     //! the cost of (mainly) the drawing operations used. If available, anti-aliasing is used 
     //! for both, the main display and the off-screen buffer. The processing logic is as follows.
     //!
