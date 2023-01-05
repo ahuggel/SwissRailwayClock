@@ -35,16 +35,13 @@ class ClockView extends WatchUi.WatchFace {
         [Graphics.COLOR_WHITE, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_LT_GRAY]
     ] as Array< Array<Number> >;
 
-    // Geometry of the clock, as a percentage of the diameter of the clock face.
-    //                                            height, width1, width2, radius, circle
-    private var _bigTickMark   as Array<Float> = [  12.0,    3.5,    3.5,   36.5]        as Array<Float>;	
-    private var _smallTickMark as Array<Float> = [   3.5,    1.4,    1.4,   45.0]        as Array<Float>;
-    private var _hourHand      as Array<Float> = [  44.0,    6.3,    5.1,  -12.0]        as Array<Float>;
-    private var _minuteHand    as Array<Float> = [  57.8,    5.2,    3.7,  -12.0]        as Array<Float>;
-    private var _secondHand    as Array<Float> = [  47.9,    1.4,    1.4,  -16.5,   5.1] as Array<Float>;
-    // A second hand with a shorter tail, for use in low-power mode on devices with a larger screen,
-    // to stay within the power budget
-    private var _secondHand2   as Array<Float> = [  44.9,    1.4,    1.4,  -13.5,   5.1] as Array<Float>;
+    // List of watchface shapes, used as indexes
+    enum { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SECONDHAND2, S_SIZE }
+    // A 2 dimensional array for the geometry of the watchface shapes (because the initialisation is more intuitive that way)
+    private var _shapes as Array< Array< Float > > = new Array< Array<Float> >[S_SIZE];
+    private var _secondCircleRadius as Number; // Radius of the second hand circle
+    // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates)
+    private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
@@ -91,17 +88,46 @@ class ClockView extends WatchUi.WatchFace {
             _sin[i] = Math.sin(i / 60.0 * 2 * Math.PI);
         }
 
+        // Geometry of the hands and tick marks of the clock, as percentages of the diameter of the
+        // clock face. Each of these shapes is a polygon (trapezoid), defined by
+        // - its height (length),
+        // - the width at the tail of the hand or tick mark,
+        // - the width at the tip of the hand or tick mark,
+        // - the distance from the center of the clock to the tail side (negative for a watch hand 
+        //   with a tail).
+        // In addition, the second hand has a circle, which is defined separately, a bit later
+        //
+        //                          height, width1, width2, radius
+        _shapes[S_BIGTICKMARK]   = [  12.0,    3.5,    3.5,   36.5];	
+        _shapes[S_SMALLTICKMARK] = [   3.5,    1.4,    1.4,   45.0];
+        _shapes[S_HOURHAND]      = [  44.0,    6.3,    5.1,  -12.0];
+        _shapes[S_MINUTEHAND]    = [  57.8,    5.2,    3.7,  -12.0];
+        _shapes[S_SECONDHAND]    = [  47.9,    1.4,    1.4,  -16.5];
+        // A second hand with a shorter tail, for use in low-power mode on devices with a larger screen,
+        // to stay within the power budget
+        _shapes[S_SECONDHAND2]   = [  44.9,    1.4,    1.4,  -13.5];
+
         // Convert the clock geometry data to pixels
-        for (var i = 0; i < 4; i++) {
-            _bigTickMark[i]   = Math.round(_bigTickMark[i] * _clockRadius / 50.0);
-            _smallTickMark[i] = Math.round(_smallTickMark[i] * _clockRadius / 50.0);
-            _hourHand[i]      = Math.round(_hourHand[i] * _clockRadius / 50.0);
-            _minuteHand[i]    = Math.round(_minuteHand[i] * _clockRadius / 50.0);
-            _secondHand[i]    = Math.round(_secondHand[i] * _clockRadius / 50.0);
-            _secondHand2[i]   = Math.round(_secondHand2[i] * _clockRadius / 50.0);
+        for (var s = 0; s < S_SIZE; s++) {
+            for (var i = 0; i < 4; i++) {
+                _shapes[s][i] = Math.round(_shapes[s][i] * _clockRadius / 50.0);
+            }
         }
-        _secondHand[4]  = Math.round(_secondHand[4] as Float * _clockRadius / 50.0);
-        _secondHand2[4] = Math.round(_secondHand2[4] as Float * _clockRadius / 50.0);
+
+        // Map out the coordinates of all the shapes
+        for (var s = 0; s < S_SIZE; s++) {
+            _coords[s*8]     = -(_shapes[s][1] / 2 + 0.5).toNumber();
+            _coords[s*8 + 1] = -(_shapes[s][3] + 0.5).toNumber();
+            _coords[s*8 + 2] = -(_shapes[s][2] / 2 + 0.5).toNumber();
+            _coords[s*8 + 3] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
+            _coords[s*8 + 4] =  (_shapes[s][2] / 2 + 0.5).toNumber();
+            _coords[s*8 + 5] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
+            _coords[s*8 + 6] =  (_shapes[s][1] / 2 + 0.5).toNumber();
+            _coords[s*8 + 7] = -(_shapes[s][3] + 0.5).toNumber();
+        }
+
+        // The radius of the second hand circle in pixels, calculated from the percentage of the clock face diameter
+        _secondCircleRadius = Math.round(5.1 * _clockRadius / 50.0) as Number;
     }
 
     //! Load resources and configure the layout of the watchface for this device
@@ -197,15 +223,15 @@ class ClockView extends WatchUi.WatchFace {
         // Draw tick marks around the edges of the screen
         targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < 60; i++) {
-            targetDc.fillPolygon(generatePolygonCoords(i % 5 ? _smallTickMark : _bigTickMark, i));
+            targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i));
         }
 
         // Draw the hour hand
-        var hourHandAngle = (((clockTime.hour % 12) * 60) + clockTime.min) / (12 * 60.0) * 2 * Math.PI;
-        targetDc.fillPolygon(generatePolygonCoords(_hourHand, hourHandAngle));
+        var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * 2 * Math.PI;
+        targetDc.fillPolygon(rotateCoords(S_HOURHAND, hourHandAngle));
 
         // Draw the minute hand
-        targetDc.fillPolygon(generatePolygonCoords(_minuteHand, clockTime.min));
+        targetDc.fillPolygon(rotateCoords(S_MINUTEHAND, clockTime.min));
 
         if (!_isAwake) {
             // Output the offscreen buffer to the main display
@@ -235,45 +261,44 @@ class ClockView extends WatchUi.WatchFace {
 
         // Hack: In low-power mode and on larger screens, use a second hand with a
         // clipped tail, in order to stay within the power budget
-        var secondHand = _secondHand;
+        var secondHand = S_SECONDHAND;
         if (!_isAwake and (_width > 260 or _height > 260)) {
-            secondHand = _secondHand2; 
+            secondHand = S_SECONDHAND2; 
         }
 
         // Compute the center of the second hand circle, at the tip of the second hand
         var sin = _sin[second];
         var cos = _sin[(second + 15) % 60];
-        var secondCircleCenter = [
-            (_screenCenter[0] + (secondHand[0] + secondHand[3]) * sin + 0.5).toNumber(),
-            (_screenCenter[1] - (secondHand[0] + secondHand[3]) * cos + 0.5).toNumber() 
+        var circleCenter = [
+            (_screenCenter[0] + (_shapes[secondHand][0] + _shapes[secondHand][3]) * sin + 0.5).toNumber(),
+            (_screenCenter[1] - (_shapes[secondHand][0] + _shapes[secondHand][3]) * cos + 0.5).toNumber() 
         ] as Array<Number>;
-        var secondHandCoords = generatePolygonCoords(secondHand, second);
-        var radius = secondHand[4].toNumber();
+        var secondHandCoords = rotateCoords(secondHand, second);
 
-        // Set the clipping region
-        var boundingBoxCoords = [ 
+        // Set the clipping region for the second hand
+        var clipCoords = [ 
             secondHandCoords[0], secondHandCoords[1], secondHandCoords[2], secondHandCoords[3],
-            [ secondCircleCenter[0] - radius, secondCircleCenter[1] - radius ],
-            [ secondCircleCenter[0] + radius, secondCircleCenter[1] - radius ],
-            [ secondCircleCenter[0] + radius, secondCircleCenter[1] + radius ],
-            [ secondCircleCenter[0] - radius, secondCircleCenter[1] + radius ]
+            [ circleCenter[0] - _secondCircleRadius, circleCenter[1] - _secondCircleRadius ],
+            [ circleCenter[0] + _secondCircleRadius, circleCenter[1] - _secondCircleRadius ],
+            [ circleCenter[0] + _secondCircleRadius, circleCenter[1] + _secondCircleRadius ],
+            [ circleCenter[0] - _secondCircleRadius, circleCenter[1] + _secondCircleRadius ]
         ] as Array< Array<Number> >;
         var minX = 65536;
         var minY = 65536;
         var maxX = 0;
         var maxY = 0;
-        for (var i = 0; i < boundingBoxCoords.size(); i++) {
-            if (boundingBoxCoords[i][0] < minX) {
-                minX = boundingBoxCoords[i][0];
+        for (var i = 0; i < clipCoords.size(); i++) {
+            if (clipCoords[i][0] < minX) {
+                minX = clipCoords[i][0];
             }
-            if (boundingBoxCoords[i][1] < minY) {
-                minY = boundingBoxCoords[i][1];
+            if (clipCoords[i][1] < minY) {
+                minY = clipCoords[i][1];
             }
-            if (boundingBoxCoords[i][0] > maxX) {
-                maxX = boundingBoxCoords[i][0];
+            if (clipCoords[i][0] > maxX) {
+                maxX = clipCoords[i][0];
             }
-            if (boundingBoxCoords[i][1] > maxY) {
-                maxY = boundingBoxCoords[i][1];
+            if (clipCoords[i][1] > maxY) {
+                maxY = clipCoords[i][1];
             }
         }
         // Add one pixel on each side for good measure
@@ -282,29 +307,15 @@ class ClockView extends WatchUi.WatchFace {
         // Draw the second hand
         dc.setColor(_colors[_colorMode][C_SECONDS], Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(secondHandCoords);
-        dc.fillCircle(secondCircleCenter[0], secondCircleCenter[1], radius);
+        dc.fillCircle(circleCenter[0], circleCenter[1], _secondCircleRadius);
     }
 
-    //! Generate the screen coordinates of the four corners of a polygon (trapezoid) used to draw 
-    //! a watch hand or a tick mark. The coordinates are generated using a specified height,
-    //! and two separate widths, and are rotated around the center point at the provided angle.
+    //! Rotate the four corner coordinates of a polygon used to draw a watch hand or a tick mark.
     //! 0 degrees is at the 12 o'clock position, and increases in the clockwise direction.
-    //! @param shape Definition of the polygon (in pixels) as follows
-    //!        shape[0] The height of the polygon
-    //!        shape[1] Width of the polygon at the tail of the hand or tick mark
-    //!        shape[2] Width of the polygon at the tip of the hand or tick mark
-    //!        shape[3] Distance from the center of the watch to the tail side 
-    //!                 (negative for a watch hand with a tail) of the polygon
+    //! @param shape Index of the shape
     //! @param angle Angle of the hand in radians (Float) or in minutes (Number, between 0 and 59)
-    //! @return The coordinates of the polygon (watch hand or tick mark)
-    private function generatePolygonCoords(shape as Array<Numeric>, angle as Float or Number) as Array< Array<Number> > {
-        // Map out the coordinates of the polygon (trapezoid)
-        var coords = [[-(shape[1] / 2),  -shape[3]            ] as Array<Number>,
-                      [-(shape[2] / 2), -(shape[3] + shape[0])] as Array<Number>,
-                      [  shape[2] / 2,  -(shape[3] + shape[0])] as Array<Number>,
-                      [  shape[1] / 2,   -shape[3]            ] as Array<Number>] as Array< Array<Number> >;
-
-        // Rotate the coordinates
+    //! @return The rotated coordinates of the polygon (watch hand or tick mark)
+    private function rotateCoords(shape as Number, angle as Float or Number) as Array< Array<Number> > {
         var sin = 0.0;
         var cos = 0.0;
         switch (angle) {
@@ -317,10 +328,12 @@ class ClockView extends WatchUi.WatchFace {
                 cos = _sin[(angle as Number + 15) % 60];
                 break;
         }
+        var shapeIdx = shape * 8;
         var result = new Array< Array<Number> >[4];
         for (var i = 0; i < 4; i++) {
-            var x = (coords[i][0] * cos - coords[i][1] * sin + 0.5).toNumber();
-            var y = (coords[i][0] * sin + coords[i][1] * cos + 0.5).toNumber();
+            var idx = shapeIdx + i * 2;
+            var x = (_coords[idx] * cos - _coords[idx + 1] * sin + 0.5).toNumber();
+            var y = (_coords[idx] * sin + _coords[idx + 1] * cos + 0.5).toNumber();
             result[i] = [_screenCenter[0] + x, _screenCenter[1] + y];
         }
         return result;
