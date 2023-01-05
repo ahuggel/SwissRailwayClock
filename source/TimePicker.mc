@@ -1,13 +1,24 @@
-//
-// Swiss Railway Clock
-// https://www.eguide.ch/de/objekt/sbb-bahnhofsuhr/
-//
-// Copyright 2022 by Andreas Huggel
-// 
-// This started from the Garmin Analog sample program; there may be some terminology from that left.
-// That sample program is Copyright 2016-2021 by Garmin Ltd. or its subsidiaries.
-// Subject to Garmin SDK License Agreement and Wearables Application Developer Agreement.
-//
+/*
+   Swiss Railway Clock
+   https://www.eguide.ch/de/objekt/sbb-bahnhofsuhr/
+
+   Copyright 2023 Andreas Huggel
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+   and associated documentation files (the "Software"), to deal in the Software without 
+   restriction, including without limitation the rights to use, copy, modify, merge, publish, 
+   distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the 
+   Software is furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all copies or 
+   substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING 
+   BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
+   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
+   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
@@ -15,7 +26,7 @@ import Toybox.WatchUi;
 // A simple time picker. It's only a class so that we can implement onLayout(), to
 // fix some display issues on both, my fr955 device and the sim, otherwise we could
 // just use Picker itself.
-// Also, it depends on the global settings class, which is not nice. That could be
+// Also, it depends on the global settings class, which is not very nice. That could be
 // fixed easily, however the delegate also has the same issue and is more
 // difficult to fix.
 // The result sort of works but doesn't look good at all. It's really too bad that 
