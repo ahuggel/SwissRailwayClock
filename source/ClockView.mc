@@ -1,7 +1,7 @@
 /*
    Swiss Railway Clock - an analog watchface for Garmin watches
 
-   Copyright 2023 Andreas Huggel
+   Copyright 2023 Andreas Huggel (ahuggel@gmx.net)
 
    Permission is hereby granted, free of charge, to any person obtaining a copy of this software
    and associated documentation files (the "Software"), to deal in the Software without 
@@ -111,16 +111,17 @@ class ClockView extends WatchUi.WatchFace {
             }
         }
 
-        // Map out the coordinates of all the shapes
+        // Map out the coordinates of all the shapes. Doing that only once to reduce processing time.
         for (var s = 0; s < S_SIZE; s++) {
-            _coords[s*8]     = -(_shapes[s][1] / 2 + 0.5).toNumber();
-            _coords[s*8 + 1] = -(_shapes[s][3] + 0.5).toNumber();
-            _coords[s*8 + 2] = -(_shapes[s][2] / 2 + 0.5).toNumber();
-            _coords[s*8 + 3] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
-            _coords[s*8 + 4] =  (_shapes[s][2] / 2 + 0.5).toNumber();
-            _coords[s*8 + 5] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
-            _coords[s*8 + 6] =  (_shapes[s][1] / 2 + 0.5).toNumber();
-            _coords[s*8 + 7] = -(_shapes[s][3] + 0.5).toNumber();
+            var idx = s * 8;
+            _coords[idx]     = -(_shapes[s][1] / 2 + 0.5).toNumber();
+            _coords[idx + 1] = -(_shapes[s][3] + 0.5).toNumber();
+            _coords[idx + 2] = -(_shapes[s][2] / 2 + 0.5).toNumber();
+            _coords[idx + 3] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
+            _coords[idx + 4] =  (_shapes[s][2] / 2 + 0.5).toNumber();
+            _coords[idx + 5] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
+            _coords[idx + 6] =  (_shapes[s][1] / 2 + 0.5).toNumber();
+            _coords[idx + 7] = -(_shapes[s][3] + 0.5).toNumber();
         }
     }
 

@@ -1,7 +1,7 @@
 /*
    Swiss Railway Clock - an analog watchface for Garmin watches
 
-   Copyright 2023 Andreas Huggel
+   Copyright 2023 Andreas Huggel (ahuggel@gmx.net)
 
    Permission is hereby granted, free of charge, to any person obtaining a copy of this software
    and associated documentation files (the "Software"), to deal in the Software without 
