@@ -27,13 +27,13 @@ var settings as ClockSettings = new $.ClockSettings();
 
 //! This class maintains application settings and synchronises them to persistent storage.
 class ClockSettings {
-    enum { S_DARK_MODE_AUTO, S_DARK_MODE_OFF, S_DARK_MODE_ON }
     enum { S_DATE_DISPLAY_OFF, S_DATE_DISPLAY_DAY_ONLY, S_DATE_DISPLAY_WEEKDAY_AND_DAY }
-    enum { S_LOW_POWER_AUTO, S_LOW_POWER_DARK, S_LOW_POWER_LIGHT }
+    enum { S_DARK_MODE_SCHEDULED, S_DARK_MODE_OFF, S_DARK_MODE_ON }
+    enum { S_LOW_POWER_CARRYOVER, S_LOW_POWER_DARK, S_LOW_POWER_LIGHT, S_LOW_POWER_INVERT }
 
-    private var _darkModeOptions as Array<String> = ["Auto", "Off", "On"] as Array<String>;
     private var _dateDisplayOptions as Array<String> = ["Off", "Day Only", "Weekday and Day"] as Array<String>;
-    private var _lowPowerOptions as Array<String> = ["Auto", "Use Dark Mode", "Dark Mode Off"] as Array<String>;
+    private var _darkModeOptions as Array<String> = ["Scheduled", "Off", "On"] as Array<String>;
+    private var _lowPowerOptions as Array<String> = ["Carry Over", "Use Dark Mode", "Use Light Mode", "Invert"] as Array<String>;
     private var _darkModeIdx as Number;
     private var _dateDisplayIdx as Number;
     private var _lowPowerIdx as Number;
@@ -179,7 +179,7 @@ class SettingsMenu extends WatchUi.Menu2 {
         Menu2.addItem(new WatchUi.MenuItem(settings.getName("dateDisplay"), settings.getLabel("dateDisplay"), "dateDisplay", {}));
         Menu2.addItem(new WatchUi.MenuItem(settings.getName("darkMode"), settings.getLabel("darkMode"), "darkMode", {}));
         // Add menu items for the dark mode on and off times only if dark mode is set to "Auto"
-        if (settings.S_DARK_MODE_AUTO == settings.getValue("darkMode")) {
+        if (settings.S_DARK_MODE_SCHEDULED == settings.getValue("darkMode")) {
             Menu2.addItem(new WatchUi.MenuItem(settings.getName("dmOn"), settings.getLabel("dmOn"), "dmOn", {}));
             Menu2.addItem(new WatchUi.MenuItem(settings.getName("dmOff"), settings.getLabel("dmOff"), "dmOff", {}));
         }
@@ -231,8 +231,9 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 // Advance to the next option and show the selected option as the sub label
                 settings.setNext(id);
                 menuItem.setSubLabel(settings.getLabel(id));
-                // If "Auto" is selected, add menu items to set the dark mode on and off times, else delete them
-                if (settings.S_DARK_MODE_AUTO == settings.getValue(id)) {
+                // If "Scheduled" is selected, add menu items to set the dark mode on and off times, else delete them
+                if (settings.S_DARK_MODE_SCHEDULED == settings.getValue(id)) {
+                    // Delete and then re-add the low-power menu item, to keep it at the end
                     var idx = _menu.findItemById("lowPower");
                     if (-1 != idx) { _menu.deleteItem(idx); }
                     _menu.addItem(new WatchUi.MenuItem(settings.getName("dmOn"), settings.getLabel("dmOn"), "dmOn", {}));

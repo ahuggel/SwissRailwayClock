@@ -143,7 +143,8 @@ class ClockView extends WatchUi.WatchFace {
     //! Handle the update event. This function is called
     //! 1) every second when the device is awake,
     //! 2) every full minute in low-power mode, and
-    //! 3) it's also triggered when the device goes into low-power mode (from onEnterSleep()).
+    //! 3) it's also triggered when the device goes in or out of low-power mode
+    //!    (from onEnterSleep() and onExitSleep()).
     //!
     //! Depending on the power state of the device, we need to be more or less careful regarding
     //! the cost of (mainly) the drawing operations used. The processing logic is as follows.
@@ -170,7 +171,7 @@ class ClockView extends WatchUi.WatchFace {
 
         // Set the color mode
         switch (settings.getValue("darkMode")) {
-            case settings.S_DARK_MODE_AUTO:
+            case settings.S_DARK_MODE_SCHEDULED:
                 _colorMode = M_LIGHT;
                 var time = clockTime.hour * 60 + clockTime.min;
                 if (time >= settings.getValue("dmOn") or time < settings.getValue("dmOff")) {
@@ -186,13 +187,18 @@ class ClockView extends WatchUi.WatchFace {
         }
         if (!_isAwake) {
             switch (settings.getValue("lowPower")) {
-                case settings.S_LOW_POWER_AUTO:
+                case settings.S_LOW_POWER_CARRYOVER:
+                    // Use the high-power mode setting
                     break;
                 case settings.S_LOW_POWER_DARK:
                     _colorMode = M_DARK;
                     break;
                 case settings.S_LOW_POWER_LIGHT:
                     _colorMode = M_LIGHT;
+                    break;
+                case settings.S_LOW_POWER_INVERT:
+                    if (M_DARK == _colorMode) { _colorMode = M_LIGHT; }
+                    if (M_LIGHT == _colorMode) { _colorMode = M_DARK; }
                     break;
             }
         }
@@ -339,6 +345,7 @@ class ClockView extends WatchUi.WatchFace {
     //! This method is called when the device exits sleep mode
     public function onExitSleep() as Void {
         _isAwake = true;
+        WatchUi.requestUpdate();
     }
 
     //! Indicate if partial updates are on or off (only used with false)
