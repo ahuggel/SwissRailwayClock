@@ -44,7 +44,8 @@ class ClockView extends WatchUi.WatchFace {
     // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates)
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
-    private var _2Pi as Float;
+    private const TWO_PI as Float = 2 * Math.PI;
+    
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
     private var _colorMode as Number;
@@ -59,7 +60,6 @@ class ClockView extends WatchUi.WatchFace {
     public function initialize() {
         WatchFace.initialize();
 
-        _2Pi = 2 * Math.PI;
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
         _colorMode = M_LIGHT;
@@ -238,15 +238,15 @@ class ClockView extends WatchUi.WatchFace {
         // Draw tick marks around the edges of the screen
         targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < 60; i++) {
-            targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * _2Pi));
+            targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
         }
 
         // Draw the hour hand
-        var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * _2Pi;
+        var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
         targetDc.fillPolygon(rotateCoords(S_HOURHAND, hourHandAngle));
 
         // Draw the minute hand
-        targetDc.fillPolygon(rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * _2Pi));
+        targetDc.fillPolygon(rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI));
 
         if (!_isAwake) {
             // Output the offscreen buffer to the main display
@@ -273,7 +273,7 @@ class ClockView extends WatchUi.WatchFace {
     //! @param dc Device context
     //! @param second The current second 
     private function drawSecondHand(dc as Dc, second as Number) as Void {
-        var angle = second / 60.0 * _2Pi;
+        var angle = second / 60.0 * TWO_PI;
         // Compute the center of the second hand circle, at the tip of the second hand
         var sin = Math.sin(angle);
         var cos = Math.cos(angle);
