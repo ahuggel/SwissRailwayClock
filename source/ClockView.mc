@@ -246,13 +246,15 @@ class ClockView extends WatchUi.WatchFace {
             } else if (battery < 40.0 and batterySetting >= settings.S_BATTERY_WARN) {
                 var warnColor = [Graphics.COLOR_ORANGE, Graphics.COLOR_YELLOW] as Array<Number>;
                 targetDc.setColor(warnColor[_colorMode], Graphics.COLOR_TRANSPARENT);
-                targetDc.fillCircle(_width/2-radius*0.67, _clockRadius/2, radius);
-                targetDc.fillCircle(_width/2+radius*0.67, _clockRadius/2, radius);
+                var x = (battery - 20.0) / 20.0;
+                targetDc.fillCircle(_width/2-radius*x, _clockRadius/2, radius);
+                targetDc.fillCircle(_width/2+radius*x, _clockRadius/2, radius);
             } else if (batterySetting >= settings.S_BATTERY_ON) {
                 targetDc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
-                targetDc.fillCircle(_width/2-radius*1.33, _clockRadius/2, radius);
+                var x = 1 + (battery - 40.0) / 60.0;
+                targetDc.fillCircle(_width/2-radius*x, _clockRadius/2, radius);
                 targetDc.fillCircle(_width/2, _clockRadius/2, radius);
-                targetDc.fillCircle(_width/2+radius*1.33, _clockRadius/2, radius);
+                targetDc.fillCircle(_width/2+radius*x, _clockRadius/2, radius);
             }
         }
 
