@@ -235,6 +235,27 @@ class ClockView extends WatchUi.WatchFace {
                 break;
         }
 
+        // Draw the battery level indicator
+        var batterySetting = settings.getValue("battery");
+        if (batterySetting > settings.S_BATTERY_OFF) {
+            var battery = System.getSystemStats().battery;
+            var radius = Math.round(3.2 * _clockRadius / 50.0) as Number;
+            if (battery < 20.0 and batterySetting >= settings.S_BATTERY_ALERT) {
+                targetDc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+                targetDc.fillCircle(_width/2, _clockRadius/2, radius);
+            } else if (battery < 40.0 and batterySetting >= settings.S_BATTERY_WARN) {
+                var warnColor = [Graphics.COLOR_ORANGE, Graphics.COLOR_YELLOW] as Array<Number>;
+                targetDc.setColor(warnColor[_colorMode], Graphics.COLOR_TRANSPARENT);
+                targetDc.fillCircle(_width/2-radius*0.67, _clockRadius/2, radius);
+                targetDc.fillCircle(_width/2+radius*0.67, _clockRadius/2, radius);
+            } else if (batterySetting >= settings.S_BATTERY_ON) {
+                targetDc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+                targetDc.fillCircle(_width/2-radius*1.33, _clockRadius/2, radius);
+                targetDc.fillCircle(_width/2, _clockRadius/2, radius);
+                targetDc.fillCircle(_width/2+radius*1.33, _clockRadius/2, radius);
+            }
+        }
+
         // Draw tick marks around the edges of the screen
         targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < 60; i++) {
@@ -284,7 +305,7 @@ class ClockView extends WatchUi.WatchFace {
         var secondHandCoords = rotateCoords(S_SECONDHAND, angle);
 
         // Set the clipping region for the second hand
-        var clipCoords = [ 
+        var clipCoords = [
             secondHandCoords[0], secondHandCoords[1], secondHandCoords[2], secondHandCoords[3],
             [ circleCenter[0] - _secondCircleRadius, circleCenter[1] - _secondCircleRadius ],
             [ circleCenter[0] + _secondCircleRadius, circleCenter[1] - _secondCircleRadius ],
@@ -296,18 +317,10 @@ class ClockView extends WatchUi.WatchFace {
         var maxX = 0;
         var maxY = 0;
         for (var i = 0; i < clipCoords.size(); i++) {
-            if (clipCoords[i][0] < minX) {
-                minX = clipCoords[i][0];
-            }
-            if (clipCoords[i][1] < minY) {
-                minY = clipCoords[i][1];
-            }
-            if (clipCoords[i][0] > maxX) {
-                maxX = clipCoords[i][0];
-            }
-            if (clipCoords[i][1] > maxY) {
-                maxY = clipCoords[i][1];
-            }
+            if (clipCoords[i][0] < minX) { minX = clipCoords[i][0]; }
+            if (clipCoords[i][1] < minY) { minY = clipCoords[i][1]; }
+            if (clipCoords[i][0] > maxX) { maxX = clipCoords[i][0]; }
+            if (clipCoords[i][1] > maxY) { maxY = clipCoords[i][1]; }
         }
         // Add one pixel on each side for good measure
         dc.setClip(minX - 1, minY - 1, maxX + 1 - (minX - 1), maxY + 1 - (minY - 1));

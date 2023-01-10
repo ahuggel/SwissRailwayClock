@@ -66,7 +66,6 @@ class TimePicker extends WatchUi.Picker {
     // This is needed to show the title (on both, the watch and the sim) and clear the background (sim)
     public function onLayout(dc as Dc) as Void {
         dc.clearClip();
-        Picker.onLayout(dc);
     }
 }
 

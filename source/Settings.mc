@@ -27,13 +27,16 @@ var settings as ClockSettings = new $.ClockSettings();
 
 //! This class maintains application settings and synchronises them to persistent storage.
 class ClockSettings {
+    enum { S_BATTERY_OFF, S_BATTERY_ALERT, S_BATTERY_WARN, S_BATTERY_ON }
     enum { S_DATE_DISPLAY_OFF, S_DATE_DISPLAY_DAY_ONLY, S_DATE_DISPLAY_WEEKDAY_AND_DAY }
     enum { S_DARK_MODE_SCHEDULED, S_DARK_MODE_OFF, S_DARK_MODE_ON }
     enum { S_LOW_POWER_CARRYOVER, S_LOW_POWER_DARK, S_LOW_POWER_LIGHT, S_LOW_POWER_INVERT }
 
+    private var _batteryOptions as Array<String> = ["Off", "Alert Only", "Warnings Only", "On"] as Array<String>;
     private var _dateDisplayOptions as Array<String> = ["Off", "Day Only", "Weekday and Day"] as Array<String>;
     private var _darkModeOptions as Array<String> = ["Scheduled", "Off", "On"] as Array<String>;
     private var _lowPowerOptions as Array<String> = ["Carry Over", "Use Dark Mode", "Use Light Mode", "Invert"] as Array<String>;
+    private var _batteryIdx as Number;
     private var _darkModeIdx as Number;
     private var _dateDisplayIdx as Number;
     private var _lowPowerIdx as Number;
@@ -42,6 +45,10 @@ class ClockSettings {
 
     //! Constructor
     public function initialize() {
+        _batteryIdx = Storage.getValue("battery") as Number;
+        if (_batteryIdx == null) {
+            _batteryIdx = 0;
+        }
         _darkModeIdx = Storage.getValue("darkMode") as Number;
         if (_darkModeIdx == null) {
             _darkModeIdx = 0;
@@ -70,6 +77,9 @@ class ClockSettings {
     public function getLabel(id as String) as String {
         var option = "";
         switch (id) {
+            case "battery":
+                option = _batteryOptions[_batteryIdx];
+                break;
             case "darkMode":
                 option = _darkModeOptions[_darkModeIdx];
                 break;
@@ -95,6 +105,9 @@ class ClockSettings {
     public function getValue(id as String) as Number {
         var value = -1;
         switch (id) {
+            case "battery":
+                value = _batteryIdx;
+                break;
             case "darkMode":
                 value = _darkModeIdx;
                 break;
@@ -119,6 +132,9 @@ class ClockSettings {
     public function getName(id as String) as String {
         var name = "";
         switch (id) {
+            case "battery":
+                name = "Battery Level";
+                break;
             case "darkMode":
                 name = "Dark Mode";
                 break;
@@ -142,6 +158,10 @@ class ClockSettings {
     //!@param id Setting
     public function setNext(id as String) as Void {
         switch (id) {
+            case "battery":
+                _batteryIdx = (_batteryIdx + 1) % _batteryOptions.size();
+                Storage.setValue(id, _batteryIdx);
+                break;
             case "darkMode":
                 _darkModeIdx = (_darkModeIdx + 1) % _darkModeOptions.size();
                 Storage.setValue(id, _darkModeIdx);
@@ -176,6 +196,7 @@ class SettingsMenu extends WatchUi.Menu2 {
     //! Constructor
     public function initialize() {
         Menu2.initialize({:title=>"Settings"});
+        Menu2.addItem(new WatchUi.MenuItem(settings.getName("battery"), settings.getLabel("battery"), "battery", {}));
         Menu2.addItem(new WatchUi.MenuItem(settings.getName("dateDisplay"), settings.getLabel("dateDisplay"), "dateDisplay", {}));
         Menu2.addItem(new WatchUi.MenuItem(settings.getName("darkMode"), settings.getLabel("darkMode"), "darkMode", {}));
         // Add menu items for the dark mode on and off times only if dark mode is set to "Auto"
@@ -221,6 +242,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     public function onSelect(menuItem as MenuItem) as Void {
         var id = menuItem.getId() as String;
         switch (id) {
+            case "battery":
             case "dateDisplay":
             case "lowPower":
                 // Advance to the next option and show the selected option as the sub label
