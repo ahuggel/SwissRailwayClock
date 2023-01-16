@@ -21,7 +21,7 @@ I read lots of very helpful posts in the Garmin Developer forum.
 The [Swiss Railway Clock] design was created by Hans Hilfiker in the 1940s and 1950s and it continues to be used at
 every railway station in Switzerland until today.
 
-[Swiss Railway Clock]: https://www.eguide.ch/de/objekt/sbb-bahnhofsuhr/
+[Swiss Railway Clock]: https://en.wikipedia.org/wiki/Swiss_railway_clock
 
 ## License
 
