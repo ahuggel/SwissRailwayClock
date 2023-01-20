@@ -48,6 +48,7 @@ class ClockView extends WatchUi.WatchFace {
     
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
+    private var _hasAlpha as Boolean;
     private var _colorMode as Number;
     private var _screenShape as Number;
     private var _width as Number;
@@ -62,6 +63,7 @@ class ClockView extends WatchUi.WatchFace {
 
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
+        _hasAlpha = Graphics has :createColor;
         _colorMode = M_LIGHT;
         _screenShape = System.getDeviceSettings().screenShape;
         _width = System.getDeviceSettings().screenWidth;
@@ -264,12 +266,35 @@ class ClockView extends WatchUi.WatchFace {
             targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
         }
 
-        // Draw the hour hand
+        // Draw the clock hands. All shadows first (it looks better that way), then the actual hands.
+        // As we need all the hand coordinates for the shadows, this is now a bit messy.
         var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
-        targetDc.fillPolygon(rotateCoords(S_HOURHAND, hourHandAngle));
+        var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
+        var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
+        var secondHandCoords = rotateSecondHandCoords(clockTime.sec);
 
-        // Draw the minute hand
-        targetDc.fillPolygon(rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI));
+        // Draw shadows on devices which support an alpha channel, when awake and in light color mode
+        if (_hasAlpha and _isAwake and M_DARK != _colorMode) {
+            var shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77);
+            dc.setFill(shadowColor);
+
+            // Draw the hour hand shadow
+            var shadow = shadowCoords(hourHandCoords, 7);
+            dc.fillPolygon(shadow);
+
+            // Draw the minute hand shadow
+            shadow = shadowCoords(minuteHandCoords, 9);
+            dc.fillPolygon(shadow);
+
+            // Draw the second hand shadow
+            shadow = shadowCoords(secondHandCoords, 10);
+            drawSecondHand(dc, shadow);
+        }
+
+        // Draw the hour and minute hands
+        targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+        targetDc.fillPolygon(hourHandCoords);
+        targetDc.fillPolygon(minuteHandCoords);
 
         if (!_isAwake) {
             // Output the offscreen buffer to the main display
@@ -277,7 +302,9 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         if (_isAwake or _doPartialUpdates) {
-            drawSecondHand(dc, clockTime.sec);
+            setSecondHandClippingRegion(dc, secondHandCoords);
+            dc.setColor(_colors[_colorMode][C_SECONDS], Graphics.COLOR_TRANSPARENT);        
+            drawSecondHand(dc, secondHandCoords);
         }
     }
 
@@ -289,13 +316,13 @@ class ClockView extends WatchUi.WatchFace {
         // Note that this will only affect the clipped region, to delete the second hand.
         dc.drawBitmap(0, 0, _offscreenBuffer);
         var clockTime = System.getClockTime();
-        drawSecondHand(dc, clockTime.sec);
+        var secondHandCoords = rotateSecondHandCoords(clockTime.sec);
+        setSecondHandClippingRegion(dc, secondHandCoords);
+        dc.setColor(_colors[_colorMode][C_SECONDS], Graphics.COLOR_TRANSPARENT);
+        drawSecondHand(dc, secondHandCoords);
     }
 
-    //! Set the clipping region and draw the second hand
-    //! @param dc Device context
-    //! @param second The current second 
-    private function drawSecondHand(dc as Dc, second as Number) as Void {
+    private function rotateSecondHandCoords(second as Number) as Array< Array<Number> > {
         var angle = second / 60.0 * TWO_PI;
         // Compute the center of the second hand circle, at the tip of the second hand
         var sin = Math.sin(angle);
@@ -304,15 +331,19 @@ class ClockView extends WatchUi.WatchFace {
             (_screenCenter[0] + (_shapes[S_SECONDHAND][0] + _shapes[S_SECONDHAND][3]) * sin + 0.5).toNumber(),
             (_screenCenter[1] - (_shapes[S_SECONDHAND][0] + _shapes[S_SECONDHAND][3]) * cos + 0.5).toNumber() 
         ] as Array<Number>;
-        var secondHandCoords = rotateCoords(S_SECONDHAND, angle);
+        var coords = rotateCoords(S_SECONDHAND, angle);
+        return [ coords[0], coords[1], coords[2], coords[3], circleCenter ] as Array< Array<Number> >;
+    }
 
-        // Set the clipping region for the second hand
+    // Set the clipping region for the second hand
+    private function setSecondHandClippingRegion(dc as Dc, coords as Array< Array<Number> >) as Void {
+        // coords[4] is the centre of the second hand circle
         var clipCoords = [
-            secondHandCoords[0], secondHandCoords[1], secondHandCoords[2], secondHandCoords[3],
-            [ circleCenter[0] - _secondCircleRadius, circleCenter[1] - _secondCircleRadius ],
-            [ circleCenter[0] + _secondCircleRadius, circleCenter[1] - _secondCircleRadius ],
-            [ circleCenter[0] + _secondCircleRadius, circleCenter[1] + _secondCircleRadius ],
-            [ circleCenter[0] - _secondCircleRadius, circleCenter[1] + _secondCircleRadius ]
+            coords[0], coords[1], coords[2], coords[3],
+            [ coords[4][0] - _secondCircleRadius, coords[4][1] - _secondCircleRadius ],
+            [ coords[4][0] + _secondCircleRadius, coords[4][1] - _secondCircleRadius ],
+            [ coords[4][0] + _secondCircleRadius, coords[4][1] + _secondCircleRadius ],
+            [ coords[4][0] - _secondCircleRadius, coords[4][1] + _secondCircleRadius ]
         ] as Array< Array<Number> >;
         var minX = 65536;
         var minY = 65536;
@@ -326,11 +357,12 @@ class ClockView extends WatchUi.WatchFace {
         }
         // Add one pixel on each side for good measure
         dc.setClip(minX - 1, minY - 1, maxX + 1 - (minX - 1), maxY + 1 - (minY - 1));
+    }
 
+    private function drawSecondHand(dc as Dc, coords as Array< Array<Number> >) as Void {
         // Draw the second hand
-        dc.setColor(_colors[_colorMode][C_SECONDS], Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon(secondHandCoords);
-        dc.fillCircle(circleCenter[0], circleCenter[1], _secondCircleRadius);
+        dc.fillPolygon([ coords[0], coords[1], coords[2], coords[3] ] as Array< Array<Number> >);
+        dc.fillCircle(coords[4][0], coords[4][1], _secondCircleRadius);
     }
 
     //! Rotate the four corner coordinates of a polygon used to draw a watch hand or a tick mark.
@@ -348,6 +380,19 @@ class ClockView extends WatchUi.WatchFace {
             var x = (_coords[idx] * cos - _coords[idx + 1] * sin + 0.5).toNumber();
             var y = (_coords[idx] * sin + _coords[idx + 1] * cos + 0.5).toNumber();
             result[i] = [_screenCenter[0] + x, _screenCenter[1] + y];
+        }
+        return result;
+    }
+
+    private function shadowCoords(coords as Array< Array<Number> >, len as Number) as Array< Array<Number> > {
+        var size = coords.size();
+        var result = new Array< Array<Number> >[size];
+        // Direction to move points, clockwise from 12 o'clock
+        var angle = 3 * Math.PI / 4;
+        var dx = Math.sin(angle) * len;
+        var dy = -Math.cos(angle) * len;
+        for (var i = 0; i < size; i++) {
+            result[i] = [coords[i][0] + dx, coords[i][1] + dy];
         }
         return result;
     }
