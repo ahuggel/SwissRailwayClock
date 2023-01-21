@@ -273,7 +273,7 @@ class ClockView extends WatchUi.WatchFace {
             }
         }
 
-        // Draw tick marks around the edges of the screen
+        // Draw tick marks around the edge of the screen
         targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < 60; i++) {
             targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
