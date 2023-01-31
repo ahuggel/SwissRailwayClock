@@ -236,27 +236,7 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         // Draw the battery level indicator
-        var batterySetting = settings.getValue("battery");
-        if (batterySetting > settings.S_BATTERY_OFF) {
-            var battery = System.getSystemStats().battery;
-            var radius = Math.round(3.2 * _clockRadius / 50.0) as Number;
-            if (battery < 20.0 and batterySetting >= settings.S_BATTERY_ALERT) {
-                targetDc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-                targetDc.fillCircle(_width/2, _clockRadius/2, radius);
-            } else if (battery < 40.0 and batterySetting >= settings.S_BATTERY_WARN) {
-                var warnColor = [Graphics.COLOR_ORANGE, Graphics.COLOR_YELLOW] as Array<Number>;
-                targetDc.setColor(warnColor[_colorMode], Graphics.COLOR_TRANSPARENT);
-                var x = (battery - 20.0) / 20.0;
-                targetDc.fillCircle(_width/2-radius*x, _clockRadius/2, radius);
-                targetDc.fillCircle(_width/2+radius*x, _clockRadius/2, radius);
-            } else if (batterySetting >= settings.S_BATTERY_ON) {
-                targetDc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
-                var x = 1 + (battery - 40.0) / 60.0;
-                targetDc.fillCircle(_width/2-radius*x, _clockRadius/2, radius);
-                targetDc.fillCircle(_width/2, _clockRadius/2, radius);
-                targetDc.fillCircle(_width/2+radius*x, _clockRadius/2, radius);
-            }
-        }
+        drawBatteryIndicator(targetDc);
 
         // Draw tick marks around the edges of the screen
         targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
@@ -290,6 +270,23 @@ class ClockView extends WatchUi.WatchFace {
         dc.drawBitmap(0, 0, _offscreenBuffer);
         var clockTime = System.getClockTime();
         drawSecondHand(dc, clockTime.sec);
+    }
+
+    //! This method is called when the device re-enters sleep mode
+    public function onEnterSleep() as Void {
+        _isAwake = false;
+        WatchUi.requestUpdate();
+    }
+
+    //! This method is called when the device exits sleep mode
+    public function onExitSleep() as Void {
+        _isAwake = true;
+        WatchUi.requestUpdate();
+    }
+
+    //! Indicate if partial updates are on or off (only used with false)
+    public function setPartialUpdates(doPartialUpdates as Boolean) as Void {
+        _doPartialUpdates = doPartialUpdates;
     }
 
     //! Set the clipping region and draw the second hand
@@ -352,21 +349,102 @@ class ClockView extends WatchUi.WatchFace {
         return result;
     }
 
-    //! This method is called when the device re-enters sleep mode
-    public function onEnterSleep() as Void {
-        _isAwake = false;
-        WatchUi.requestUpdate();
+    private function drawBatteryIndicator(dc as Dc) as Void {
+        var batterySetting = settings.getValue("battery");
+        if (batterySetting > settings.S_BATTERY_OFF) {
+            var level = System.getSystemStats().battery;
+            if (level < 40.0 and batterySetting >= settings.S_BATTERY_CLASSIC_WARN) {
+                switch (batterySetting) {
+                    case settings.S_BATTERY_CLASSIC:
+                    case settings.S_BATTERY_CLASSIC_WARN:
+                        drawClassicBatteryIndicator(dc, level);
+                        break;
+                    case settings.S_BATTERY_MODERN:
+                    case settings.S_BATTERY_MODERN_WARN:
+                    case settings.S_BATTERY_HYBRID:
+                        drawModernBatteryIndicator(dc, level);
+                        break;
+                }
+            } else if (batterySetting >= settings.S_BATTERY_CLASSIC) {
+                switch (batterySetting) {
+                    case settings.S_BATTERY_CLASSIC:
+                    case settings.S_BATTERY_HYBRID:
+                        drawClassicBatteryIndicator(dc, level);
+                        break;
+                    case settings.S_BATTERY_MODERN:
+                        drawModernBatteryIndicator(dc, level);
+                        break;
+                }
+            }
+        }
     }
 
-    //! This method is called when the device exits sleep mode
-    public function onExitSleep() as Void {
-        _isAwake = true;
-        WatchUi.requestUpdate();
+    private function drawModernBatteryIndicator(dc as Dc, level as Float) as Void {
+        var radius = (3.2 * _clockRadius / 50.0 + 0.5).toNumber();
+        if (level < 20) {
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(_width/2, _clockRadius/2, radius);
+
+            dc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
+            var pts = [ [_width/2, _clockRadius/2],
+                        [_width/2, _clockRadius/2 - radius],
+                        [_width/2 + radius, _clockRadius/2 - radius],
+                        [_width/2 + radius, _clockRadius/2 - radius/2] ] as Array< Array<Number> >;
+            dc.fillPolygon(pts);
+        }
+        else if (level < 40) {
+            var warnColor = [Graphics.COLOR_ORANGE, Graphics.COLOR_YELLOW] as Array<Number>;
+            dc.setColor(warnColor[_colorMode], Graphics.COLOR_TRANSPARENT);
+            var x = (level - 20.0) / 20.0;
+            dc.fillCircle(_width/2-radius*x, _clockRadius/2, radius);
+            dc.fillCircle(_width/2+radius*x, _clockRadius/2, radius);
+        }
+        else {
+            dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+            var a = (radius * (level - 40.0) / 60.0 + 0.5).toNumber();
+            dc.fillCircle(_width/2-radius-a, _clockRadius/2, radius);
+            dc.fillEllipse(_width/2, _clockRadius/2, a, radius);
+            dc.fillCircle(_width/2+radius+a, _clockRadius/2, radius);
+        }
     }
 
-    //! Indicate if partial updates are on or off (only used with false)
-    public function setPartialUpdates(doPartialUpdates as Boolean) as Void {
-        _doPartialUpdates = doPartialUpdates;
+    private function drawClassicBatteryIndicator(dc as Dc, level as Float) as Void {
+
+        // Only tested on 260x260 displays: (x, y) = (116, 59), width = 32, height = 13
+        // TODO: This needs to be generic enough to also run on other screen sizes
+        var pw = 2;
+        var width = (12.4 * _clockRadius / 50.0 + 0.5).toNumber();
+        var height = (width / 2.3).toNumber();
+        var x = _width/2 - width/2 + pw;
+        var y = _clockRadius/2 - height/2;
+//        System.println("(x, y) = (" + x + ", " + y + ")");
+//        System.println("width = " + width + ", height = " + height);
+        var frameColor = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY] as Array<Number>;
+        dc.setColor(frameColor[_colorMode], Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(pw);
+        dc.drawRoundedRectangle(x-1, y-1, width+2, height+2, 1);
+        dc.setPenWidth(1);
+        dc.fillRectangle(x+width+2, y+height/2-3, 2, 6); // TODO: Dimensions shouldn't be hardcoded
+
+        var warnColor = [Graphics.COLOR_ORANGE, Graphics.COLOR_YELLOW] as Array<Number>;
+        var color = Graphics.COLOR_GREEN;
+        if (level < 40.0) { color = warnColor[_colorMode]; }
+        if (level < 20.0) { color = Graphics.COLOR_RED; }
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+
+        var bw = (width - 4) / 5;
+        var bh = height - 2 - pw/2;
+        level = (level + 0.5).toNumber();
+        var fb = (level/20).toNumber();
+        for (var i=0; i < fb; i++) {
+            dc.fillRectangle(x+1 + i*(bw+1), y+1, bw, bh);
+        }
+        var bl = level % 20 * bw / 20;
+        System.println("bw = " + bw);
+        System.println("bl = " + bl);
+        if (bl > 0) {
+            dc.fillRectangle(x+1 + fb*(bw+1), y+1, bl, bh);
+        }
     }
 }
 

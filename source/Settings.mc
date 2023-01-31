@@ -27,12 +27,12 @@ var settings as ClockSettings = new $.ClockSettings();
 
 //! This class maintains application settings and synchronises them to persistent storage.
 class ClockSettings {
-    enum { S_BATTERY_OFF, S_BATTERY_ALERT, S_BATTERY_WARN, S_BATTERY_ON }
+    enum { S_BATTERY_OFF, S_BATTERY_CLASSIC_WARN, S_BATTERY_MODERN_WARN, S_BATTERY_CLASSIC, S_BATTERY_MODERN, S_BATTERY_HYBRID }
     enum { S_DATE_DISPLAY_OFF, S_DATE_DISPLAY_DAY_ONLY, S_DATE_DISPLAY_WEEKDAY_AND_DAY }
     enum { S_DARK_MODE_SCHEDULED, S_DARK_MODE_OFF, S_DARK_MODE_ON }
     enum { S_LOW_POWER_CARRYOVER, S_LOW_POWER_DARK, S_LOW_POWER_LIGHT, S_LOW_POWER_INVERT }
 
-    private var _batteryOptions as Array<String> = ["Off", "Alert Only", "Warnings Only", "On"] as Array<String>;
+    private var _batteryOptions as Array<String> = ["Off", "Classic Warnings", "Modern Warnings", "Classic", "Modern", "Hybrid"] as Array<String>;
     private var _dateDisplayOptions as Array<String> = ["Off", "Day Only", "Weekday and Day"] as Array<String>;
     private var _darkModeOptions as Array<String> = ["Scheduled", "Off", "On"] as Array<String>;
     private var _lowPowerOptions as Array<String> = ["Carry Over", "Use Dark Mode", "Use Light Mode", "Invert"] as Array<String>;
@@ -272,7 +272,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
             case "dmOff":
                 // Let the user select the time
                 WatchUi.pushView(new TimePicker(id), new TimePickerDelegate(id), WatchUi.SLIDE_IMMEDIATE);
-            break;
+                break;
         }
   	}
 }
