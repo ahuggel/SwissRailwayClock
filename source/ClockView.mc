@@ -23,7 +23,7 @@
     TODO:
     - Do we really need to differentiate between awake and not awake in onUpdate?
       Why not just always use the offscreen buffer?
-    - move the shadow shapes by a percentage instead of a number of pixels
+    - Settings migration: make sure a setting still works after the settings code changed
 */
 
 import Toybox.Graphics;
@@ -251,7 +251,33 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         // Draw the battery level indicator
-        drawBatteryIndicator(targetDc);
+        var batterySetting = settings.getValue("battery");
+        if (batterySetting > settings.S_BATTERY_OFF) {
+            var level = System.getSystemStats().battery;
+            if (level < 40.0 and batterySetting >= settings.S_BATTERY_CLASSIC_WARN) {
+                switch (batterySetting) {
+                    case settings.S_BATTERY_CLASSIC:
+                    case settings.S_BATTERY_CLASSIC_WARN:
+                        drawClassicBatteryIndicator(targetDc, level);
+                        break;
+                    case settings.S_BATTERY_MODERN:
+                    case settings.S_BATTERY_MODERN_WARN:
+                    case settings.S_BATTERY_HYBRID:
+                        drawModernBatteryIndicator(targetDc, level);
+                        break;
+                }
+            } else if (batterySetting >= settings.S_BATTERY_CLASSIC) {
+                switch (batterySetting) {
+                    case settings.S_BATTERY_CLASSIC:
+                    case settings.S_BATTERY_HYBRID:
+                        drawClassicBatteryIndicator(targetDc, level);
+                        break;
+                    case settings.S_BATTERY_MODERN:
+                        drawModernBatteryIndicator(targetDc, level);
+                        break;
+                }
+            }
+        }
 
         // Draw tick marks around the edge of the screen
         targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
@@ -259,29 +285,20 @@ class ClockView extends WatchUi.WatchFace {
             targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
         }
 
-        // Draw the clock hands. All shadows first (it looks better that way), then the actual hands.
-        // As we need all the hand coordinates for the shadows, this is now a bit messy.
+        // Draw the clock hands with shadows. All shadows first (it looks better that way), then the actual
+        // hands. As we need all the hand coordinates for the shadows, this is now a bit messy.
         var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
         var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
         var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
         var secondHandCoords = rotateSecondHandCoords(clockTime.sec / 60.0 * TWO_PI);
 
-        // Draw shadows on devices which support an alpha channel, when awake and in light color mode
+        // Draw hand shadows on devices which support an alpha channel, when awake and in light color mode
         if (_hasAlpha and _isAwake and M_DARK != _colorMode) {
             var shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77);
             dc.setFill(shadowColor);
-
-            // Draw the hour hand shadow
-            var shadow = shadowCoords(hourHandCoords, 7);
-            dc.fillPolygon(shadow);
-
-            // Draw the minute hand shadow
-            shadow = shadowCoords(minuteHandCoords, 9);
-            dc.fillPolygon(shadow);
-
-            // Draw the second hand shadow
-            shadow = shadowCoords(secondHandCoords, 10);
-            drawSecondHand(dc, shadow);
+            dc.fillPolygon(shadowCoords(hourHandCoords, 7));
+            dc.fillPolygon(shadowCoords(minuteHandCoords, 9));
+            drawSecondHand(dc, shadowCoords(secondHandCoords, 10));
         }
 
         // Draw the hour and minute hands
@@ -392,6 +409,7 @@ class ClockView extends WatchUi.WatchFace {
         return result;
     }
 
+    // TODO: move the shadow shapes by a percentage instead of a number of pixels
     private function shadowCoords(coords as Array< Array<Number> >, len as Number) as Array< Array<Number> > {
         var size = coords.size();
         var result = new Array< Array<Number> >[size];
@@ -405,48 +423,19 @@ class ClockView extends WatchUi.WatchFace {
         return result;
     }
 
-    private function drawBatteryIndicator(dc as Dc) as Void {
-        var batterySetting = settings.getValue("battery");
-        if (batterySetting > settings.S_BATTERY_OFF) {
-            var level = System.getSystemStats().battery;
-            if (level < 40.0 and batterySetting >= settings.S_BATTERY_CLASSIC_WARN) {
-                switch (batterySetting) {
-                    case settings.S_BATTERY_CLASSIC:
-                    case settings.S_BATTERY_CLASSIC_WARN:
-                        drawClassicBatteryIndicator(dc, level);
-                        break;
-                    case settings.S_BATTERY_MODERN:
-                    case settings.S_BATTERY_MODERN_WARN:
-                    case settings.S_BATTERY_HYBRID:
-                        drawModernBatteryIndicator(dc, level);
-                        break;
-                }
-            } else if (batterySetting >= settings.S_BATTERY_CLASSIC) {
-                switch (batterySetting) {
-                    case settings.S_BATTERY_CLASSIC:
-                    case settings.S_BATTERY_HYBRID:
-                        drawClassicBatteryIndicator(dc, level);
-                        break;
-                    case settings.S_BATTERY_MODERN:
-                        drawModernBatteryIndicator(dc, level);
-                        break;
-                }
-            }
-        }
-    }
-
     private function drawModernBatteryIndicator(dc as Dc, level as Float) as Void {
         var radius = (3.2 * _clockRadius / 50.0 + 0.5).toNumber();
         if (level < 20) {
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(_width/2, _clockRadius/2, radius);
-
+/*
             dc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
             var pts = [ [_width/2, _clockRadius/2],
                         [_width/2, _clockRadius/2 - radius],
                         [_width/2 + radius, _clockRadius/2 - radius],
                         [_width/2 + radius, _clockRadius/2 - radius/2] ] as Array< Array<Number> >;
             dc.fillPolygon(pts);
+*/
         }
         else if (level < 40) {
             var warnColor = [Graphics.COLOR_ORANGE, Graphics.COLOR_YELLOW] as Array<Number>;
@@ -470,12 +459,12 @@ class ClockView extends WatchUi.WatchFace {
         // TODO: This needs to be generic enough to also run on other screen sizes
         var pw = 2;
         var width = (12.4 * _clockRadius / 50.0 + 0.5).toNumber();
-        var height = (width / 2.3).toNumber();
+        var height = (width / 2.2).toNumber();
         var x = _width/2 - width/2 + pw;
         var y = _clockRadius/2 - height/2;
 //        System.println("(x, y) = (" + x + ", " + y + ")");
 //        System.println("width = " + width + ", height = " + height);
-        var frameColor = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY] as Array<Number>;
+        var frameColor = [Graphics.COLOR_DK_GRAY, Graphics.COLOR_LT_GRAY] as Array<Number>;
         dc.setColor(frameColor[_colorMode], Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(pw);
         dc.drawRoundedRectangle(x-1, y-1, width+2, height+2, 1);
