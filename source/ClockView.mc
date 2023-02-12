@@ -295,6 +295,7 @@ class ClockView extends WatchUi.WatchFace {
         // Draw hand shadows on devices which support an alpha channel, when awake and in light color mode
         if (_hasAlpha and _isAwake and M_DARK != _colorMode) {
             var shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77);
+            // TODO: Need to check API version for setFill, _hasAlpha doesn't seem to be enough (Venu Sq 2)
             dc.setFill(shadowColor);
             dc.fillPolygon(shadowCoords(hourHandCoords, 7));
             dc.fillPolygon(shadowCoords(minuteHandCoords, 9));
@@ -454,41 +455,45 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     private function drawClassicBatteryIndicator(dc as Dc, level as Float) as Void {
+        // Dimensions of the battery level indicator, based on percentages of the clock diameter
+        var pw = (1.2 * _clockRadius / 50.0 + 0.5).toNumber(); // pen size for the battery rectangle 
+        if (0 == pw % 2) { pw += 1; }                          // make sure pw is an odd number
+        var bw = (1.9 * _clockRadius / 50.0 + 0.5).toNumber(); // width of the battery level segments
+        var bh = (4.2 * _clockRadius / 50.0 + 0.5).toNumber(); // height of the battery level segments
+        var ts = (0.4 * _clockRadius / 50.0 + 0.5).toNumber(); // tiny space around everything
+        var cw = pw;                                           // width of the little knob on the right side of the battery
+        var ch = (2.3 * _clockRadius / 50.0 + 0.5).toNumber(); // height of the little knob
 
-        // Only tested on 260x260 displays: (x, y) = (116, 59), width = 32, height = 13
-        // TODO: This needs to be generic enough to also run on other screen sizes
-        var pw = 2;
-        var width = (12.4 * _clockRadius / 50.0 + 0.5).toNumber();
-        var height = (width / 2.2).toNumber();
-        var x = _width/2 - width/2 + pw;
+        // Draw the battery shape
+        var width = 5*bw + 6*ts + pw+1;
+        var height = bh + 2*ts + pw+1;
+        var x = _width/2 - width/2 + pw/2;
         var y = _clockRadius/2 - height/2;
-//        System.println("(x, y) = (" + x + ", " + y + ")");
-//        System.println("width = " + width + ", height = " + height);
-        var frameColor = [Graphics.COLOR_DK_GRAY, Graphics.COLOR_LT_GRAY] as Array<Number>;
+        var frameColor = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY] as Array<Number>;
         dc.setColor(frameColor[_colorMode], Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(pw);
-        dc.drawRoundedRectangle(x-1, y-1, width+2, height+2, 1);
+        dc.drawRoundedRectangle(x, y, width, height, pw);
         dc.setPenWidth(1);
-        dc.fillRectangle(x+width+2, y+height/2-3, 2, 6); // TODO: Dimensions shouldn't be hardcoded
+        if (1 == height % 2 and 0 == ch % 2) { ch += 1; }      // make sure both, the battery rectangle height and the knob 
+        if (0 == height % 2 and 1 == ch % 2) { ch += 1; }      // height, are odd, or both are even
+        dc.fillRoundedRectangle(x + width + (pw-1)/2 + ts, y + height/2 - ch/2, cw, ch, (cw-1)/2);
 
-        var warnColor = [Graphics.COLOR_ORANGE, Graphics.COLOR_YELLOW] as Array<Number>;
+        // Draw battery level segments according to the battery level
         var color = Graphics.COLOR_GREEN;
+        var warnColor = [Graphics.COLOR_ORANGE, Graphics.COLOR_YELLOW] as Array<Number>;
         if (level < 40.0) { color = warnColor[_colorMode]; }
         if (level < 20.0) { color = Graphics.COLOR_RED; }
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-
-        var bw = (width - 4) / 5;
-        var bh = height - 2 - pw/2;
         level = (level + 0.5).toNumber();
+        var xb = x + (pw-1)/2 + 1 + ts;
+        var yb = y + (pw-1)/2 + 1 + ts;
         var fb = (level/20).toNumber();
         for (var i=0; i < fb; i++) {
-            dc.fillRectangle(x+1 + i*(bw+1), y+1, bw, bh);
+            dc.fillRectangle(xb + i*(bw+ts), yb, bw, bh);
         }
         var bl = level % 20 * bw / 20;
-//        System.println("bw = " + bw);
-//        System.println("bl = " + bl);
         if (bl > 0) {
-            dc.fillRectangle(x+1 + fb*(bw+1), y+1, bl, bh);
+            dc.fillRectangle(xb + fb*(bw+ts), yb, bl, bh);
         }
     }
 }
