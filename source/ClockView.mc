@@ -58,6 +58,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
     private var _hasAlpha as Boolean;
+    private var _hasAntiAlias as Boolean;
     private var _colorMode as Number;
     private var _screenShape as Number;
     private var _width as Number;
@@ -72,7 +73,8 @@ class ClockView extends WatchUi.WatchFace {
 
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
-        _hasAlpha = Graphics has :createColor;
+        _hasAlpha = (Toybox.Graphics has :createColor);
+        _hasAntiAlias = (Toybox.Graphics.Dc has :setAntiAlias);
         _colorMode = M_LIGHT;
         _screenShape = System.getDeviceSettings().screenShape;
         _width = System.getDeviceSettings().screenWidth;
@@ -143,12 +145,6 @@ class ClockView extends WatchUi.WatchFace {
     //! Load resources and configure the layout of the watchface for this device
     //! @param dc Device context
     public function onLayout(dc as Dc) as Void {
-        // If available, enable anti-aliasing for both, the main display and the off-screen buffer 
-        if (Toybox.Graphics.Dc has :setAntiAlias) {
-            dc.setAntiAlias(true);
-            var offscreenDc = _offscreenBuffer.getDc();
-            offscreenDc.setAntiAlias(true);
-        }
     }
 
     //! Called when this View is brought to the foreground. Restore the state of this view and
@@ -177,11 +173,13 @@ class ClockView extends WatchUi.WatchFace {
     //!
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
+        if (_hasAntiAlias) { dc.setAntiAlias(true); }
         dc.clearClip();
         var targetDc = dc;
         if (!_isAwake) {
             // Only use the buffer in low-power mode
             targetDc = _offscreenBuffer.getDc();
+            if (_hasAntiAlias) { targetDc.setAntiAlias(true); }
         }
         var clockTime = System.getClockTime();
 
@@ -323,6 +321,7 @@ class ClockView extends WatchUi.WatchFace {
     //! in low-power mode. See onUpdate() for the full story.
     //! @param dc Device context
     public function onPartialUpdate(dc as Dc) as Void {
+        if (_hasAntiAlias) { dc.setAntiAlias(true); } // TODO: Too expensive for the 7X :(
         // Output the offscreen buffer to the main display and draw the second hand.
         // Note that this will only affect the clipped region, to delete the second hand.
         dc.drawBitmap(0, 0, _offscreenBuffer);
