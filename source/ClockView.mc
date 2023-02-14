@@ -73,7 +73,7 @@ class ClockView extends WatchUi.WatchFace {
 
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
-        _hasAlpha = (Toybox.Graphics has :createColor);
+        _hasAlpha = (Toybox.Graphics has :createColor) and (Toybox.Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasAntiAlias = (Toybox.Graphics.Dc has :setAntiAlias);
         _colorMode = M_LIGHT;
         _screenShape = System.getDeviceSettings().screenShape;
@@ -162,14 +162,16 @@ class ClockView extends WatchUi.WatchFace {
     //! the cost of (mainly) the drawing operations used. The processing logic is as follows.
     //!
     //! When awake: 
-    //! onUpdate(): Draw the entire screen every second, directly on the main display.
+    //! onUpdate(): Draw the entire screen every second, directly on the main display. Set anti 
+    //!             aliasing if it is available.
     //!
     //! In low-power mode:
     //! onUpdate(): Draw the screen into the off-screen buffer and then output the buffer
     //!             to the main display. If partial updates are enabled, also draw the second 
-    //!             hand, directly on the main display.
+    //!             hand, directly on the main display. Set anti aliasing if it is available.
     //! onPartialUpdate(): Use (part of) the off-screen buffer to blank out the second hand and 
     //!             re-draw the second hand at the new position, directly on the main display.
+    //!             Don't use anti aliasing, as it is too expensive on larger displays.
     //!
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
@@ -293,7 +295,6 @@ class ClockView extends WatchUi.WatchFace {
         // Draw hand shadows on devices which support an alpha channel, when awake and in light color mode
         if (_hasAlpha and _isAwake and M_DARK != _colorMode) {
             var shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77);
-            // TODO: Need to check API version for setFill, _hasAlpha doesn't seem to be enough (Venu Sq 2)
             dc.setFill(shadowColor);
             dc.fillPolygon(shadowCoords(hourHandCoords, 7));
             dc.fillPolygon(shadowCoords(minuteHandCoords, 9));
@@ -318,10 +319,10 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     //! Handle the partial update event. This function is called every second when the device is
-    //! in low-power mode. See onUpdate() for the full story.
+    //! in low-power mode. See onUpdate() for the full story. We don't use antialiasing here, as
+    //! it is too expensive on larger displays.
     //! @param dc Device context
     public function onPartialUpdate(dc as Dc) as Void {
-        if (_hasAntiAlias) { dc.setAntiAlias(true); } // TODO: Too expensive for the 7X :(
         // Output the offscreen buffer to the main display and draw the second hand.
         // Note that this will only affect the clipped region, to delete the second hand.
         dc.drawBitmap(0, 0, _offscreenBuffer);
@@ -356,7 +357,6 @@ class ClockView extends WatchUi.WatchFace {
         var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + 0.5).toNumber();
         var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + 0.5).toNumber();
         var center = [_screenCenter[0] + x, _screenCenter[1] + y] as Array<Number>;
-
         var coords = rotateCoords(S_SECONDHAND, angle);
         return [ coords[0], coords[1], coords[2], coords[3], center ] as Array< Array<Number> >;
     }
