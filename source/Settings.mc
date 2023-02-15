@@ -58,19 +58,19 @@ class Config {
 
     //! Constructor
     public function initialize() {
-        _batteryIdx = Storage.getValue(_itemLabels[I_BATTERY]) as Number % _batteryOptions.size();
+        _batteryIdx = Storage.getValue(_itemLabels[I_BATTERY]) as Number;
         if (_batteryIdx == null) {
             _batteryIdx = 0;
         }
-        _darkModeIdx = Storage.getValue(_itemLabels[I_DARK_MODE]) as Number % _darkModeOptions.size();
+        _darkModeIdx = Storage.getValue(_itemLabels[I_DARK_MODE]) as Number;
         if (_darkModeIdx == null) {
             _darkModeIdx = 0;
         }
-        _dateDisplayIdx = Storage.getValue(_itemLabels[I_DATE_DISPLAY]) as Number % _dateDisplayOptions.size();
+        _dateDisplayIdx = Storage.getValue(_itemLabels[I_DATE_DISPLAY]) as Number;
         if (_dateDisplayIdx == null) {
             _dateDisplayIdx = 0;
         }
-        _secondHandIdx = Storage.getValue(_itemLabels[I_SECOND_HAND]) as Number % 2;
+        _secondHandIdx = Storage.getValue(_itemLabels[I_SECOND_HAND]) as Number;
         if (_secondHandIdx == null) {
             _secondHandIdx = 0;
         }

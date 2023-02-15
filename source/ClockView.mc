@@ -66,6 +66,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _screenCenter as Array<Number>;
     private var _clockRadius as Number;
     private var _secondHandTimer as Number;
+    private var _hideSecondHand as Boolean;
     private var _offscreenBuffer as BufferedBitmap;
 
     //! Constructor. Initialize the variables for this view.
@@ -83,6 +84,7 @@ class ClockView extends WatchUi.WatchFace {
         _screenCenter = [_width/2, _height/2] as Array<Number>;
         _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
         _secondHandTimer = SECOND_HAND_TIMER; // Time to wait (in seconds) before disabling the second hand in low-power mode
+        _hideSecondHand = false;
 
         // Allocate the buffer we use for drawing the watchface, hour and minute hands in low-power mode, 
         // using BufferedBitmap (API Level 2.3.0).
@@ -268,7 +270,8 @@ class ClockView extends WatchUi.WatchFace {
         if (_isAwake) { 
             _secondHandTimer = SECOND_HAND_TIMER; 
         }
-        if (!_isAwake and _secondHandTimer > 0 and Config.S_SECOND_HAND_OFF == config.getValue(Config.I_SECOND_HAND)) {
+        _hideSecondHand = (Config.S_SECOND_HAND_OFF == config.getValue(Config.I_SECOND_HAND));
+        if (!_isAwake and _hideSecondHand and _secondHandTimer > 0) {
             _secondHandTimer -= 1;
         } 
 
@@ -316,14 +319,14 @@ class ClockView extends WatchUi.WatchFace {
     //! it is too expensive on larger displays.
     //! @param dc Device context
     public function onPartialUpdate(dc as Dc) as Void {
-        if (_secondHandTimer > 0 and Config.S_SECOND_HAND_OFF == config.getValue(Config.I_SECOND_HAND)) {
+        if (_hideSecondHand and _secondHandTimer > 0) {
             _secondHandTimer -= 1;
             if (0 == _secondHandTimer) {
                 // Delete the second hand
                 dc.drawBitmap(0, 0, _offscreenBuffer);
             }
         }
-        if (_secondHandTimer > 0) {
+        if (_secondHandTimer > 0) { 
             // Output the offscreen buffer to the main display and draw the second hand.
             // Note that this will only affect the clipped region, to delete the second hand.
             dc.drawBitmap(0, 0, _offscreenBuffer);
