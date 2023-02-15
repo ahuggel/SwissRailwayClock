@@ -23,7 +23,6 @@
     TODO:
     - Do we really need to differentiate between awake and not awake in onUpdate?
       Why not just always use the offscreen buffer?
-    - Settings migration: make sure a setting still works after the settings code changed
 */
 
 import Toybox.Graphics;
@@ -54,6 +53,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
     private const TWO_PI as Float = 2 * Math.PI;
+    private const SECOND_HAND_TIMER as Number = 30;
     
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
@@ -65,6 +65,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _height as Number;
     private var _screenCenter as Array<Number>;
     private var _clockRadius as Number;
+    private var _secondHandTimer as Number;
     private var _offscreenBuffer as BufferedBitmap;
 
     //! Constructor. Initialize the variables for this view.
@@ -81,6 +82,7 @@ class ClockView extends WatchUi.WatchFace {
         _height = System.getDeviceSettings().screenHeight;
         _screenCenter = [_width/2, _height/2] as Array<Number>;
         _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
+        _secondHandTimer = SECOND_HAND_TIMER; // Time to wait (in seconds) before disabling the second hand in low-power mode
 
         // Allocate the buffer we use for drawing the watchface, hour and minute hands in low-power mode, 
         // using BufferedBitmap (API Level 2.3.0).
@@ -186,37 +188,20 @@ class ClockView extends WatchUi.WatchFace {
         var clockTime = System.getClockTime();
 
         // Set the color mode
-        switch (settings.getValue("darkMode")) {
-            case settings.S_DARK_MODE_SCHEDULED:
+        switch (config.getValue(Config.I_DARK_MODE)) {
+            case Config.S_DARK_MODE_SCHEDULED:
                 _colorMode = M_LIGHT;
                 var time = clockTime.hour * 60 + clockTime.min;
-                if (time >= settings.getValue("dmOn") or time < settings.getValue("dmOff")) {
+                if (time >= config.getValue(Config.I_DM_ON) or time < config.getValue(Config.I_DM_OFF)) {
                     _colorMode = M_DARK;
                 }
                 break;
-            case settings.S_DARK_MODE_OFF:
+            case Config.S_DARK_MODE_OFF:
                 _colorMode = M_LIGHT;
                 break;
-            case settings.S_DARK_MODE_ON:
+            case Config.S_DARK_MODE_ON:
                 _colorMode = M_DARK;
                 break;
-        }
-        if (!_isAwake) {
-            switch (settings.getValue("lowPower")) {
-                case settings.S_LOW_POWER_CARRYOVER:
-                    // Use the high-power mode setting
-                    break;
-                case settings.S_LOW_POWER_DARK:
-                    _colorMode = M_DARK;
-                    break;
-                case settings.S_LOW_POWER_LIGHT:
-                    _colorMode = M_LIGHT;
-                    break;
-                case settings.S_LOW_POWER_INVERT:
-                    if (M_DARK == _colorMode) { _colorMode = M_LIGHT; }
-                    if (M_LIGHT == _colorMode) { _colorMode = M_DARK; }
-                    break;
-            }
         }
 
         // Draw the background
@@ -237,47 +222,55 @@ class ClockView extends WatchUi.WatchFace {
         // Draw the date string
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
         targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-        switch (settings.getValue("dateDisplay")) {
-            case settings.S_DATE_DISPLAY_OFF:
+        switch (config.getValue(Config.I_DATE_DISPLAY)) {
+            case Config.S_DATE_DISPLAY_OFF:
                 break;
-            case settings.S_DATE_DISPLAY_DAY_ONLY: 
+            case Config.S_DATE_DISPLAY_DAY_ONLY: 
                 var dateStr = Lang.format("$1$", [info.day.format("%02d")]);
                 targetDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                 break;
-            case settings.S_DATE_DISPLAY_WEEKDAY_AND_DAY:
+            case Config.S_DATE_DISPLAY_WEEKDAY_AND_DAY:
                 dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
                 targetDc.drawText(_width/2, _height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                 break;
         }
 
         // Draw the battery level indicator
-        var batterySetting = settings.getValue("battery");
-        if (batterySetting > settings.S_BATTERY_OFF) {
+        var batterySetting = config.getValue(Config.I_BATTERY);
+        if (batterySetting > Config.S_BATTERY_OFF) {
             var level = System.getSystemStats().battery;
-            if (level < 40.0 and batterySetting >= settings.S_BATTERY_CLASSIC_WARN) {
+            if (level < 40.0 and batterySetting >= Config.S_BATTERY_CLASSIC_WARN) {
                 switch (batterySetting) {
-                    case settings.S_BATTERY_CLASSIC:
-                    case settings.S_BATTERY_CLASSIC_WARN:
+                    case Config.S_BATTERY_CLASSIC:
+                    case Config.S_BATTERY_CLASSIC_WARN:
                         drawClassicBatteryIndicator(targetDc, level);
                         break;
-                    case settings.S_BATTERY_MODERN:
-                    case settings.S_BATTERY_MODERN_WARN:
-                    case settings.S_BATTERY_HYBRID:
+                    case Config.S_BATTERY_MODERN:
+                    case Config.S_BATTERY_MODERN_WARN:
+                    case Config.S_BATTERY_HYBRID:
                         drawModernBatteryIndicator(targetDc, level);
                         break;
                 }
-            } else if (batterySetting >= settings.S_BATTERY_CLASSIC) {
+            } else if (batterySetting >= Config.S_BATTERY_CLASSIC) {
                 switch (batterySetting) {
-                    case settings.S_BATTERY_CLASSIC:
-                    case settings.S_BATTERY_HYBRID:
+                    case Config.S_BATTERY_CLASSIC:
+                    case Config.S_BATTERY_HYBRID:
                         drawClassicBatteryIndicator(targetDc, level);
                         break;
-                    case settings.S_BATTERY_MODERN:
+                    case Config.S_BATTERY_MODERN:
                         drawModernBatteryIndicator(targetDc, level);
                         break;
                 }
             }
         }
+
+        // Handle the setting to disable the second hand in sleep mode after some time
+        if (_isAwake) { 
+            _secondHandTimer = SECOND_HAND_TIMER; 
+        }
+        if (!_isAwake and _secondHandTimer > 0 and Config.S_SECOND_HAND_OFF == config.getValue(Config.I_SECOND_HAND)) {
+            _secondHandTimer -= 1;
+        } 
 
         // Draw tick marks around the edge of the screen
         targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
@@ -311,7 +304,7 @@ class ClockView extends WatchUi.WatchFace {
             dc.drawBitmap(0, 0, _offscreenBuffer);
         }
 
-        if (_isAwake or _doPartialUpdates) {
+        if (_isAwake or (_doPartialUpdates and _secondHandTimer > 0)) {
             setSecondHandClippingRegion(dc, secondHandCoords);
             dc.setColor(_colors[_colorMode][C_SECONDS], Graphics.COLOR_TRANSPARENT);        
             drawSecondHand(dc, secondHandCoords);
@@ -323,14 +316,23 @@ class ClockView extends WatchUi.WatchFace {
     //! it is too expensive on larger displays.
     //! @param dc Device context
     public function onPartialUpdate(dc as Dc) as Void {
-        // Output the offscreen buffer to the main display and draw the second hand.
-        // Note that this will only affect the clipped region, to delete the second hand.
-        dc.drawBitmap(0, 0, _offscreenBuffer);
-        var clockTime = System.getClockTime();
-        var secondHandCoords = rotateSecondHandCoords(clockTime.sec / 60.0 * TWO_PI);
-        setSecondHandClippingRegion(dc, secondHandCoords);
-        dc.setColor(_colors[_colorMode][C_SECONDS], Graphics.COLOR_TRANSPARENT);
-        drawSecondHand(dc, secondHandCoords);
+        if (_secondHandTimer > 0 and Config.S_SECOND_HAND_OFF == config.getValue(Config.I_SECOND_HAND)) {
+            _secondHandTimer -= 1;
+            if (0 == _secondHandTimer) {
+                // Delete the second hand
+                dc.drawBitmap(0, 0, _offscreenBuffer);
+            }
+        }
+        if (_secondHandTimer > 0) {
+            // Output the offscreen buffer to the main display and draw the second hand.
+            // Note that this will only affect the clipped region, to delete the second hand.
+            dc.drawBitmap(0, 0, _offscreenBuffer);
+            var clockTime = System.getClockTime();
+            var secondHandCoords = rotateSecondHandCoords(clockTime.sec / 60.0 * TWO_PI);
+            setSecondHandClippingRegion(dc, secondHandCoords);
+            dc.setColor(_colors[_colorMode][C_SECONDS], Graphics.COLOR_TRANSPARENT);
+            drawSecondHand(dc, secondHandCoords);
+        }
     }
 
     //! This method is called when the device re-enters sleep mode

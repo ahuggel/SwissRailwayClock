@@ -23,50 +23,63 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 //! Global variable that keeps track of the settings and makes them available to the app.
-var settings as ClockSettings = new $.ClockSettings();
+var config as Config = new $.Config();
 
 //! This class maintains application settings and synchronises them to persistent storage.
-class ClockSettings {
+class Config {
+    // Configuration item identifiers
+    enum Item { I_BATTERY, I_DARK_MODE, I_DATE_DISPLAY, I_SECOND_HAND, I_DM_ON, I_DM_OFF }
+    // Configuration item labels used as keys for storing the configuration values
+    private var _itemLabels as Array<String> = ["battery", "darkMode", "dateDisplay", "secondHand", "dmOn", "dmOff"] as Array<String>;
+    // Configuration item display names
+    private var _itemNames as Array<String> = ["Battery Level", "Dark Mode", "Date Display", "Seconds in Sleep", "Turn On", "Turn Off"] as Array<String>;
+
+    // Options for list and toggle items
     enum { S_BATTERY_OFF, S_BATTERY_CLASSIC_WARN, S_BATTERY_MODERN_WARN, S_BATTERY_CLASSIC, S_BATTERY_MODERN, S_BATTERY_HYBRID }
     enum { S_DATE_DISPLAY_OFF, S_DATE_DISPLAY_DAY_ONLY, S_DATE_DISPLAY_WEEKDAY_AND_DAY }
     enum { S_DARK_MODE_SCHEDULED, S_DARK_MODE_OFF, S_DARK_MODE_ON }
-    enum { S_LOW_POWER_CARRYOVER, S_LOW_POWER_DARK, S_LOW_POWER_LIGHT, S_LOW_POWER_INVERT }
+    enum { S_SECOND_HAND_ON, S_SECOND_HAND_OFF }
 
+    // Option labels for simple On/Off toggle items
+    static const ON_OFF_OPTIONS = {:enabled=>"On", :disabled=>"Off"};
+
+    // Option labels for list items
     private var _batteryOptions as Array<String> = ["Off", "Classic Warnings", "Modern Warnings", "Classic", "Modern", "Hybrid"] as Array<String>;
-    private var _dateDisplayOptions as Array<String> = ["Off", "Day Only", "Weekday and Day"] as Array<String>;
     private var _darkModeOptions as Array<String> = ["Scheduled", "Off", "On"] as Array<String>;
-    private var _lowPowerOptions as Array<String> = ["Carry Over", "Use Dark Mode", "Use Light Mode", "Invert"] as Array<String>;
+    private var _dateDisplayOptions as Array<String> = ["Off", "Day Only", "Weekday and Day"] as Array<String>;
+
+    // Values for the configuration items
     private var _batteryIdx as Number;
     private var _darkModeIdx as Number;
     private var _dateDisplayIdx as Number;
-    private var _lowPowerIdx as Number;
+    private var _secondHandIdx as Number;
     private var _dmOnTime as Number;
     private var _dmOffTime as Number;
 
     //! Constructor
     public function initialize() {
-        _batteryIdx = Storage.getValue("battery") as Number;
+        _batteryIdx = Storage.getValue(_itemLabels[I_BATTERY]) as Number % _batteryOptions.size();
         if (_batteryIdx == null) {
             _batteryIdx = 0;
         }
-        _darkModeIdx = Storage.getValue("darkMode") as Number;
+        _darkModeIdx = Storage.getValue(_itemLabels[I_DARK_MODE]) as Number % _darkModeOptions.size();
         if (_darkModeIdx == null) {
             _darkModeIdx = 0;
         }
-        _dateDisplayIdx = Storage.getValue("dateDisplay") as Number;
+        _dateDisplayIdx = Storage.getValue(_itemLabels[I_DATE_DISPLAY]) as Number % _dateDisplayOptions.size();
         if (_dateDisplayIdx == null) {
             _dateDisplayIdx = 0;
         }
-        _lowPowerIdx = Storage.getValue("lowPower") as Number;
-        if (_lowPowerIdx == null) {
-            _lowPowerIdx = 0;
+        _secondHandIdx = Storage.getValue(_itemLabels[I_SECOND_HAND]) as Number % 2;
+        if (_secondHandIdx == null) {
+            _secondHandIdx = 0;
         }
-        _dmOnTime = Storage.getValue("dmOn") as Number;
-        if (_dmOnTime == null) {
-            _dmOnTime = 1200; // Default time to turn dark mode on: 20:00
+        _dmOnTime = Storage.getValue(_itemLabels[I_DM_ON]) as Number;
+        if (_dmOnTime == null or _dmOnTime < 0 or _dmOnTime > 1439) {
+            _dmOnTime = 1320; // Default time to turn dark mode on: 22:00
         }
-        _dmOffTime = Storage.getValue("dmOff") as Number;
-        if (_dmOffTime == null) {
+        _dmOffTime = Storage.getValue(_itemLabels[I_DM_OFF]) as Number;
+        if (_dmOffTime == null or _dmOffTime < 0 or _dmOffTime > 1439) {
             _dmOffTime = 420; // Default time to turn dark more off: 07:00
         }
     }
@@ -74,26 +87,26 @@ class ClockSettings {
     //! Return the current label for the specified setting.
     //!@param id Setting
     //!@return Label of the currently selected option
-    public function getLabel(id as String) as String {
+    public function getLabel(id as Item) as String {
         var option = "";
         switch (id) {
-            case "battery":
+            case I_BATTERY:
                 option = _batteryOptions[_batteryIdx];
                 break;
-            case "darkMode":
+            case I_DARK_MODE:
                 option = _darkModeOptions[_darkModeIdx];
                 break;
-            case "dateDisplay":
+            case I_DATE_DISPLAY:
                 option = _dateDisplayOptions[_dateDisplayIdx];
                 break;
-            case "lowPower":
-                option = _lowPowerOptions[_lowPowerIdx];
-                break;
-            case "dmOn":
+            case I_DM_ON:
                 option = (_dmOnTime / 60).toNumber() + ":" + (_dmOnTime % 60).format("%02d");
                 break;
-            case "dmOff":
+            case I_DM_OFF:
                 option = (_dmOffTime / 60).toNumber() + ":" + (_dmOffTime % 60).format("%02d");
+                break;
+            case I_SECOND_HAND:
+                System.println("ERROR: Config.getLabel() is not implemented for id = " + id);
                 break;
         }
         return option;
@@ -102,25 +115,25 @@ class ClockSettings {
     //! Return the current value of the specified setting.
     //!@param id Setting
     //!@return The current value of the setting
-    public function getValue(id as String) as Number {
+    public function getValue(id as Item) as Number {
         var value = -1;
         switch (id) {
-            case "battery":
+            case I_BATTERY:
                 value = _batteryIdx;
                 break;
-            case "darkMode":
+            case I_DARK_MODE:
                 value = _darkModeIdx;
                 break;
-            case "dateDisplay":
+            case I_DATE_DISPLAY:
                 value = _dateDisplayIdx;
                 break;
-            case "lowPower":
-                value = _lowPowerIdx;
+            case I_SECOND_HAND:
+                value = _secondHandIdx;
                 break;
-            case "dmOn":
+            case I_DM_ON:
                 value = _dmOnTime;
                 break;
-            case "dmOff":
+            case I_DM_OFF:
                 value = _dmOffTime;
         }
         return value;
@@ -129,63 +142,52 @@ class ClockSettings {
     //! Return the name for the specified setting.
     //!@param id Setting
     //!@return Setting name
-    public function getName(id as String) as String {
-        var name = "";
-        switch (id) {
-            case "battery":
-                name = "Battery Level";
-                break;
-            case "darkMode":
-                name = "Dark Mode";
-                break;
-            case "dateDisplay":
-                name = "Date Display";
-                break;
-            case "lowPower":
-                name = "In Low-Power";
-                break;
-            case "dmOn":
-                name = "Turn On";
-                break;
-            case "dmOff":
-                name = "Turn Off";
-                break;
-        }
-        return name;
+    public function getName(id as Item) as String {
+        return _itemNames[id as Number];
     }
 
     //! Advance the setting to the next value.
     //!@param id Setting
-    public function setNext(id as String) as Void {
+    public function setNext(id as Item) as Void {
         switch (id) {
-            case "battery":
+            case I_BATTERY:
                 _batteryIdx = (_batteryIdx + 1) % _batteryOptions.size();
-                Storage.setValue(id, _batteryIdx);
+                Storage.setValue(_itemLabels[I_BATTERY], _batteryIdx);
                 break;
-            case "darkMode":
+            case I_DARK_MODE:
                 _darkModeIdx = (_darkModeIdx + 1) % _darkModeOptions.size();
-                Storage.setValue(id, _darkModeIdx);
+                Storage.setValue(_itemLabels[I_DARK_MODE], _darkModeIdx);
                 break;
-            case "dateDisplay":
+            case I_DATE_DISPLAY:
                 _dateDisplayIdx = (_dateDisplayIdx + 1) % _dateDisplayOptions.size();
-                Storage.setValue(id, _dateDisplayIdx);
+                Storage.setValue(_itemLabels[I_DATE_DISPLAY], _dateDisplayIdx);
                 break;
-            case "lowPower":
-                _lowPowerIdx = (_lowPowerIdx + 1) % _lowPowerOptions.size();
-                Storage.setValue(id, _lowPowerIdx);
+            case I_SECOND_HAND:
+                _secondHandIdx = (_secondHandIdx + 1) % 2;
+                Storage.setValue(_itemLabels[I_SECOND_HAND], _secondHandIdx);
+                break;
+            case I_DM_ON:
+            case I_DM_OFF:
+                System.println("ERROR: Config.setNext() is not implemented for id = " + id);
                 break;
         }
     }
 
-    public function setValue(id as String, value as Number) as Void {
+    public function setValue(id as Item, value as Number) as Void {
         switch (id) {
-            case "dmOn":
+            case I_DM_ON:
                 _dmOnTime = value;
-                Storage.setValue(id, _dmOnTime);
+                Storage.setValue(_itemLabels[I_DM_ON], _dmOnTime);
                 break;
-            case "dmOff":
+            case I_DM_OFF:
                 _dmOffTime = value;
-                Storage.setValue(id, _dmOffTime);
+                Storage.setValue(_itemLabels[I_DM_OFF], _dmOffTime);
+                break;
+            case I_BATTERY:
+            case I_DARK_MODE:
+            case I_DATE_DISPLAY:
+            case I_SECOND_HAND:
+                System.println("ERROR: Config.setValue() is not implemented for id = " + id);
                 break;
         }
     }
@@ -196,29 +198,35 @@ class SettingsMenu extends WatchUi.Menu2 {
     //! Constructor
     public function initialize() {
         Menu2.initialize({:title=>"Settings"});
-        Menu2.addItem(new WatchUi.MenuItem(settings.getName("battery"), settings.getLabel("battery"), "battery", {}));
-        Menu2.addItem(new WatchUi.MenuItem(settings.getName("dateDisplay"), settings.getLabel("dateDisplay"), "dateDisplay", {}));
-        Menu2.addItem(new WatchUi.MenuItem(settings.getName("darkMode"), settings.getLabel("darkMode"), "darkMode", {}));
-        // Add menu items for the dark mode on and off times only if dark mode is set to "Auto"
-        if (settings.S_DARK_MODE_SCHEDULED == settings.getValue("darkMode")) {
-            Menu2.addItem(new WatchUi.MenuItem(settings.getName("dmOn"), settings.getLabel("dmOn"), "dmOn", {}));
-            Menu2.addItem(new WatchUi.MenuItem(settings.getName("dmOff"), settings.getLabel("dmOff"), "dmOff", {}));
+        Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_BATTERY), config.getLabel(Config.I_BATTERY), Config.I_BATTERY, {}));
+        Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_DATE_DISPLAY), config.getLabel(Config.I_DATE_DISPLAY), Config.I_DATE_DISPLAY, {}));
+        Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_DARK_MODE), config.getLabel(Config.I_DARK_MODE), Config.I_DARK_MODE, {}));
+        // Add menu items for the dark mode on and off times only if dark mode is set to "Scheduled"
+        if (Config.S_DARK_MODE_SCHEDULED == config.getValue(Config.I_DARK_MODE)) {
+            Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_ON), config.getLabel(Config.I_DM_ON), Config.I_DM_ON, {}));
+            Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_OFF), config.getLabel(Config.I_DM_OFF), Config.I_DM_OFF, {}));
         }
-        Menu2.addItem(new WatchUi.MenuItem(settings.getName("lowPower"), settings.getLabel("lowPower"), "lowPower", {}));
+        Menu2.addItem(new WatchUi.ToggleMenuItem(
+            config.getName(Config.I_SECOND_HAND), 
+            Config.ON_OFF_OPTIONS,
+            Config.I_SECOND_HAND, 
+            Config.S_SECOND_HAND_ON == config.getValue(Config.I_SECOND_HAND), 
+            {}
+        ));
     }
 
     public function onShow() as Void {
         Menu2.onShow();
         // Update sub labels in case the dark mode on or off time changed
-        var idx = findItemById("dmOn");
+        var idx = findItemById(Config.I_DM_ON);
         if (-1 != idx) {
             var menuItem = getItem(idx) as MenuItem;
-            menuItem.setSubLabel(settings.getLabel("dmOn"));
+            menuItem.setSubLabel(config.getLabel(Config.I_DM_ON));
         }
-        idx = findItemById("dmOff");
+        idx = findItemById(Config.I_DM_OFF);
         if (-1 != idx) {
             var menuItem = getItem(idx) as MenuItem;
-            menuItem.setSubLabel(settings.getLabel("dmOff"));
+            menuItem.setSubLabel(config.getLabel(Config.I_DM_OFF));
         }
     }
 }
@@ -240,36 +248,45 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     //! Handle a menu item being selected
     //! @param menuItem The menu item selected
     public function onSelect(menuItem as MenuItem) as Void {
-        var id = menuItem.getId() as String;
+        var id = menuItem.getId() as Config.Item;
         switch (id) {
-            case "battery":
-            case "dateDisplay":
-            case "lowPower":
+            case Config.I_BATTERY:
+            case Config.I_DATE_DISPLAY:
                 // Advance to the next option and show the selected option as the sub label
-                settings.setNext(id);
-                menuItem.setSubLabel(settings.getLabel(id));
+                config.setNext(id);
+                menuItem.setSubLabel(config.getLabel(id));
                 break;
-            case "darkMode":
+            case Config.I_DARK_MODE:
                 // Advance to the next option and show the selected option as the sub label
-                settings.setNext(id);
-                menuItem.setSubLabel(settings.getLabel(id));
+                config.setNext(id);
+                menuItem.setSubLabel(config.getLabel(id));
                 // If "Scheduled" is selected, add menu items to set the dark mode on and off times, else delete them
-                if (settings.S_DARK_MODE_SCHEDULED == settings.getValue(id)) {
-                    // Delete and then re-add the low-power menu item, to keep it at the end
-                    var idx = _menu.findItemById("lowPower");
+                if (Config.S_DARK_MODE_SCHEDULED == config.getValue(id)) {
+                    // Delete and then re-add the second hand menu item, to keep it at the end
+                    var idx = _menu.findItemById(Config.I_SECOND_HAND);
                     if (-1 != idx) { _menu.deleteItem(idx); }
-                    _menu.addItem(new WatchUi.MenuItem(settings.getName("dmOn"), settings.getLabel("dmOn"), "dmOn", {}));
-                    _menu.addItem(new WatchUi.MenuItem(settings.getName("dmOff"), settings.getLabel("dmOff"), "dmOff", {}));
-                    _menu.addItem(new WatchUi.MenuItem(settings.getName("lowPower"), settings.getLabel("lowPower"), "lowPower", {}));
+                    _menu.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_ON), config.getLabel(Config.I_DM_ON), Config.I_DM_ON, {}));
+                    _menu.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_OFF), config.getLabel(Config.I_DM_OFF), Config.I_DM_OFF, {}));
+                    _menu.addItem(new WatchUi.ToggleMenuItem(
+                        config.getName(Config.I_SECOND_HAND), 
+                        Config.ON_OFF_OPTIONS,
+                        Config.I_SECOND_HAND,
+                        Config.S_SECOND_HAND_ON == config.getValue(Config.I_SECOND_HAND), 
+                        {}
+                    ));
                 } else {
-                    var idx = _menu.findItemById("dmOn");
+                    var idx = _menu.findItemById(Config.I_DM_ON);
                     if (-1 != idx) { _menu.deleteItem(idx); }
-                    idx = _menu.findItemById("dmOff");
+                    idx = _menu.findItemById(Config.I_DM_OFF);
                     if (-1 != idx) { _menu.deleteItem(idx); }
                 }
-                break;    
-            case "dmOn":
-            case "dmOff":
+                break;
+            case Config.I_SECOND_HAND:
+                // Toggle the two possible values of this setting
+                config.setNext(id);
+                break;
+            case Config.I_DM_ON:
+            case Config.I_DM_OFF:
                 // Let the user select the time
                 WatchUi.pushView(new TimePicker(id), new TimePickerDelegate(id), WatchUi.SLIDE_IMMEDIATE);
                 break;

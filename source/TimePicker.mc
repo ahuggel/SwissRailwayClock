@@ -34,9 +34,9 @@ import Toybox.WatchUi;
 // apps with a more consistent look and feel.
 class TimePicker extends WatchUi.Picker {
     //! Constructor
-    public function initialize(id as String) {
+    public function initialize(id as Config.Item) {
         var title = new WatchUi.Text({
-            :text=>settings.getName(id),
+            :text=>config.getName(id),
             :font=>Graphics.FONT_SMALL,
             :locX=>WatchUi.LAYOUT_HALIGN_CENTER,
             :locY=>WatchUi.LAYOUT_VALIGN_BOTTOM, 
@@ -55,7 +55,7 @@ class TimePicker extends WatchUi.Picker {
         factories[2] = new TimeFactory(TimeFactory.T_MINUTE);
 
         var defaults = new Array<Number>[3];
-        var value = settings.getValue(id);
+        var value = config.getValue(id);
         defaults[0] = (value / 60).toNumber();
         defaults[1] = 0;
         defaults[2] = value % 60;
@@ -109,15 +109,15 @@ class TimeFactory extends WatchUi.PickerFactory {
 }
 
 class TimePickerDelegate extends WatchUi.PickerDelegate {
-    private var _id as String;
+    private var _id as Config.Item;
 
-    public function initialize(id as String) {
+    public function initialize(id as Config.Item) {
         PickerDelegate.initialize();
         _id = id;
     }
 
     public function onAccept(values as Array<Number?>) as Boolean {
-        settings.setValue(_id, values[0] as Number * 60 + values[2] as Number);
+        config.setValue(_id, values[0] as Number * 60 + values[2] as Number);
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         return true;
     }
