@@ -23,7 +23,7 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 //! Global variable that keeps track of the settings and makes them available to the app.
-var config as Config = new $.Config();
+var config as Config = new Config();
 
 //! This class maintains application settings and synchronises them to persistent storage.
 class Config {
@@ -57,6 +57,8 @@ class Config {
     private var _3dEffectsIdx as Number;
     private var _dmOnTime as Number;
     private var _dmOffTime as Number;
+
+    private var _hasAlpha as Boolean?; // Indicates if the device supports an alpha channel; required for the 3D effects
 
     //! Constructor
     public function initialize() {
@@ -138,6 +140,12 @@ class Config {
                 value = _secondHandIdx;
                 break;
             case I_3D_EFFECTS:
+                // Check the device capabilities here and reset the value if necessary, so the watchface code can rely on
+                // getValue() alone. The more straightforward place to do this would be the constructor, but that doesn't work.
+                if (!hasAlpha() and S_3D_EFFECTS_ON == _3dEffectsIdx) {
+                    // Reset the config value if it is set to on. This may happen when the option has never been set, yet.
+                    setNext(I_3D_EFFECTS);
+                }
                 value = _3dEffectsIdx;
                 break;
             case I_DM_ON:
@@ -206,6 +214,16 @@ class Config {
                 break;
         }
     }
+
+    // Returns true if the device supports an alpha channel, false if not.
+    public function hasAlpha() as Boolean {
+        // Lazy initialisation of the variable as it can't be initialised in the constructor for some reason
+        if (_hasAlpha == null) {
+            _hasAlpha = (Toybox.Graphics has :createColor) and (Toybox.Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
+        }
+        System.println("_hasAlpha = " + _hasAlpha); // DEBUG
+        return _hasAlpha as Boolean;
+    }
 }
 
 //! The app settings menu
@@ -228,13 +246,15 @@ class SettingsMenu extends WatchUi.Menu2 {
             Config.S_SECOND_HAND_ON == config.getValue(Config.I_SECOND_HAND), 
             {}
         ));
-        Menu2.addItem(new WatchUi.ToggleMenuItem(
-            config.getName(Config.I_3D_EFFECTS), 
-            Config.ON_OFF_OPTIONS,
-            Config.I_3D_EFFECTS, 
-            Config.S_3D_EFFECTS_ON == config.getValue(Config.I_3D_EFFECTS), 
-            {}
-        ));
+        if (config.hasAlpha()) {
+            Menu2.addItem(new WatchUi.ToggleMenuItem(
+                config.getName(Config.I_3D_EFFECTS), 
+                Config.ON_OFF_OPTIONS,
+                Config.I_3D_EFFECTS, 
+                Config.S_3D_EFFECTS_ON == config.getValue(Config.I_3D_EFFECTS), 
+                {}
+            ));
+        }
     }
 
     public function onShow() as Void {
@@ -298,13 +318,15 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                         Config.S_SECOND_HAND_ON == config.getValue(Config.I_SECOND_HAND), 
                         {}
                     ));
-                    _menu.addItem(new WatchUi.ToggleMenuItem(
-                        config.getName(Config.I_3D_EFFECTS), 
-                        Config.ON_OFF_OPTIONS,
-                        Config.I_3D_EFFECTS, 
-                        Config.S_3D_EFFECTS_ON == config.getValue(Config.I_3D_EFFECTS), 
-                        {}
-                    ));
+                    if (config.hasAlpha()) {
+                        _menu.addItem(new WatchUi.ToggleMenuItem(
+                            config.getName(Config.I_3D_EFFECTS), 
+                            Config.ON_OFF_OPTIONS,
+                            Config.I_3D_EFFECTS, 
+                            Config.S_3D_EFFECTS_ON == config.getValue(Config.I_3D_EFFECTS), 
+                            {}
+                        ));
+                    }
                 } else {
                     var idx = _menu.findItemById(Config.I_DM_ON);
                     if (-1 != idx) { _menu.deleteItem(idx); }
