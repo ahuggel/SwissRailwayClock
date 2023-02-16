@@ -28,17 +28,18 @@ var config as Config = new $.Config();
 //! This class maintains application settings and synchronises them to persistent storage.
 class Config {
     // Configuration item identifiers
-    enum Item { I_BATTERY, I_DARK_MODE, I_DATE_DISPLAY, I_SECOND_HAND, I_DM_ON, I_DM_OFF }
+    enum Item { I_BATTERY, I_DARK_MODE, I_DATE_DISPLAY, I_SECOND_HAND, I_3D_EFFECTS, I_DM_ON, I_DM_OFF }
     // Configuration item labels used as keys for storing the configuration values
-    private var _itemLabels as Array<String> = ["battery", "darkMode", "dateDisplay", "secondHand", "dmOn", "dmOff"] as Array<String>;
+    private var _itemLabels as Array<String> = ["battery", "darkMode", "dateDisplay", "secondHand", "3deffects", "dmOn", "dmOff"] as Array<String>;
     // Configuration item display names
-    private var _itemNames as Array<String> = ["Battery Level", "Dark Mode", "Date Display", "Seconds in Sleep", "Turn On", "Turn Off"] as Array<String>;
+    private var _itemNames as Array<String> = ["Battery Level", "Dark Mode", "Date Display", "Seconds in Sleep", "3D Effects", "Turn On", "Turn Off"] as Array<String>;
 
     // Options for list and toggle items
     enum { S_BATTERY_OFF, S_BATTERY_CLASSIC_WARN, S_BATTERY_MODERN_WARN, S_BATTERY_CLASSIC, S_BATTERY_MODERN, S_BATTERY_HYBRID }
     enum { S_DATE_DISPLAY_OFF, S_DATE_DISPLAY_DAY_ONLY, S_DATE_DISPLAY_WEEKDAY_AND_DAY }
     enum { S_DARK_MODE_SCHEDULED, S_DARK_MODE_OFF, S_DARK_MODE_ON }
     enum { S_SECOND_HAND_ON, S_SECOND_HAND_OFF }
+    enum { S_3D_EFFECTS_ON, S_3D_EFFECTS_OFF }
 
     // Option labels for simple On/Off toggle items
     static const ON_OFF_OPTIONS = {:enabled=>"On", :disabled=>"Off"};
@@ -53,6 +54,7 @@ class Config {
     private var _darkModeIdx as Number;
     private var _dateDisplayIdx as Number;
     private var _secondHandIdx as Number;
+    private var _3dEffectsIdx as Number;
     private var _dmOnTime as Number;
     private var _dmOffTime as Number;
 
@@ -73,6 +75,10 @@ class Config {
         _secondHandIdx = Storage.getValue(_itemLabels[I_SECOND_HAND]) as Number;
         if (_secondHandIdx == null) {
             _secondHandIdx = 0;
+        }
+        _3dEffectsIdx = Storage.getValue(_itemLabels[I_3D_EFFECTS]) as Number;
+        if (_3dEffectsIdx == null) {
+            _3dEffectsIdx = 0;
         }
         _dmOnTime = Storage.getValue(_itemLabels[I_DM_ON]) as Number;
         if (_dmOnTime == null or _dmOnTime < 0 or _dmOnTime > 1439) {
@@ -106,6 +112,7 @@ class Config {
                 option = (_dmOffTime / 60).toNumber() + ":" + (_dmOffTime % 60).format("%02d");
                 break;
             case I_SECOND_HAND:
+            case I_3D_EFFECTS:
                 System.println("ERROR: Config.getLabel() is not implemented for id = " + id);
                 break;
         }
@@ -129,6 +136,9 @@ class Config {
                 break;
             case I_SECOND_HAND:
                 value = _secondHandIdx;
+                break;
+            case I_3D_EFFECTS:
+                value = _3dEffectsIdx;
                 break;
             case I_DM_ON:
                 value = _dmOnTime;
@@ -166,6 +176,10 @@ class Config {
                 _secondHandIdx = (_secondHandIdx + 1) % 2;
                 Storage.setValue(_itemLabels[I_SECOND_HAND], _secondHandIdx);
                 break;
+            case I_3D_EFFECTS:
+                _3dEffectsIdx = (_3dEffectsIdx + 1) % 2;
+                Storage.setValue(_itemLabels[I_3D_EFFECTS], _3dEffectsIdx);
+                break;
             case I_DM_ON:
             case I_DM_OFF:
                 System.println("ERROR: Config.setNext() is not implemented for id = " + id);
@@ -187,6 +201,7 @@ class Config {
             case I_DARK_MODE:
             case I_DATE_DISPLAY:
             case I_SECOND_HAND:
+            case I_3D_EFFECTS:
                 System.println("ERROR: Config.setValue() is not implemented for id = " + id);
                 break;
         }
@@ -211,6 +226,13 @@ class SettingsMenu extends WatchUi.Menu2 {
             Config.ON_OFF_OPTIONS,
             Config.I_SECOND_HAND, 
             Config.S_SECOND_HAND_ON == config.getValue(Config.I_SECOND_HAND), 
+            {}
+        ));
+        Menu2.addItem(new WatchUi.ToggleMenuItem(
+            config.getName(Config.I_3D_EFFECTS), 
+            Config.ON_OFF_OPTIONS,
+            Config.I_3D_EFFECTS, 
+            Config.S_3D_EFFECTS_ON == config.getValue(Config.I_3D_EFFECTS), 
             {}
         ));
     }
@@ -262,8 +284,10 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 menuItem.setSubLabel(config.getLabel(id));
                 // If "Scheduled" is selected, add menu items to set the dark mode on and off times, else delete them
                 if (Config.S_DARK_MODE_SCHEDULED == config.getValue(id)) {
-                    // Delete and then re-add the second hand menu item, to keep it at the end
+                    // Delete and then re-add the second hand and 3D effects menu items, to keep them after the dark mode schedule times
                     var idx = _menu.findItemById(Config.I_SECOND_HAND);
+                    if (-1 != idx) { _menu.deleteItem(idx); }
+                    idx = _menu.findItemById(Config.I_3D_EFFECTS);
                     if (-1 != idx) { _menu.deleteItem(idx); }
                     _menu.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_ON), config.getLabel(Config.I_DM_ON), Config.I_DM_ON, {}));
                     _menu.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_OFF), config.getLabel(Config.I_DM_OFF), Config.I_DM_OFF, {}));
@@ -274,6 +298,13 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                         Config.S_SECOND_HAND_ON == config.getValue(Config.I_SECOND_HAND), 
                         {}
                     ));
+                    _menu.addItem(new WatchUi.ToggleMenuItem(
+                        config.getName(Config.I_3D_EFFECTS), 
+                        Config.ON_OFF_OPTIONS,
+                        Config.I_3D_EFFECTS, 
+                        Config.S_3D_EFFECTS_ON == config.getValue(Config.I_3D_EFFECTS), 
+                        {}
+                    ));
                 } else {
                     var idx = _menu.findItemById(Config.I_DM_ON);
                     if (-1 != idx) { _menu.deleteItem(idx); }
@@ -282,7 +313,8 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 }
                 break;
             case Config.I_SECOND_HAND:
-                // Toggle the two possible values of this setting
+            case Config.I_3D_EFFECTS:
+                // Toggle the two possible configuration values
                 config.setNext(id);
                 break;
             case Config.I_DM_ON:
