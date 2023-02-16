@@ -38,7 +38,7 @@ class Config {
     enum { S_BATTERY_OFF, S_BATTERY_CLASSIC_WARN, S_BATTERY_MODERN_WARN, S_BATTERY_CLASSIC, S_BATTERY_MODERN, S_BATTERY_HYBRID }
     enum { S_DATE_DISPLAY_OFF, S_DATE_DISPLAY_DAY_ONLY, S_DATE_DISPLAY_WEEKDAY_AND_DAY }
     enum { S_DARK_MODE_SCHEDULED, S_DARK_MODE_OFF, S_DARK_MODE_ON }
-    enum { S_SECOND_HAND_ON, S_SECOND_HAND_OFF }
+    enum { S_SECOND_HAND_ON, S_SECOND_HAND_LIGHT, S_SECOND_HAND_OFF }
     enum { S_3D_EFFECTS_ON, S_3D_EFFECTS_OFF }
 
     // Option labels for simple On/Off toggle items
@@ -48,6 +48,7 @@ class Config {
     private var _batteryOptions as Array<String> = ["Off", "Classic Warnings", "Modern Warnings", "Classic", "Modern", "Hybrid"] as Array<String>;
     private var _darkModeOptions as Array<String> = ["Scheduled", "Off", "On"] as Array<String>;
     private var _dateDisplayOptions as Array<String> = ["Off", "Day Only", "Weekday and Day"] as Array<String>;
+    private var _secondHandOptions as Array<String> = ["On", "Off in Dark Mode", "Off"] as Array<String>;
 
     // Values for the configuration items
     private var _batteryIdx as Number;
@@ -90,7 +91,7 @@ class Config {
         if (_dmOffTime == null or _dmOffTime < 0 or _dmOffTime > 1439) {
             _dmOffTime = 420; // Default time to turn dark more off: 07:00
         }
-    }
+    } 
 
     //! Return the current label for the specified setting.
     //!@param id Setting
@@ -107,13 +108,15 @@ class Config {
             case I_DATE_DISPLAY:
                 option = _dateDisplayOptions[_dateDisplayIdx];
                 break;
+            case I_SECOND_HAND:
+                option = _secondHandOptions[_secondHandIdx];
+                break;
             case I_DM_ON:
                 option = (_dmOnTime / 60).toNumber() + ":" + (_dmOnTime % 60).format("%02d");
                 break;
             case I_DM_OFF:
                 option = (_dmOffTime / 60).toNumber() + ":" + (_dmOffTime % 60).format("%02d");
                 break;
-            case I_SECOND_HAND:
             case I_3D_EFFECTS:
                 System.println("ERROR: Config.getLabel() is not implemented for id = " + id);
                 break;
@@ -181,7 +184,7 @@ class Config {
                 Storage.setValue(_itemLabels[I_DATE_DISPLAY], _dateDisplayIdx);
                 break;
             case I_SECOND_HAND:
-                _secondHandIdx = (_secondHandIdx + 1) % 2;
+                _secondHandIdx = (_secondHandIdx + 1) % _secondHandOptions.size();
                 Storage.setValue(_itemLabels[I_SECOND_HAND], _secondHandIdx);
                 break;
             case I_3D_EFFECTS:
@@ -239,13 +242,7 @@ class SettingsMenu extends WatchUi.Menu2 {
             Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_ON), config.getLabel(Config.I_DM_ON), Config.I_DM_ON, {}));
             Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_OFF), config.getLabel(Config.I_DM_OFF), Config.I_DM_OFF, {}));
         }
-        Menu2.addItem(new WatchUi.ToggleMenuItem(
-            config.getName(Config.I_SECOND_HAND), 
-            Config.ON_OFF_OPTIONS,
-            Config.I_SECOND_HAND, 
-            Config.S_SECOND_HAND_ON == config.getValue(Config.I_SECOND_HAND), 
-            {}
-        ));
+        Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_SECOND_HAND), config.getLabel(Config.I_SECOND_HAND), Config.I_SECOND_HAND, {}));
         if (config.hasAlpha()) {
             Menu2.addItem(new WatchUi.ToggleMenuItem(
                 config.getName(Config.I_3D_EFFECTS), 
@@ -294,6 +291,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         switch (id) {
             case Config.I_BATTERY:
             case Config.I_DATE_DISPLAY:
+            case Config.I_SECOND_HAND:
                 // Advance to the next option and show the selected option as the sub label
                 config.setNext(id);
                 menuItem.setSubLabel(config.getLabel(id));
@@ -311,13 +309,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                     if (-1 != idx) { _menu.deleteItem(idx); }
                     _menu.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_ON), config.getLabel(Config.I_DM_ON), Config.I_DM_ON, {}));
                     _menu.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_OFF), config.getLabel(Config.I_DM_OFF), Config.I_DM_OFF, {}));
-                    _menu.addItem(new WatchUi.ToggleMenuItem(
-                        config.getName(Config.I_SECOND_HAND), 
-                        Config.ON_OFF_OPTIONS,
-                        Config.I_SECOND_HAND,
-                        Config.S_SECOND_HAND_ON == config.getValue(Config.I_SECOND_HAND), 
-                        {}
-                    ));
+                    _menu.addItem(new WatchUi.MenuItem(config.getName(Config.I_SECOND_HAND), config.getLabel(Config.I_SECOND_HAND), Config.I_SECOND_HAND, {}));
                     if (config.hasAlpha()) {
                         _menu.addItem(new WatchUi.ToggleMenuItem(
                             config.getName(Config.I_3D_EFFECTS), 
@@ -334,7 +326,6 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                     if (-1 != idx) { _menu.deleteItem(idx); }
                 }
                 break;
-            case Config.I_SECOND_HAND:
             case Config.I_3D_EFFECTS:
                 // Toggle the two possible configuration values
                 config.setNext(id);

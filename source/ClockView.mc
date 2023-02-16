@@ -265,14 +265,14 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         // Handle the setting to disable the second hand in sleep mode after some time
-        _hideSecondHand = (Config.S_SECOND_HAND_OFF == config.getValue(Config.I_SECOND_HAND));
-        if (_hideSecondHand) {
-            if (_isAwake) { 
-                _secondHandTimer = SECOND_HAND_TIMER; 
-            }
-            if (!_isAwake and _secondHandTimer > 0) {
-                _secondHandTimer -= 1;
-            }
+        if (_isAwake) { 
+            _secondHandTimer = SECOND_HAND_TIMER; 
+        }
+        var secondHandOption = config.getValue(Config.I_SECOND_HAND);
+        _hideSecondHand = Config.S_SECOND_HAND_OFF == secondHandOption 
+            or (Config.S_SECOND_HAND_LIGHT == secondHandOption and M_DARK == _colorMode);
+        if (!_isAwake and _hideSecondHand and _secondHandTimer > 0) {
+            _secondHandTimer -= 1;
         }
 
         // Draw tick marks around the edge of the screen
