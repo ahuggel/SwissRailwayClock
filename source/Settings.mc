@@ -224,7 +224,6 @@ class Config {
         if (_hasAlpha == null) {
             _hasAlpha = (Toybox.Graphics has :createColor) and (Toybox.Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         }
-        System.println("_hasAlpha = " + _hasAlpha); // DEBUG
         return _hasAlpha as Boolean;
     }
 }
