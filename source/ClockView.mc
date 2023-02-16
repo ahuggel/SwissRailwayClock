@@ -57,7 +57,6 @@ class ClockView extends WatchUi.WatchFace {
     
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
-    private var _hasAlpha as Boolean;
     private var _hasAntiAlias as Boolean;
     private var _colorMode as Number;
     private var _screenShape as Number;
@@ -75,7 +74,6 @@ class ClockView extends WatchUi.WatchFace {
 
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
-        _hasAlpha = (Toybox.Graphics has :createColor) and (Toybox.Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasAntiAlias = (Toybox.Graphics.Dc has :setAntiAlias);
         _colorMode = M_LIGHT;
         _screenShape = System.getDeviceSettings().screenShape;
@@ -267,13 +265,15 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         // Handle the setting to disable the second hand in sleep mode after some time
-        if (_isAwake) { 
-            _secondHandTimer = SECOND_HAND_TIMER; 
-        }
         _hideSecondHand = (Config.S_SECOND_HAND_OFF == config.getValue(Config.I_SECOND_HAND));
-        if (!_isAwake and _hideSecondHand and _secondHandTimer > 0) {
-            _secondHandTimer -= 1;
-        } 
+        if (_hideSecondHand) {
+            if (_isAwake) { 
+                _secondHandTimer = SECOND_HAND_TIMER; 
+            }
+            if (!_isAwake and _secondHandTimer > 0) {
+                _secondHandTimer -= 1;
+            }
+        }
 
         // Draw tick marks around the edge of the screen
         targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
@@ -288,8 +288,9 @@ class ClockView extends WatchUi.WatchFace {
         var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
         var secondHandCoords = rotateSecondHandCoords(clockTime.sec / 60.0 * TWO_PI);
 
-        // Draw hand shadows on devices which support an alpha channel, when awake and in light color mode
-        if (_hasAlpha and _isAwake and M_DARK != _colorMode) {
+        // Draw hand shadows, directly on the screen, if 3D effects are turned on and supported by the device (also 
+        // ensured by getValue()), the watch is awake and in light color mode
+        if (Config.S_3D_EFFECTS_ON == config.getValue(Config.I_3D_EFFECTS) and _isAwake and M_DARK != _colorMode) {
             var shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77);
             dc.setFill(shadowColor);
             dc.fillPolygon(shadowCoords(hourHandCoords, 7));
