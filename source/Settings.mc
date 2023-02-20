@@ -19,6 +19,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 import Toybox.Application.Storage;
+import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
@@ -59,7 +60,7 @@ class Config {
     private var _dmOnTime as Number;
     private var _dmOffTime as Number;
 
-    private var _hasAlpha as Boolean?; // Indicates if the device supports an alpha channel; required for the 3D effects
+    private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
 
     //! Constructor
     public function initialize() {
@@ -79,10 +80,13 @@ class Config {
         if (_secondHandIdx == null) {
             _secondHandIdx = 0;
         }
+        _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _3dEffectsIdx = Storage.getValue(_itemLabels[I_3D_EFFECTS]) as Number;
         if (_3dEffectsIdx == null) {
             _3dEffectsIdx = 0;
         }
+        // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
+        if (!_hasAlpha and S_3D_EFFECTS_ON == _3dEffectsIdx) { _3dEffectsIdx = S_3D_EFFECTS_OFF; }
         _dmOnTime = Storage.getValue(_itemLabels[I_DM_ON]) as Number;
         if (_dmOnTime == null or _dmOnTime < 0 or _dmOnTime > 1439) {
             _dmOnTime = 1320; // Default time to turn dark mode on: 22:00
@@ -143,12 +147,6 @@ class Config {
                 value = _secondHandIdx;
                 break;
             case I_3D_EFFECTS:
-                // Check the device capabilities here and reset the value if necessary, so the watchface code can rely on
-                // getValue() alone. The more straightforward place to do this would be the constructor, but that doesn't work.
-                if (!hasAlpha() and S_3D_EFFECTS_ON == _3dEffectsIdx) {
-                    // Reset the config value if it is set to on. This may happen when the option has never been set, yet.
-                    setNext(I_3D_EFFECTS);
-                }
                 value = _3dEffectsIdx;
                 break;
             case I_DM_ON:
@@ -220,11 +218,7 @@ class Config {
 
     // Returns true if the device supports an alpha channel, false if not.
     public function hasAlpha() as Boolean {
-        // Lazy initialisation of the variable as it can't be initialised in the constructor for some reason
-        if (_hasAlpha == null) {
-            _hasAlpha = (Toybox.Graphics has :createColor) and (Toybox.Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
-        }
-        return _hasAlpha as Boolean;
+        return _hasAlpha;
     }
 }
 
