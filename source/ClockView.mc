@@ -19,12 +19,6 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-/*
-    TODO:
-    - Do we really need to differentiate between awake and not awake in onUpdate?
-      Why not just always use the offscreen buffer?
-*/
-
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
@@ -40,7 +34,7 @@ class ClockView extends WatchUi.WatchFace {
     enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
     private var _colors as Array< Array<Number> > = [
         [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED, Graphics.COLOR_DK_GRAY],
-        [Graphics.COLOR_WHITE, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_LT_GRAY]
+        [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_DK_GRAY]
     ] as Array< Array<Number> >;
 
     // List of watchface shapes, used as indexes
@@ -160,20 +154,14 @@ class ClockView extends WatchUi.WatchFace {
     //! 3) it's also triggered when the device goes in or out of low-power mode
     //!    (from onEnterSleep() and onExitSleep()).
     //!
-    //! Depending on the power state of the device, we need to be more or less careful regarding
-    //! the cost of (mainly) the drawing operations used. The processing logic is as follows.
+    //! In low-power mode, onPartialUpdate() is called every second, except on the full minute,
+    //! and the system enforces a power budget, which the code must not exceed.
     //!
-    //! When awake: 
-    //! onUpdate(): Draw the entire screen every second, directly on the main display. Set anti 
-    //!             aliasing if it is available.
-    //!
-    //! In low-power mode:
-    //! onUpdate(): Draw the screen into the off-screen buffer and then output the buffer
-    //!             to the main display. If partial updates are enabled, also draw the second 
-    //!             hand, directly on the main display. Set anti aliasing if it is available.
-    //! onPartialUpdate(): Use (part of) the off-screen buffer to blank out the second hand and 
-    //!             re-draw the second hand at the new position, directly on the main display.
-    //!             Don't use anti aliasing, as it is too expensive on larger displays.
+    //! The processing logic is as follows:
+    //! Draw the screen into the off-screen buffer and then output the buffer to the main display.
+    //! Finally, the second hand is drawn directly on the screen. If supported, use anti aliasing.
+    //! The off-screen buffer is later used to blank out the second hand, before it is re-drawn at
+    //! the new position, directly on the main display.
     //!
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
@@ -265,8 +253,9 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         // Handle the setting to disable the second hand in sleep mode after some time
-        if (_isAwake) { 
-            _secondHandTimer = SECOND_HAND_TIMER; 
+        if (_isAwake) {
+            // Reset the timer
+            _secondHandTimer = SECOND_HAND_TIMER;
         }
         var secondHandOption = config.getValue(Config.I_SECOND_HAND);
         _hideSecondHand = Config.S_SECOND_HAND_OFF == secondHandOption 
@@ -318,6 +307,7 @@ class ClockView extends WatchUi.WatchFace {
     //! it is too expensive on larger displays.
     //! @param dc Device context
     public function onPartialUpdate(dc as Dc) as Void {
+        _isAwake = false; // To state the obvious. Workaround for a firmware bug reported on an Enduro 2.
         if (_hideSecondHand and _secondHandTimer > 0) {
             _secondHandTimer -= 1;
             if (0 == _secondHandTimer) {
