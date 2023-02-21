@@ -73,6 +73,14 @@ class ClockView extends WatchUi.WatchFace {
         WatchFace.initialize();
 
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
+
+        // DEBUG
+        var clockTime = System.getClockTime();
+        var debugtime = clockTime.hour * 60 + clockTime.min;
+        if (debugtime >= 1430 or debugtime < 10) {
+            System.println(clockTime.hour.format("%02d") + ":" + clockTime.min.format("%02d") + ":" + clockTime.sec.format("%02d") + " ini " + _isAwake);
+        }
+
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
         _hasAntiAlias = (Toybox.Graphics.Dc has :setAntiAlias);
         _colorMode = M_LIGHT;
@@ -177,15 +185,21 @@ class ClockView extends WatchUi.WatchFace {
     //!
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
-        if (_hasAntiAlias) { dc.setAntiAlias(true); }
         dc.clearClip();
-        var targetDc = dc;
-        if (!_isAwake) {
-            // Only use the buffer in low-power mode
-            targetDc = _offscreenBuffer.getDc();
-            if (_hasAntiAlias) { targetDc.setAntiAlias(true); }
+        // Always use the offscreen buffer, not only in low-power mode. That simplifies the logic and is more robust.
+        var targetDc = _offscreenBuffer.getDc();
+        if (_hasAntiAlias) {
+            dc.setAntiAlias(true);
+            targetDc.setAntiAlias(true); 
         }
+
         var clockTime = System.getClockTime();
+
+        //DEBUG
+        var debugtime = clockTime.hour * 60 + clockTime.min;
+        if (debugtime >= 1430 or debugtime < 10) {
+            System.println(clockTime.hour.format("%02d") + ":" + clockTime.min.format("%02d") + ":" + clockTime.sec.format("%02d") + " upd " + _isAwake);
+        }
 
         // Set the color mode
         switch (config.getValue(Config.I_DARK_MODE)) {
@@ -288,14 +302,14 @@ class ClockView extends WatchUi.WatchFace {
         var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
         var secondHandCoords = rotateSecondHandCoords(clockTime.sec / 60.0 * TWO_PI);
 
-        // Draw hand shadows, directly on the screen, if 3D effects are turned on and supported by the device (also 
-        // ensured by getValue()), the watch is awake and in light color mode
-        if (Config.S_3D_EFFECTS_ON == config.getValue(Config.I_3D_EFFECTS) and _isAwake and M_DARK != _colorMode) {
+        // Draw hand shadows, if 3D effects are turned on and supported by the device (also ensured by getValue()),
+        // the watch is awake and in light color mode
+        if (Config.S_3D_EFFECTS_ON == config.getValue(Config.I_3D_EFFECTS) and _isAwake and M_LIGHT == _colorMode) {
             var shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77);
-            dc.setFill(shadowColor);
-            dc.fillPolygon(shadowCoords(hourHandCoords, 7));
-            dc.fillPolygon(shadowCoords(minuteHandCoords, 9));
-            drawSecondHand(dc, shadowCoords(secondHandCoords, 10));
+            targetDc.setFill(shadowColor);
+            targetDc.fillPolygon(shadowCoords(hourHandCoords, 7));
+            targetDc.fillPolygon(shadowCoords(minuteHandCoords, 9));
+            drawSecondHand(targetDc, shadowCoords(secondHandCoords, 10));
         }
 
         // Draw the hour and minute hands
@@ -303,10 +317,8 @@ class ClockView extends WatchUi.WatchFace {
         targetDc.fillPolygon(hourHandCoords);
         targetDc.fillPolygon(minuteHandCoords);
 
-        if (!_isAwake) {
-            // Output the offscreen buffer to the main display
-            dc.drawBitmap(0, 0, _offscreenBuffer);
-        }
+        // Output the offscreen buffer to the main display
+        dc.drawBitmap(0, 0, _offscreenBuffer);
 
         if (_isAwake or (_doPartialUpdates and _secondHandTimer > 0)) {
             setSecondHandClippingRegion(dc, secondHandCoords);
@@ -342,12 +354,28 @@ class ClockView extends WatchUi.WatchFace {
     //! This method is called when the device re-enters sleep mode
     public function onEnterSleep() as Void {
         _isAwake = false;
+
+        // DEBUG
+        var clockTime = System.getClockTime();
+        var debugtime = clockTime.hour * 60 + clockTime.min;
+        if (debugtime >= 1430 or debugtime < 10) {
+            System.println(clockTime.hour.format("%02d") + ":" + clockTime.min.format("%02d") + ":" + clockTime.sec.format("%02d") + " ent " + _isAwake);
+        }
+
         WatchUi.requestUpdate();
     }
 
     //! This method is called when the device exits sleep mode
     public function onExitSleep() as Void {
         _isAwake = true;
+
+        // DEBUG
+        var clockTime = System.getClockTime();
+        var debugtime = clockTime.hour * 60 + clockTime.min;
+        if (debugtime >= 1430 or debugtime < 10) {
+            System.println(clockTime.hour.format("%02d") + ":" + clockTime.min.format("%02d") + ":" + clockTime.sec.format("%02d") + " exi " + _isAwake);
+        }
+
         WatchUi.requestUpdate();
     }
 
