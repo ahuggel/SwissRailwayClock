@@ -73,14 +73,6 @@ class ClockView extends WatchUi.WatchFace {
         WatchFace.initialize();
 
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
-
-        // DEBUG
-        var clockTime = System.getClockTime();
-        var debugtime = clockTime.hour * 60 + clockTime.min;
-        if (debugtime >= 1430 or debugtime < 10) {
-            System.println(clockTime.hour.format("%02d") + ":" + clockTime.min.format("%02d") + ":" + clockTime.sec.format("%02d") + " ini " + _isAwake);
-        }
-
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
         _hasAntiAlias = (Toybox.Graphics.Dc has :setAntiAlias);
         _colorMode = M_LIGHT;
@@ -194,12 +186,6 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         var clockTime = System.getClockTime();
-
-        //DEBUG
-        var debugtime = clockTime.hour * 60 + clockTime.min;
-        if (debugtime >= 1430 or debugtime < 10) {
-            System.println(clockTime.hour.format("%02d") + ":" + clockTime.min.format("%02d") + ":" + clockTime.sec.format("%02d") + " upd " + _isAwake);
-        }
 
         // Set the color mode
         switch (config.getValue(Config.I_DARK_MODE)) {
@@ -354,28 +340,12 @@ class ClockView extends WatchUi.WatchFace {
     //! This method is called when the device re-enters sleep mode
     public function onEnterSleep() as Void {
         _isAwake = false;
-
-        // DEBUG
-        var clockTime = System.getClockTime();
-        var debugtime = clockTime.hour * 60 + clockTime.min;
-        if (debugtime >= 1430 or debugtime < 10) {
-            System.println(clockTime.hour.format("%02d") + ":" + clockTime.min.format("%02d") + ":" + clockTime.sec.format("%02d") + " ent " + _isAwake);
-        }
-
         WatchUi.requestUpdate();
     }
 
     //! This method is called when the device exits sleep mode
     public function onExitSleep() as Void {
         _isAwake = true;
-
-        // DEBUG
-        var clockTime = System.getClockTime();
-        var debugtime = clockTime.hour * 60 + clockTime.min;
-        if (debugtime >= 1430 or debugtime < 10) {
-            System.println(clockTime.hour.format("%02d") + ":" + clockTime.min.format("%02d") + ":" + clockTime.sec.format("%02d") + " exi " + _isAwake);
-        }
-
         WatchUi.requestUpdate();
     }
 
