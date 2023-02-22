@@ -227,21 +227,21 @@ class SettingsMenu extends WatchUi.Menu2 {
     //! Constructor
     public function initialize() {
         Menu2.initialize({:title=>"Settings"});
-        Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_BATTERY), config.getLabel(Config.I_BATTERY), Config.I_BATTERY, {}));
-        Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_DATE_DISPLAY), config.getLabel(Config.I_DATE_DISPLAY), Config.I_DATE_DISPLAY, {}));
-        Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_DARK_MODE), config.getLabel(Config.I_DARK_MODE), Config.I_DARK_MODE, {}));
+        Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_BATTERY), $.config.getLabel($.Config.I_BATTERY), $.Config.I_BATTERY, {}));
+        Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DATE_DISPLAY), $.config.getLabel($.Config.I_DATE_DISPLAY), $.Config.I_DATE_DISPLAY, {}));
+        Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DARK_MODE), $.config.getLabel($.Config.I_DARK_MODE), $.Config.I_DARK_MODE, {}));
         // Add menu items for the dark mode on and off times only if dark mode is set to "Scheduled"
-        if (Config.S_DARK_MODE_SCHEDULED == config.getValue(Config.I_DARK_MODE)) {
-            Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_ON), config.getLabel(Config.I_DM_ON), Config.I_DM_ON, {}));
-            Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_OFF), config.getLabel(Config.I_DM_OFF), Config.I_DM_OFF, {}));
+        if ($.Config.S_DARK_MODE_SCHEDULED == $.config.getValue($.Config.I_DARK_MODE)) {
+            Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DM_ON), $.config.getLabel($.Config.I_DM_ON), $.Config.I_DM_ON, {}));
+            Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DM_OFF), $.config.getLabel($.Config.I_DM_OFF), $.Config.I_DM_OFF, {}));
         }
-        Menu2.addItem(new WatchUi.MenuItem(config.getName(Config.I_SECOND_HAND), config.getLabel(Config.I_SECOND_HAND), Config.I_SECOND_HAND, {}));
-        if (config.hasAlpha()) {
+        Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_SECOND_HAND), $.config.getLabel($.Config.I_SECOND_HAND), $.Config.I_SECOND_HAND, {}));
+        if ($.config.hasAlpha()) {
             Menu2.addItem(new WatchUi.ToggleMenuItem(
-                config.getName(Config.I_3D_EFFECTS), 
-                Config.ON_OFF_OPTIONS,
-                Config.I_3D_EFFECTS, 
-                Config.S_3D_EFFECTS_ON == config.getValue(Config.I_3D_EFFECTS), 
+                $.config.getName($.Config.I_3D_EFFECTS), 
+                $.Config.ON_OFF_OPTIONS,
+                $.Config.I_3D_EFFECTS, 
+                $.Config.S_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS), 
                 {}
             ));
         }
@@ -250,15 +250,15 @@ class SettingsMenu extends WatchUi.Menu2 {
     public function onShow() as Void {
         Menu2.onShow();
         // Update sub labels in case the dark mode on or off time changed
-        var idx = findItemById(Config.I_DM_ON);
+        var idx = findItemById($.Config.I_DM_ON);
         if (-1 != idx) {
             var menuItem = getItem(idx) as MenuItem;
-            menuItem.setSubLabel(config.getLabel(Config.I_DM_ON));
+            menuItem.setSubLabel($.config.getLabel($.Config.I_DM_ON));
         }
-        idx = findItemById(Config.I_DM_OFF);
+        idx = findItemById($.Config.I_DM_OFF);
         if (-1 != idx) {
             var menuItem = getItem(idx) as MenuItem;
-            menuItem.setSubLabel(config.getLabel(Config.I_DM_OFF));
+            menuItem.setSubLabel($.config.getLabel($.Config.I_DM_OFF));
         }
     }
 }
@@ -282,49 +282,49 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     public function onSelect(menuItem as MenuItem) as Void {
         var id = menuItem.getId() as Config.Item;
         switch (id) {
-            case Config.I_BATTERY:
-            case Config.I_DATE_DISPLAY:
-            case Config.I_SECOND_HAND:
+            case $.Config.I_BATTERY:
+            case $.Config.I_DATE_DISPLAY:
+            case $.Config.I_SECOND_HAND:
                 // Advance to the next option and show the selected option as the sub label
-                config.setNext(id);
-                menuItem.setSubLabel(config.getLabel(id));
+                $.config.setNext(id);
+                menuItem.setSubLabel($.config.getLabel(id));
                 break;
-            case Config.I_DARK_MODE:
+            case $.Config.I_DARK_MODE:
                 // Advance to the next option and show the selected option as the sub label
-                config.setNext(id);
-                menuItem.setSubLabel(config.getLabel(id));
+                $.config.setNext(id);
+                menuItem.setSubLabel($.config.getLabel(id));
                 // If "Scheduled" is selected, add menu items to set the dark mode on and off times, else delete them
-                if (Config.S_DARK_MODE_SCHEDULED == config.getValue(id)) {
+                if ($.Config.S_DARK_MODE_SCHEDULED == $.config.getValue(id)) {
                     // Delete and then re-add the second hand and 3D effects menu items, to keep them after the dark mode schedule times
-                    var idx = _menu.findItemById(Config.I_SECOND_HAND);
+                    var idx = _menu.findItemById($.Config.I_SECOND_HAND);
                     if (-1 != idx) { _menu.deleteItem(idx); }
-                    idx = _menu.findItemById(Config.I_3D_EFFECTS);
+                    idx = _menu.findItemById($.Config.I_3D_EFFECTS);
                     if (-1 != idx) { _menu.deleteItem(idx); }
-                    _menu.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_ON), config.getLabel(Config.I_DM_ON), Config.I_DM_ON, {}));
-                    _menu.addItem(new WatchUi.MenuItem(config.getName(Config.I_DM_OFF), config.getLabel(Config.I_DM_OFF), Config.I_DM_OFF, {}));
-                    _menu.addItem(new WatchUi.MenuItem(config.getName(Config.I_SECOND_HAND), config.getLabel(Config.I_SECOND_HAND), Config.I_SECOND_HAND, {}));
-                    if (config.hasAlpha()) {
+                    _menu.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DM_ON), $.config.getLabel($.Config.I_DM_ON), $.Config.I_DM_ON, {}));
+                    _menu.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DM_OFF), $.config.getLabel($.Config.I_DM_OFF), $.Config.I_DM_OFF, {}));
+                    _menu.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_SECOND_HAND), $.config.getLabel($.Config.I_SECOND_HAND), $.Config.I_SECOND_HAND, {}));
+                    if ($.config.hasAlpha()) {
                         _menu.addItem(new WatchUi.ToggleMenuItem(
-                            config.getName(Config.I_3D_EFFECTS), 
-                            Config.ON_OFF_OPTIONS,
-                            Config.I_3D_EFFECTS, 
-                            Config.S_3D_EFFECTS_ON == config.getValue(Config.I_3D_EFFECTS), 
+                            $.config.getName($.Config.I_3D_EFFECTS), 
+                            $.Config.ON_OFF_OPTIONS,
+                            $.Config.I_3D_EFFECTS, 
+                            $.Config.S_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS), 
                             {}
                         ));
                     }
                 } else {
-                    var idx = _menu.findItemById(Config.I_DM_ON);
+                    var idx = _menu.findItemById($.Config.I_DM_ON);
                     if (-1 != idx) { _menu.deleteItem(idx); }
-                    idx = _menu.findItemById(Config.I_DM_OFF);
+                    idx = _menu.findItemById($.Config.I_DM_OFF);
                     if (-1 != idx) { _menu.deleteItem(idx); }
                 }
                 break;
-            case Config.I_3D_EFFECTS:
+            case $.Config.I_3D_EFFECTS:
                 // Toggle the two possible configuration values
-                config.setNext(id);
+                $.config.setNext(id);
                 break;
-            case Config.I_DM_ON:
-            case Config.I_DM_OFF:
+            case $.Config.I_DM_ON:
+            case $.Config.I_DM_OFF:
                 // Let the user select the time
                 WatchUi.pushView(new TimePicker(id), new TimePickerDelegate(id), WatchUi.SLIDE_IMMEDIATE);
                 break;

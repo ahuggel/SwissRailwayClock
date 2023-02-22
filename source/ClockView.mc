@@ -176,18 +176,18 @@ class ClockView extends WatchUi.WatchFace {
         var clockTime = System.getClockTime();
 
         // Set the color mode
-        switch (config.getValue(Config.I_DARK_MODE)) {
-            case Config.S_DARK_MODE_SCHEDULED:
+        switch ($.config.getValue($.Config.I_DARK_MODE)) {
+            case $.Config.S_DARK_MODE_SCHEDULED:
                 _colorMode = M_LIGHT;
                 var time = clockTime.hour * 60 + clockTime.min;
-                if (time >= config.getValue(Config.I_DM_ON) or time < config.getValue(Config.I_DM_OFF)) {
+                if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
                     _colorMode = M_DARK;
                 }
                 break;
-            case Config.S_DARK_MODE_OFF:
+            case $.Config.S_DARK_MODE_OFF:
                 _colorMode = M_LIGHT;
                 break;
-            case Config.S_DARK_MODE_ON:
+            case $.Config.S_DARK_MODE_ON:
                 _colorMode = M_DARK;
                 break;
         }
@@ -210,42 +210,42 @@ class ClockView extends WatchUi.WatchFace {
         // Draw the date string
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
         targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-        switch (config.getValue(Config.I_DATE_DISPLAY)) {
-            case Config.S_DATE_DISPLAY_OFF:
+        switch ($.config.getValue($.Config.I_DATE_DISPLAY)) {
+            case $.Config.S_DATE_DISPLAY_OFF:
                 break;
-            case Config.S_DATE_DISPLAY_DAY_ONLY: 
+            case $.Config.S_DATE_DISPLAY_DAY_ONLY: 
                 var dateStr = Lang.format("$1$", [info.day.format("%02d")]);
                 targetDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                 break;
-            case Config.S_DATE_DISPLAY_WEEKDAY_AND_DAY:
+            case $.Config.S_DATE_DISPLAY_WEEKDAY_AND_DAY:
                 dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
                 targetDc.drawText(_width/2, _height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                 break;
         }
 
         // Draw the battery level indicator
-        var batterySetting = config.getValue(Config.I_BATTERY);
-        if (batterySetting > Config.S_BATTERY_OFF) {
+        var batterySetting = $.config.getValue($.Config.I_BATTERY);
+        if (batterySetting > $.Config.S_BATTERY_OFF) {
             var level = System.getSystemStats().battery;
-            if (level < 40.0 and batterySetting >= Config.S_BATTERY_CLASSIC_WARN) {
+            if (level < 40.0 and batterySetting >= $.Config.S_BATTERY_CLASSIC_WARN) {
                 switch (batterySetting) {
-                    case Config.S_BATTERY_CLASSIC:
-                    case Config.S_BATTERY_CLASSIC_WARN:
+                    case $.Config.S_BATTERY_CLASSIC:
+                    case $.Config.S_BATTERY_CLASSIC_WARN:
                         drawClassicBatteryIndicator(targetDc, level);
                         break;
-                    case Config.S_BATTERY_MODERN:
-                    case Config.S_BATTERY_MODERN_WARN:
-                    case Config.S_BATTERY_HYBRID:
+                    case $.Config.S_BATTERY_MODERN:
+                    case $.Config.S_BATTERY_MODERN_WARN:
+                    case $.Config.S_BATTERY_HYBRID:
                         drawModernBatteryIndicator(targetDc, level);
                         break;
                 }
-            } else if (batterySetting >= Config.S_BATTERY_CLASSIC) {
+            } else if (batterySetting >= $.Config.S_BATTERY_CLASSIC) {
                 switch (batterySetting) {
-                    case Config.S_BATTERY_CLASSIC:
-                    case Config.S_BATTERY_HYBRID:
+                    case $.Config.S_BATTERY_CLASSIC:
+                    case $.Config.S_BATTERY_HYBRID:
                         drawClassicBatteryIndicator(targetDc, level);
                         break;
-                    case Config.S_BATTERY_MODERN:
+                    case $.Config.S_BATTERY_MODERN:
                         drawModernBatteryIndicator(targetDc, level);
                         break;
                 }
@@ -257,9 +257,9 @@ class ClockView extends WatchUi.WatchFace {
             // Reset the timer
             _secondHandTimer = SECOND_HAND_TIMER;
         }
-        var secondHandOption = config.getValue(Config.I_SECOND_HAND);
-        _hideSecondHand = Config.S_SECOND_HAND_OFF == secondHandOption 
-            or (Config.S_SECOND_HAND_LIGHT == secondHandOption and M_DARK == _colorMode);
+        var secondHandOption = $.config.getValue($.Config.I_SECOND_HAND);
+        _hideSecondHand = $.Config.S_SECOND_HAND_OFF == secondHandOption 
+            or ($.Config.S_SECOND_HAND_LIGHT == secondHandOption and M_DARK == _colorMode);
         if (!_isAwake and _hideSecondHand and _secondHandTimer > 0) {
             _secondHandTimer -= 1;
         }
@@ -279,7 +279,7 @@ class ClockView extends WatchUi.WatchFace {
 
         // Draw hand shadows, if 3D effects are turned on and supported by the device (also ensured by getValue()),
         // the watch is awake and in light color mode
-        if (Config.S_3D_EFFECTS_ON == config.getValue(Config.I_3D_EFFECTS) and _isAwake and M_LIGHT == _colorMode) {
+        if ($.Config.S_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS) and _isAwake and M_LIGHT == _colorMode) {
             var shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77);
             targetDc.setFill(shadowColor);
             targetDc.fillPolygon(shadowCoords(hourHandCoords, 7));
