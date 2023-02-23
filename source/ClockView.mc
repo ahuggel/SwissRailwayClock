@@ -18,7 +18,6 @@
    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
@@ -38,7 +37,7 @@ class ClockView extends WatchUi.WatchFace {
     ] as Array< Array<Number> >;
 
     // List of watchface shapes, used as indexes
-    enum { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
+    enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
     // A 2 dimensional array for the geometry of the watchface shapes (because the initialisation is more intuitive that way)
     private var _shapes as Array< Array< Float > > = new Array< Array<Float> >[S_SIZE];
     private var _secondCircleRadius as Number; // Radius of the second hand circle
@@ -177,17 +176,17 @@ class ClockView extends WatchUi.WatchFace {
 
         // Set the color mode
         switch ($.config.getValue($.Config.I_DARK_MODE)) {
-            case $.Config.S_DARK_MODE_SCHEDULED:
+            case $.Config.O_DARK_MODE_SCHEDULED:
                 _colorMode = M_LIGHT;
                 var time = clockTime.hour * 60 + clockTime.min;
                 if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
                     _colorMode = M_DARK;
                 }
                 break;
-            case $.Config.S_DARK_MODE_OFF:
+            case $.Config.O_DARK_MODE_OFF:
                 _colorMode = M_LIGHT;
                 break;
-            case $.Config.S_DARK_MODE_ON:
+            case $.Config.O_DARK_MODE_ON:
                 _colorMode = M_DARK;
                 break;
         }
@@ -211,13 +210,13 @@ class ClockView extends WatchUi.WatchFace {
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
         targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
         switch ($.config.getValue($.Config.I_DATE_DISPLAY)) {
-            case $.Config.S_DATE_DISPLAY_OFF:
+            case $.Config.O_DATE_DISPLAY_OFF:
                 break;
-            case $.Config.S_DATE_DISPLAY_DAY_ONLY: 
+            case $.Config.O_DATE_DISPLAY_DAY_ONLY: 
                 var dateStr = Lang.format("$1$", [info.day.format("%02d")]);
                 targetDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                 break;
-            case $.Config.S_DATE_DISPLAY_WEEKDAY_AND_DAY:
+            case $.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY:
                 dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
                 targetDc.drawText(_width/2, _height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                 break;
@@ -225,27 +224,27 @@ class ClockView extends WatchUi.WatchFace {
 
         // Draw the battery level indicator
         var batterySetting = $.config.getValue($.Config.I_BATTERY);
-        if (batterySetting > $.Config.S_BATTERY_OFF) {
+        if (batterySetting > $.Config.O_BATTERY_OFF) {
             var level = System.getSystemStats().battery;
-            if (level < 40.0 and batterySetting >= $.Config.S_BATTERY_CLASSIC_WARN) {
+            if (level < 40.0 and batterySetting >= $.Config.O_BATTERY_CLASSIC_WARN) {
                 switch (batterySetting) {
-                    case $.Config.S_BATTERY_CLASSIC:
-                    case $.Config.S_BATTERY_CLASSIC_WARN:
+                    case $.Config.O_BATTERY_CLASSIC:
+                    case $.Config.O_BATTERY_CLASSIC_WARN:
                         drawClassicBatteryIndicator(targetDc, level);
                         break;
-                    case $.Config.S_BATTERY_MODERN:
-                    case $.Config.S_BATTERY_MODERN_WARN:
-                    case $.Config.S_BATTERY_HYBRID:
+                    case $.Config.O_BATTERY_MODERN:
+                    case $.Config.O_BATTERY_MODERN_WARN:
+                    case $.Config.O_BATTERY_HYBRID:
                         drawModernBatteryIndicator(targetDc, level);
                         break;
                 }
-            } else if (batterySetting >= $.Config.S_BATTERY_CLASSIC) {
+            } else if (batterySetting >= $.Config.O_BATTERY_CLASSIC) {
                 switch (batterySetting) {
-                    case $.Config.S_BATTERY_CLASSIC:
-                    case $.Config.S_BATTERY_HYBRID:
+                    case $.Config.O_BATTERY_CLASSIC:
+                    case $.Config.O_BATTERY_HYBRID:
                         drawClassicBatteryIndicator(targetDc, level);
                         break;
-                    case $.Config.S_BATTERY_MODERN:
+                    case $.Config.O_BATTERY_MODERN:
                         drawModernBatteryIndicator(targetDc, level);
                         break;
                 }
@@ -258,8 +257,8 @@ class ClockView extends WatchUi.WatchFace {
             _secondHandTimer = SECOND_HAND_TIMER;
         }
         var secondHandOption = $.config.getValue($.Config.I_SECOND_HAND);
-        _hideSecondHand = $.Config.S_SECOND_HAND_OFF == secondHandOption 
-            or ($.Config.S_SECOND_HAND_LIGHT == secondHandOption and M_DARK == _colorMode);
+        _hideSecondHand = $.Config.O_SECOND_HAND_OFF == secondHandOption 
+            or ($.Config.O_SECOND_HAND_LIGHT == secondHandOption and M_DARK == _colorMode);
         if (!_isAwake and _hideSecondHand and _secondHandTimer > 0) {
             _secondHandTimer -= 1;
         }
@@ -279,7 +278,7 @@ class ClockView extends WatchUi.WatchFace {
 
         // Draw hand shadows, if 3D effects are turned on and supported by the device (also ensured by getValue()),
         // the watch is awake and in light color mode
-        if ($.Config.S_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS) and _isAwake and M_LIGHT == _colorMode) {
+        if ($.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS) and _isAwake and M_LIGHT == _colorMode) {
             var shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77);
             targetDc.setFill(shadowColor);
             targetDc.fillPolygon(shadowCoords(hourHandCoords, 7));
@@ -389,7 +388,7 @@ class ClockView extends WatchUi.WatchFace {
     //! @param shape Index of the shape
     //! @param angle Rotation angle in radians
     //! @return The rotated coordinates of the polygon (watch hand or tick mark)
-    private function rotateCoords(shape as Number, angle as Float) as Array< Array<Number> > {
+    private function rotateCoords(shape as Shape, angle as Float) as Array< Array<Number> > {
         var sin = Math.sin(angle);
         var cos = Math.cos(angle);
         var shapeIdx = shape * 8;
