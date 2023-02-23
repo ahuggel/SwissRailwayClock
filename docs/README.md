@@ -4,7 +4,7 @@
 
 - An(other) implementation of the iconic Swiss Railway Clock design, with a second hand in both high and low-power mode (no pause at 12 o'clock);
 - Simple code for an analog watchface, with a generous amount of code comments and hopefully easier to read and more straightforward than the samples I started with;
-- On-device settings with a menu to set date display and dark mode options, which also uses a basic time picker;
+- On-device settings with a menu to set battery level indicator, date display, dark mode and some other options, which also uses a basic time picker;
 - A global settings class that synchronises the selected options to persistent storage and makes them available across the app;
 - Compiles without warnings with the compiler type checking level set to "Strict";
 - Should work on all modern watches (```minApiLevel``` is set to 3.2.0, mostly to keep the code simple). It fails miserably in the always-on mode of watches with an AMOLED display though.
