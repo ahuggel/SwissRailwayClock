@@ -252,13 +252,13 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         // Handle the setting to disable the second hand in sleep mode after some time
-        if (_isAwake) {
-            // Reset the timer
-            _secondHandTimer = SECOND_HAND_TIMER;
-        }
         var secondHandOption = $.config.getValue($.Config.I_SECOND_HAND);
         _hideSecondHand = $.Config.O_SECOND_HAND_OFF == secondHandOption 
             or ($.Config.O_SECOND_HAND_LIGHT == secondHandOption and M_DARK == _colorMode);
+        if (_isAwake or !_hideSecondHand) {
+            // Reset the timer
+            _secondHandTimer = SECOND_HAND_TIMER;
+        }
         if (!_isAwake and _hideSecondHand and _secondHandTimer > 0) {
             _secondHandTimer -= 1;
         }
