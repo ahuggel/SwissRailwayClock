@@ -38,16 +38,16 @@ class ClockView extends WatchUi.WatchFace {
 
     // List of watchface shapes, used as indexes
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
-    // A 2 dimensional array for the geometry of the watchface shapes (because the initialisation is more intuitive that way)
+    // A 2 dimensional array for the geometry of the watchface shapes - because the initialisation is more intuitive that way
     private var _shapes as Array< Array< Float > > = new Array< Array<Float> >[S_SIZE];
     private var _secondCircleRadius as Number; // Radius of the second hand circle
     private var _secondCircleCenter as Array<Number>; // Center of the second hand circle
-    // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates)
+    // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
     private const TWO_PI as Float = 2 * Math.PI;
-    private const SECOND_HAND_TIMER as Number = 30;
-    
+    private const SECOND_HAND_TIMER as Number = 30; // Number of seconds before the second hand disappears, if the relevant setting is on
+
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
     private var _hasAntiAlias as Boolean;
@@ -159,8 +159,8 @@ class ClockView extends WatchUi.WatchFace {
     //! The processing logic is as follows:
     //! Draw the screen into the off-screen buffer and then output the buffer to the main display.
     //! Finally, the second hand is drawn directly on the screen. If supported, use anti aliasing.
-    //! The off-screen buffer is later used to blank out the second hand, before it is re-drawn at
-    //! the new position, directly on the main display.
+    //! The off-screen buffer is later, in onPartialUpdate(), used to blank out the second hand,
+    //! before it is re-drawn at the new position, directly on the main display.
     //!
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
