@@ -1,8 +1,2 @@
-bin/SwissRailwayClock.prg
-bin/SwissRailwayClock.prg.debug.xml
-bin/internal-mir/Rez.mir
-bin/mir/source/SwissRailwayClockApp.mir
-bin/mir/source/Settings.mir
-bin/mir/source/ClockView.mir
-bin/mir/source/TimePicker.mir
+bin/
 SwissRailwayClock.code-workspace

@@ -28,11 +28,11 @@ var config as Config = new Config();
 
 //! This class maintains application settings and synchronises them to persistent storage.
 class Config {
-    // Configuration item identifiers
+    // Configuration item identifiers. Used throughout the app to refer to individual settings.
     enum Item { I_BATTERY, I_DARK_MODE, I_DATE_DISPLAY, I_SECOND_HAND, I_3D_EFFECTS, I_DM_ON, I_DM_OFF, I_SIZE }
     // Configuration item display names
     private var _itemNames as Array<String> = ["Battery Level", "Dark Mode", "Date Display", "Seconds in Sleep", "3D Effects", "Turn On", "Turn Off"] as Array<String>;
-    // Configuration item labels used as keys for storing the configuration values. Using these rather than Item is more robust.
+    // Configuration item labels only used as keys for storing the configuration values. Using these for persistent storage, rather than Item is more robust.
     private var _itemLabels as Array<String> = ["battery", "darkMode", "dateDisplay", "secondHand", "3deffects", "dmOn", "dmOff"] as Array<String>;
 
     // Options for list and toggle configuration items. Using enums, the compiler can help detect issues like typos or outdated values.
@@ -47,10 +47,10 @@ class Config {
         I_BATTERY      => ["Off", "Classic Warnings", "Modern Warnings", "Classic", "Modern", "Hybrid"],
         I_DARK_MODE    => ["Scheduled", "Off", "On"],
         I_DATE_DISPLAY => ["Off", "Day Only", "Weekday and Day"],
-        I_SECOND_HAND  => ["On", "Off in Dark Mode", "Off"]
+        I_SECOND_HAND  => ["Off in Dark Mode", "Off", "On"]
     } as Dictionary<Item, Array<String> >;
 
-    // Option labels for simple On/Off toggle items
+    // Option labels for simple On/Off toggle items. Used in ToggleMenuItem.
     static const ON_OFF_OPTIONS = {:enabled=>"On", :disabled=>"Off"};
 
     private var _values as Dictionary<Item, Number>;  // Values for the configuration items
