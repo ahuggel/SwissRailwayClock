@@ -29,11 +29,11 @@ var config as Config = new Config();
 //! This class maintains application settings and synchronises them to persistent storage.
 class Config {
     // Configuration item identifiers. Used throughout the app to refer to individual settings.
-    enum Item { I_BATTERY, I_DARK_MODE, I_DATE_DISPLAY, I_SECOND_HAND, I_3D_EFFECTS, I_DM_ON, I_DM_OFF, I_SIZE }
+    enum Item { I_BATTERY, I_DATE_DISPLAY, I_DARK_MODE, I_SECOND_HAND, I_3D_EFFECTS, I_DM_ON, I_DM_OFF, I_SIZE }
     // Configuration item display names
-    private var _itemNames as Array<String> = ["Battery Level", "Dark Mode", "Date Display", "Seconds in Sleep", "3D Effects", "Turn On", "Turn Off"] as Array<String>;
+    private var _itemNames as Array<String> = ["Battery Level", "Date Display", "Dark Mode", "Seconds in Sleep", "3D Effects", "Turn On", "Turn Off"] as Array<String>;
     // Configuration item labels only used as keys for storing the configuration values. Using these for persistent storage, rather than Item is more robust.
-    private var _itemLabels as Array<String> = ["battery", "darkMode", "dateDisplay", "secondHand", "3deffects", "dmOn", "dmOff"] as Array<String>;
+    private var _itemLabels as Array<String> = ["battery", "dateDisplay", "darkMode", "secondHand", "3deffects", "dmOn", "dmOff"] as Array<String>;
 
     // Options for list and toggle configuration items. Using enums, the compiler can help detect issues like typos or outdated values.
     enum { O_BATTERY_OFF, O_BATTERY_CLASSIC_WARN, O_BATTERY_MODERN_WARN, O_BATTERY_CLASSIC, O_BATTERY_MODERN, O_BATTERY_HYBRID }
@@ -45,8 +45,8 @@ class Config {
     // Option labels for list items. One for each of the enum values above.
     private var _labels as Dictionary<Item, Array<String> > = {
         I_BATTERY      => ["Off", "Classic Warnings", "Modern Warnings", "Classic", "Modern", "Hybrid"],
-        I_DARK_MODE    => ["Scheduled", "Off", "On"],
         I_DATE_DISPLAY => ["Off", "Day Only", "Weekday and Day"],
+        I_DARK_MODE    => ["Scheduled", "Off", "On"],
         I_SECOND_HAND  => ["Off in Dark Mode", "Off", "On"]
     } as Dictionary<Item, Array<String> >;
 
@@ -93,8 +93,8 @@ class Config {
         var value = _values[id];
         switch (id) {
             case I_BATTERY:
-            case I_DARK_MODE:
             case I_DATE_DISPLAY:
+            case I_DARK_MODE:
             case I_SECOND_HAND:
                 var label = _labels[id] as Array<String>;
                 option = label[value];
@@ -130,8 +130,8 @@ class Config {
         var value = _values[id];
         switch (id) {
             case I_BATTERY:
-            case I_DARK_MODE:
             case I_DATE_DISPLAY:
+            case I_DARK_MODE:
             case I_SECOND_HAND:
                 var label = _labels[id] as Array<String>;
                 _values[id] = (value as Number + 1) % label.size();
