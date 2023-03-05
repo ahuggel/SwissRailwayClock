@@ -116,7 +116,7 @@ class TimePickerDelegate extends WatchUi.PickerDelegate {
         _id = id;
     }
 
-    public function onAccept(values as Array<Number?>) as Boolean {
+    public function onAccept(values as Array) as Boolean {
         $.config.setValue(_id, values[0] as Number * 60 + values[2] as Number);
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         return true;
