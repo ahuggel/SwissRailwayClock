@@ -1,13 +1,13 @@
 ![image](https://user-images.githubusercontent.com/972802/211146459-4acc8a60-0c2f-4bf3-acf8-0270906968ab.png)
 
-# Swiss Railway Clock - An analog watchface for Garmin watches
+# Swiss Railway Clock - An analog watchface for Garmin smartwatches
 
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a second hand in both high and low-power mode;
 - The operation differs from the original Swiss railway clock in that the second hand updates only every second and it does not pause at 12 o'clock. There is also an option to make the second hand disappear in low-power mode, after about 30s;
-- On-device settings allow the configuration of battery level indicator, date display, dark mode and some other options. The menu demonstrates the use of three different types of menu items as well as a basic time picker;
+- On-device settings allow the configuration of battery level indicator, date display, dark mode, 3D effects and some other options. The menu implements three different types of menu items as well as a basic time picker;
 - A global settings class synchronises the selected options to persistent storage and makes them available across the app;
 - The program compiles without warnings with the compiler type checking level set to "Strict";
-- Modern Garmin watches should be able to run this watchface (```minApiLevel``` is set to 3.2.0, mostly to keep the code simple). It fails miserably in the always-on mode of watches with an AMOLED display though.
+- All modern Garmin watches should be able to run this watchface (```minApiLevel``` is set to 3.2.0, mostly to keep the code simple). It fails miserably in the always-on mode of watches with an AMOLED display though.
 
 This program is the result of my recent journey to learn basic Monkey C and the Garmin SDK. I tried to keep the source code simple and straightforward, with a generous amount of comments, and implement an easy to understand yet robust logic. I am making it available for others to hopefully be able to learn the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
 
