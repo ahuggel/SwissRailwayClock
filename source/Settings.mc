@@ -31,7 +31,7 @@ class Config {
     // Configuration item identifiers. Used throughout the app to refer to individual settings.
     enum Item { I_BATTERY, I_DATE_DISPLAY, I_DARK_MODE, I_DM_CONTRAST, I_SECOND_HAND, I_3D_EFFECTS, I_DM_ON, I_DM_OFF, I_SIZE }
     // Configuration item display names
-    private var _itemNames as Array<String> = ["Battery Level", "Date Display", "Dark Mode", "Dark Mode Contrast", "Seconds in Low Power", "3D Effects", "Turn On", "Turn Off"] as Array<String>;
+    private var _itemNames as Array<String> = ["Battery Level", "Date Display", "Dark Mode", "Contrast", "Seconds Disappear", "3D Effects", "Turn On", "Turn Off"] as Array<String>;
     // Configuration item labels only used as keys for storing the configuration values. Using these for persistent storage, rather than Item is more robust.
     private var _itemLabels as Array<String> = ["battery", "dateDisplay", "darkMode", "dmContrast", "secondHand", "3deffects", "dmOn", "dmOff"] as Array<String>;
 
@@ -39,9 +39,10 @@ class Config {
     enum { O_BATTERY_OFF, O_BATTERY_CLASSIC_WARN, O_BATTERY_MODERN_WARN, O_BATTERY_CLASSIC, O_BATTERY_MODERN, O_BATTERY_HYBRID }
     enum { O_DATE_DISPLAY_OFF, O_DATE_DISPLAY_DAY_ONLY, O_DATE_DISPLAY_WEEKDAY_AND_DAY }
     enum { O_DARK_MODE_SCHEDULED, O_DARK_MODE_OFF, O_DARK_MODE_ON }
-    enum { O_DM_CONTRAST_LT_GRAY, O_DM_CONTRAST_DK_GRAY, O_DM_CONTRAST_WHITE }
     enum { O_SECOND_HAND_ON, O_SECOND_HAND_LIGHT, O_SECOND_HAND_OFF }
     enum { O_3D_EFFECTS_ON, O_3D_EFFECTS_OFF }
+    // Colors for the dark mode contrast icon menu item. The index (0, 1 or 2) is stored, but getValue() returns the color.
+    static const O_DM_CONTRAST as Array<Number> = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>;
 
     // Option labels for list items. One for each of the enum values above.
     private var _labels as Dictionary<Item, Array<String> > = {
@@ -49,7 +50,7 @@ class Config {
         I_DATE_DISPLAY => ["Off", "Day Only", "Weekday and Day"],
         I_DARK_MODE    => ["Scheduled", "Off", "On"],
         I_DM_CONTRAST  => ["Light Gray", "Dark Gray", "White"],
-        I_SECOND_HAND  => ["Off in Dark Mode", "Off", "On"]
+        I_SECOND_HAND  => ["In Dark Mode", "Never", "Always"]
     } as Dictionary<Item, Array<String> >;
 
     // Option labels for simple On/Off toggle items. Used in ToggleMenuItem.
@@ -66,7 +67,7 @@ class Config {
         for (var id = 0; id < I_SIZE; id++) {
             var value = Storage.getValue(_itemLabels[id]) as Number;
             switch (id) {
-                case: I_3D_EFFECTS:
+                case I_3D_EFFECTS:
                     if (null == value) { value = 0; }
                     // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
                     if (!_hasAlpha and O_3D_EFFECTS_ON == value) { value = O_3D_EFFECTS_OFF; }
@@ -85,7 +86,7 @@ class Config {
             if (null == value) { value = 0; }
             _values[id as Item] = value;
         }
-    } 
+    }
 
     //! Return the current label for the specified setting.
     //!@param id Setting
@@ -117,7 +118,13 @@ class Config {
     //!@param id Setting
     //!@return The current value of the setting
     public function getValue(id as Item) as Number {
-        return _values[id] as Number;
+        var value = _values[id] as Number;
+        switch (id) {
+            case I_DM_CONTRAST:
+                value = O_DM_CONTRAST[value];
+                break;
+        }
+        return value;
     }
 
     //! Return the name for the specified setting.
@@ -153,8 +160,16 @@ class Config {
     }
 
     public function setValue(id as Item, value as Number) as Void {
-        _values[id] = value;
-        Storage.setValue(_itemLabels[id as Number], _values[id]);
+        switch (id) {
+            case I_DM_ON:
+            case I_DM_OFF:
+                _values[id] = value;
+                Storage.setValue(_itemLabels[id as Number], _values[id]);
+                break;
+            default:
+                System.println("ERROR: Config.seValue() is not implemented for id = " + id);
+                break;
+        }
     }
 
     // Returns true if the device supports an alpha channel, false if not.
@@ -179,7 +194,14 @@ class SettingsMenu extends WatchUi.Menu2 {
         }
         // Add the menu item for dark mode contrast only if dark mode is not set to "Off"
         if ($.Config.O_DARK_MODE_OFF != dm) {
-            Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DM_CONTRAST), $.config.getLabel($.Config.I_DM_CONTRAST), $.Config.I_DM_CONTRAST, {}));
+            // Add the dark mode contrast item
+            Menu2.addItem(new WatchUi.IconMenuItem(
+                $.config.getName($.Config.I_DM_CONTRAST), 
+                $.config.getLabel($.Config.I_DM_CONTRAST), 
+                $.Config.I_DM_CONTRAST, 
+                new MenuIcon($.config.getValue($.Config.I_DM_CONTRAST)),
+                {}
+            ));
         }
         Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_SECOND_HAND), $.config.getLabel($.Config.I_SECOND_HAND), $.Config.I_SECOND_HAND, {}));
         if ($.config.hasAlpha()) {
@@ -230,11 +252,19 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         switch (id) {
             case $.Config.I_BATTERY:
             case $.Config.I_DATE_DISPLAY:
-            case $.Config.I_DM_CONTRAST:
             case $.Config.I_SECOND_HAND:
                 // Advance to the next option and show the selected option as the sub label
                 $.config.setNext(id);
                 menuItem.setSubLabel($.config.getLabel(id));
+                break;
+            case $.Config.I_DM_CONTRAST:
+                // Advance to the next option and show the selected option as the sub label
+                $.config.setNext(id);
+                menuItem.setSubLabel($.config.getLabel(id));
+                // Update the color of the icon
+                var menuIcon = (menuItem as WatchUi.IconMenuItem).getIcon() as MenuIcon;
+                menuIcon.setColor($.config.getValue(id));
+                WatchUi.requestUpdate();
                 break;
             case $.Config.I_DARK_MODE:
                 // Advance to the next option and show the selected option as the sub label
@@ -254,8 +284,14 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                         _menu.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DM_OFF), $.config.getLabel($.Config.I_DM_OFF), $.Config.I_DM_OFF, {}));
                         // Fallthrough
                     case $.Config.O_DARK_MODE_ON:
-                        // Add the dark mode contrast item
-                        _menu.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DM_CONTRAST), $.config.getLabel($.Config.I_DM_CONTRAST), $.Config.I_DM_CONTRAST, {}));
+                        // Add the dark mode contrast menu item
+                        _menu.addItem(new WatchUi.IconMenuItem(
+                            $.config.getName($.Config.I_DM_CONTRAST), 
+                            $.config.getLabel($.Config.I_DM_CONTRAST), 
+                            $.Config.I_DM_CONTRAST, 
+                            new MenuIcon($.config.getValue($.Config.I_DM_CONTRAST)),
+                            {}
+                        ));
                         break;
                 }
                 // Finally, re-add the second hand and 3d effects items
@@ -288,5 +324,30 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         var del = -1 != idx;
         if (del) { _menu.deleteItem(idx); }
         return del;
+    }
+}
+
+//! The icon class used for the contrast menu item
+class MenuIcon extends WatchUi.Drawable {
+    private var _color as Number;
+
+    //! Constructor
+    public function initialize(color as Number) {
+        Drawable.initialize({});
+        _color = color;
+    }
+
+    //! Set the color for the icon
+    public function setColor(color as Number) as Void {
+        _color = color;
+    }
+
+    //! @param dc Device Context
+    public function draw(dc as Dc) as Void {
+        dc.clearClip();
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.fillRectangle(0, 0, dc.getWidth(), dc.getHeight());
+        dc.setColor(_color, _color);
+        dc.fillPolygon([[0,0], [dc.getWidth(), dc.getHeight()], [dc.getWidth(), 0]] as Array< Array<Number> >);
     }
 }
