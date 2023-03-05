@@ -191,6 +191,17 @@ class ClockView extends WatchUi.WatchFace {
                 break;
         }
 
+        // In dark mode, adjust colors based on the contrast setting
+        if (M_DARK == _colorMode) {
+            var foregroundColor = $.config.getValue($.Config.I_DM_CONTRAST);
+            _colors[M_DARK][C_FOREGROUND] = foregroundColor;
+            if (Graphics.COLOR_WHITE == foregroundColor) {
+                _colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
+            } else {
+                _colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
+            }
+        }
+
         // Draw the background
         if (System.SCREEN_SHAPE_ROUND == _screenShape) {
             // Fill the entire background with the background color
