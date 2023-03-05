@@ -2,26 +2,24 @@
 
 # Swiss Railway Clock - An analog watchface for Garmin watches
 
-- An(other) implementation of the iconic Swiss Railway Clock design, with a second hand in both high and low-power mode (no pause at 12 o'clock);
-- Simple code for an analog watchface, with a generous amount of code comments and hopefully easier to read and more straightforward than the samples I started with;
-- On-device settings with a menu to set battery level indicator, date display, dark mode and some other options, which also uses a basic time picker;
-- A global settings class that synchronises the selected options to persistent storage and makes them available across the app;
-- Compiles without warnings with the compiler type checking level set to "Strict";
-- Should work on all modern watches (```minApiLevel``` is set to 3.2.0, mostly to keep the code simple). It fails miserably in the always-on mode of watches with an AMOLED display though.
+- This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a second hand in both high and low-power mode;
+- The operation differs from the original Swiss railway clock in that the second hand updates only every second and it does not pause at 12 o'clock. There is also an option to make the second hand disappear in low-power mode, after about 30s;
+- On-device settings allow the configuration of battery level indicator, date display, dark mode and some other options. The menu demonstrates the use of three different types of menu items as well as a basic time picker;
+- A global settings class synchronises the selected options to persistent storage and makes them available across the app;
+- The program compiles without warnings with the compiler type checking level set to "Strict";
+- Modern Garmin watches should be able to run this watchface (```minApiLevel``` is set to 3.2.0, mostly to keep the code simple). It fails miserably in the always-on mode of watches with an AMOLED display though.
 
-This program is the result of my recent journey to learn basic Monkey C and the Garmin SDK to get this watchface on my 
-new watch. I'm making it available for others to hopefully be able to learn the necessary concepts more quickly than I did, 
-and to perhaps get some feedback on what could be done better and how.
+This program is the result of my recent journey to learn basic Monkey C and the Garmin SDK. I tried to keep the source code simple and straightforward, with a generous amount of comments, and implement a hopefully easy to understand logic. I am making it available for others to hopefully be able to learn the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
 
 ## Credits
 
 I've used several samples that come with the Garmin SDK, in particular: Analog, Menu2Sample and Picker.
 I also looked at the code at https://github.com/markwmuller/SwissWatchFace/, which is for a similar watchface, and
-I read lots of very helpful posts in the Garmin Developer forum.
-The [Swiss Railway Clock] design was created by Hans Hilfiker in the 1940s and 1950s and it continues to be used at
+read lots of very helpful posts in the Garmin Developer forum.
+The [Swiss railway clock] design was created by Hans Hilfiker in the 1940s and 1950s and it continues to be used at
 every railway station in Switzerland until today.
 
-[Swiss Railway Clock]: https://en.wikipedia.org/wiki/Swiss_railway_clock
+[Swiss railway clock]: https://en.wikipedia.org/wiki/Swiss_railway_clock
 
 ## License
 

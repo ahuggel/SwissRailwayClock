@@ -433,6 +433,7 @@ class ClockView extends WatchUi.WatchFace {
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(_width/2, _clockRadius/2, radius);
 /*
+            TODO: THIS IS WORK IN PROGRESS
             dc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
             var pts = [ [_width/2, _clockRadius/2],
                         [_width/2, _clockRadius/2 - radius],
