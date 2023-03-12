@@ -39,7 +39,7 @@ class Config {
     enum { O_BATTERY_OFF, O_BATTERY_CLASSIC_WARN, O_BATTERY_MODERN_WARN, O_BATTERY_CLASSIC, O_BATTERY_MODERN, O_BATTERY_HYBRID }
     enum { O_DATE_DISPLAY_OFF, O_DATE_DISPLAY_DAY_ONLY, O_DATE_DISPLAY_WEEKDAY_AND_DAY }
     enum { O_DARK_MODE_SCHEDULED, O_DARK_MODE_OFF, O_DARK_MODE_ON }
-    enum { O_SECOND_HAND_ON, O_SECOND_HAND_LIGHT, O_SECOND_HAND_OFF }
+    enum { O_SECOND_HAND_DARK, O_SECOND_HAND_OFF, O_SECOND_HAND_ON }
     enum { O_3D_EFFECTS_ON, O_3D_EFFECTS_OFF }
     // Colors for the dark mode contrast icon menu item. The index (0, 1 or 2) is stored, but getValue() returns the color.
     static const O_DM_CONTRAST as Array<Number> = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>;

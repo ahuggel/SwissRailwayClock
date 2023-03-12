@@ -28,7 +28,7 @@ import Toybox.WatchUi;
 
 //! Implements the Swiss Railway Clock watch face
 class ClockView extends WatchUi.WatchFace {
-    
+
     enum { M_LIGHT, M_DARK } // Color modes
     enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
     private var _colors as Array< Array<Number> > = [
@@ -265,7 +265,7 @@ class ClockView extends WatchUi.WatchFace {
         // Handle the setting to disable the second hand in sleep mode after some time
         var secondHandOption = $.config.getValue($.Config.I_SECOND_HAND);
         _hideSecondHand = $.Config.O_SECOND_HAND_OFF == secondHandOption 
-            or ($.Config.O_SECOND_HAND_LIGHT == secondHandOption and M_DARK == _colorMode);
+            or ($.Config.O_SECOND_HAND_DARK == secondHandOption and M_DARK == _colorMode);
         if (_isAwake or !_hideSecondHand) {
             // Reset the timer
             _secondHandTimer = SECOND_HAND_TIMER;
@@ -361,6 +361,7 @@ class ClockView extends WatchUi.WatchFace {
         var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + 0.5).toNumber();
         var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + 0.5).toNumber();
         var center = [_screenCenter[0] + x, _screenCenter[1] + y] as Array<Number>;
+
         var coords = rotateCoords(S_SECONDHAND, angle);
         return [ coords[0], coords[1], coords[2], coords[3], center ] as Array< Array<Number> >;
     }
