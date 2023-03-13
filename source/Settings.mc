@@ -44,7 +44,7 @@ class Config {
     // Colors for the dark mode contrast icon menu item. The index (0, 1 or 2) is stored, but getValue() returns the color.
     static const O_DM_CONTRAST as Array<Number> = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>;
 
-    // Option labels for list items. One for each of the enum values above.
+    // Option labels for list items. One for each of the enum values above and in the same order.
     private var _labels as Dictionary<Item, Array<String> > = {
         I_BATTERY      => ["Off", "Classic Warnings", "Modern Warnings", "Classic", "Modern", "Hybrid"],
         I_DATE_DISPLAY => ["Off", "Day Only", "Weekday and Day"],
@@ -67,11 +67,6 @@ class Config {
         for (var id = 0; id < I_SIZE; id++) {
             var value = Storage.getValue(_itemLabels[id]) as Number;
             switch (id) {
-                case I_3D_EFFECTS:
-                    if (null == value) { value = 0; }
-                    // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
-                    if (!_hasAlpha and O_3D_EFFECTS_ON == value) { value = O_3D_EFFECTS_OFF; }
-                    break;
                 case I_DM_ON:
                     if (null == value or value < 0 or value > 1439) {
                         value = 1320; // Default time to turn dark mode on: 22:00
@@ -82,8 +77,15 @@ class Config {
                         value = 420; // Default time to turn dark more off: 07:00
                     }
                     break;
+                case I_3D_EFFECTS:
+                    if (null == value) { value = 0; }
+                    // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
+                    if (!_hasAlpha and O_3D_EFFECTS_ON == value) { value = O_3D_EFFECTS_OFF; }
+                    break;
+                default:
+                    if (null == value) { value = 0; }
+                    break;
             }
-            if (null == value) { value = 0; }
             _values[id as Item] = value;
         }
     }
@@ -107,7 +109,7 @@ class Config {
             case I_DM_OFF:
                 option = (value as Number / 60).toNumber() + ":" + (value as Number % 60).format("%02d");
                 break;
-            case I_3D_EFFECTS:
+            default:
                 System.println("ERROR: Config.getLabel() is not implemented for id = " + id);
                 break;
         }
@@ -152,8 +154,7 @@ class Config {
                 _values[id] = (value as Number + 1) % 2;
                 Storage.setValue(_itemLabels[id as Number], _values[id]);
                 break;
-            case I_DM_ON:
-            case I_DM_OFF:
+            default:
                 System.println("ERROR: Config.setNext() is not implemented for id = " + id);
                 break;
         }
@@ -183,14 +184,14 @@ class SettingsMenu extends WatchUi.Menu2 {
     //! Constructor
     public function initialize() {
         Menu2.initialize({:title=>"Settings"});
-        Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_BATTERY), $.config.getLabel($.Config.I_BATTERY), $.Config.I_BATTERY, {}));
-        Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DATE_DISPLAY), $.config.getLabel($.Config.I_DATE_DISPLAY), $.Config.I_DATE_DISPLAY, {}));
-        Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DARK_MODE), $.config.getLabel($.Config.I_DARK_MODE), $.Config.I_DARK_MODE, {}));
+        addMenuItem($.Config.I_BATTERY);
+        addMenuItem($.Config.I_DATE_DISPLAY);
+        addMenuItem($.Config.I_DARK_MODE);
         // Add menu items for the dark mode on and off times only if dark mode is set to "Scheduled"
         var dm = $.config.getValue($.Config.I_DARK_MODE);
         if ($.Config.O_DARK_MODE_SCHEDULED == dm) {
-            Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DM_ON), $.config.getLabel($.Config.I_DM_ON), $.Config.I_DM_ON, {}));
-            Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DM_OFF), $.config.getLabel($.Config.I_DM_OFF), $.Config.I_DM_OFF, {}));
+            addMenuItem($.Config.I_DM_ON);
+            addMenuItem($.Config.I_DM_OFF);
         }
         // Add the menu item for dark mode contrast only if dark mode is not set to "Off"
         if ($.Config.O_DARK_MODE_OFF != dm) {
@@ -203,7 +204,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 {}
             ));
         }
-        Menu2.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_SECOND_HAND), $.config.getLabel($.Config.I_SECOND_HAND), $.Config.I_SECOND_HAND, {}));
+        addMenuItem($.Config.I_SECOND_HAND);
         if ($.config.hasAlpha()) {
             Menu2.addItem(new WatchUi.ToggleMenuItem(
                 $.config.getName($.Config.I_3D_EFFECTS), 
@@ -228,6 +229,19 @@ class SettingsMenu extends WatchUi.Menu2 {
             var menuItem = getItem(idx) as MenuItem;
             menuItem.setSubLabel($.config.getLabel($.Config.I_DM_OFF));
         }
+    }
+
+    //! Add a MenuItem to the menu.
+    public function addMenuItem(item as Config.Item) as Void {
+        Menu2.addItem(new WatchUi.MenuItem($.config.getName(item), $.config.getLabel(item), item, {}));
+    }
+
+    //! Delete any menu item. Returns true if an item was deleted, else false
+    public function deleteAnyItem(item as Config.Item) as Boolean {
+        var idx = findItemById(item);
+        var del = -1 != idx;
+        if (del) { Menu2.deleteItem(idx); }
+        return del;
     }
 }
 
@@ -271,17 +285,17 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 $.config.setNext(id);
                 menuItem.setSubLabel($.config.getLabel(id));
                 // Delete all dark mode and following menu items
-                deleteItem($.Config.I_DM_ON);
-                deleteItem($.Config.I_DM_OFF);
-                deleteItem($.Config.I_DM_CONTRAST);
-                deleteItem($.Config.I_SECOND_HAND);
-                deleteItem($.Config.I_3D_EFFECTS);
+                _menu.deleteAnyItem($.Config.I_DM_ON);
+                _menu.deleteAnyItem($.Config.I_DM_OFF);
+                _menu.deleteAnyItem($.Config.I_DM_CONTRAST);
+                _menu.deleteAnyItem($.Config.I_SECOND_HAND);
+                _menu.deleteAnyItem($.Config.I_3D_EFFECTS);
                 // Rebuild the menu with the items required based on the dark mode setting
                 switch ($.config.getValue(id)) {
                     case $.Config.O_DARK_MODE_SCHEDULED:
                         // Add the dark mode schedule times and contrast menu items
-                        _menu.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DM_ON), $.config.getLabel($.Config.I_DM_ON), $.Config.I_DM_ON, {}));
-                        _menu.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_DM_OFF), $.config.getLabel($.Config.I_DM_OFF), $.Config.I_DM_OFF, {}));
+                        _menu.addMenuItem($.Config.I_DM_ON);
+                        _menu.addMenuItem($.Config.I_DM_OFF);
                         // Fallthrough
                     case $.Config.O_DARK_MODE_ON:
                         // Add the dark mode contrast menu item
@@ -295,7 +309,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                         break;
                 }
                 // Finally, re-add the second hand and 3d effects items
-                _menu.addItem(new WatchUi.MenuItem($.config.getName($.Config.I_SECOND_HAND), $.config.getLabel($.Config.I_SECOND_HAND), $.Config.I_SECOND_HAND, {}));
+                _menu.addMenuItem($.Config.I_SECOND_HAND);
                 if ($.config.hasAlpha()) {
                     _menu.addItem(new WatchUi.ToggleMenuItem(
                         $.config.getName($.Config.I_3D_EFFECTS), 
@@ -317,14 +331,6 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 break;
         }
   	}
-
-    //! Delete a menu item and return true if it exists
-    private function deleteItem(item as Config.Item) as Boolean {
-        var idx = _menu.findItemById(item);
-        var del = -1 != idx;
-        if (del) { _menu.deleteItem(idx); }
-        return del;
-    }
 }
 
 //! The icon class used for the contrast menu item
