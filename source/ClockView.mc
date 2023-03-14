@@ -39,7 +39,7 @@ class ClockView extends WatchUi.WatchFace {
     // List of watchface shapes, used as indexes
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
     // A 2 dimensional array for the geometry of the watchface shapes - because the initialisation is more intuitive that way
-    private var _shapes as Array< Array< Float > > = new Array< Array<Float> >[S_SIZE];
+    private var _shapes as Array< Array<Float> > = new Array< Array<Float> >[S_SIZE];
     private var _secondCircleRadius as Number; // Radius of the second hand circle
     private var _secondCircleCenter as Array<Number>; // Center of the second hand circle
     // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
@@ -77,8 +77,7 @@ class ClockView extends WatchUi.WatchFace {
         _secondHandTimer = SECOND_HAND_TIMER; // Time to wait (in seconds) before disabling the second hand in low-power mode
         _hideSecondHand = false;
 
-        // Allocate the buffer we use for drawing the watchface, hour and minute hands in low-power mode, 
-        // using BufferedBitmap (API Level 2.3.0).
+        // Allocate the buffer we use for drawing the watchface, using BufferedBitmap (API Level 2.3.0).
         // This is a full-colored buffer (with no palette), as we have enough memory :) and it makes drawing 
         // text with anti-aliased fonts much more straightforward.
         // Doing this in initialize() rather than onLayout() so _offscreenBuffer does not need to be 
@@ -116,17 +115,17 @@ class ClockView extends WatchUi.WatchFace {
             }
         }
 
-        // Map out the coordinates of all the shapes. Doing that only once to reduce processing time.
+        // Map out the coordinates of all the shapes. Doing that only once reduces processing time.
         for (var s = 0; s < S_SIZE; s++) {
             var idx = s * 8;
-            _coords[idx]     = -(_shapes[s][1] / 2 + 0.5).toNumber();
-            _coords[idx + 1] = -(_shapes[s][3] + 0.5).toNumber();
-            _coords[idx + 2] = -(_shapes[s][2] / 2 + 0.5).toNumber();
-            _coords[idx + 3] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
-            _coords[idx + 4] =  (_shapes[s][2] / 2 + 0.5).toNumber();
-            _coords[idx + 5] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
-            _coords[idx + 6] =  (_shapes[s][1] / 2 + 0.5).toNumber();
-            _coords[idx + 7] = -(_shapes[s][3] + 0.5).toNumber();
+            _coords[idx]   = -(_shapes[s][1] / 2 + 0.5).toNumber();
+            _coords[idx+1] = -(_shapes[s][3] + 0.5).toNumber();
+            _coords[idx+2] = -(_shapes[s][2] / 2 + 0.5).toNumber();
+            _coords[idx+3] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
+            _coords[idx+4] =  (_shapes[s][2] / 2 + 0.5).toNumber();
+            _coords[idx+5] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
+            _coords[idx+6] =  (_shapes[s][1] / 2 + 0.5).toNumber();
+            _coords[idx+7] = -(_shapes[s][3] + 0.5).toNumber();
         }
 
         // The radius of the second hand circle in pixels, calculated from the percentage of the clock face diameter
@@ -221,8 +220,6 @@ class ClockView extends WatchUi.WatchFace {
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
         targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
         switch ($.config.getValue($.Config.I_DATE_DISPLAY)) {
-            case $.Config.O_DATE_DISPLAY_OFF:
-                break;
             case $.Config.O_DATE_DISPLAY_DAY_ONLY: 
                 var dateStr = Lang.format("$1$", [info.day.format("%02d")]);
                 targetDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);

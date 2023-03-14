@@ -28,7 +28,7 @@ var config as Config = new Config();
 
 //! This class maintains application settings and synchronises them to persistent storage.
 class Config {
-    // Configuration item identifiers. Used throughout the app to refer to individual settings.
+    // Configuration item identifiers. Used throughout the app to refer to individual settings. The last one must be I_SIZE, it is used like size()
     enum Item { I_BATTERY, I_DATE_DISPLAY, I_DARK_MODE, I_DM_CONTRAST, I_SECOND_HAND, I_3D_EFFECTS, I_DM_ON, I_DM_OFF, I_SIZE }
     // Configuration item display names
     private var _itemNames as Array<String> = ["Battery Level", "Date Display", "Dark Mode", "Contrast", "Seconds Disappear", "3D Effects", "Turn On", "Turn Off"] as Array<String>;
@@ -195,7 +195,6 @@ class SettingsMenu extends WatchUi.Menu2 {
         }
         // Add the menu item for dark mode contrast only if dark mode is not set to "Off"
         if ($.Config.O_DARK_MODE_OFF != dm) {
-            // Add the dark mode contrast item
             Menu2.addItem(new WatchUi.IconMenuItem(
                 $.config.getName($.Config.I_DM_CONTRAST), 
                 $.config.getLabel($.Config.I_DM_CONTRAST), 
