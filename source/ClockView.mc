@@ -374,20 +374,21 @@ class ClockView extends WatchUi.WatchFace {
         var x2 = coords[4][0] + _secondCircleRadius;
         var y2 = coords[4][1] + _secondCircleRadius;
         var clipCoords = [ // coords[1], coords[2] optimized out: only consider the tail and circle coords
-            coords[0], coords[3], [ x1, y1 ], [ x2, y1 ], [ x2, y2 ], [ x1, y2 ]
-        ] as Array< Array<Number> >;
+            coords[0][0], coords[0][1], coords[3][0], coords[3][1], x1, y1, x2, y1, x2, y2, x1, y2 
+        ] as Array<Number>;
         var minX = 65536;
         var minY = 65536;
         var maxX = 0;
         var maxY = 0;
-        for (var i = 0; i < 6; i++) { // i < clipCoords.size() optimized to 6 :/
-            if (clipCoords[i][0] < minX) { minX = clipCoords[i][0]; }
-            if (clipCoords[i][1] < minY) { minY = clipCoords[i][1]; }
-            if (clipCoords[i][0] > maxX) { maxX = clipCoords[i][0]; }
-            if (clipCoords[i][1] > maxY) { maxY = clipCoords[i][1]; }
+        for (var i = 0; i < 12; i += 2) { // i < clipCoords.size() optimized to 12 :/
+            var j = i + 1;
+            if (clipCoords[i] < minX) { minX = clipCoords[i]; }
+            if (clipCoords[j] < minY) { minY = clipCoords[j]; }
+            if (clipCoords[i] > maxX) { maxX = clipCoords[i]; }
+            if (clipCoords[j] > maxY) { maxY = clipCoords[j]; }
         }
-        // Add one pixel on each side for good measure
-        dc.setClip(minX - 1, minY - 1, maxX + 1 - (minX - 1), maxY + 1 - (minY - 1));
+        // Add two pixels on each side for good measure
+        dc.setClip(minX - 2, minY - 2, maxX + 2 - (minX - 2), maxY + 2 - (minY - 2));
     }
 
     private function drawSecondHand(dc as Dc, coords as Array< Array<Number> >) as Void {
