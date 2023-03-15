@@ -157,7 +157,7 @@ class ClockView extends WatchUi.WatchFace {
     //!
     //! The processing logic is as follows:
     //! Draw the screen into the off-screen buffer and then output the buffer to the main display.
-    //! Finally, the second hand is drawn directly on the screen. If supported, use anti aliasing.
+    //! Finally, the second hand is drawn directly on the screen. If supported, use anti-aliasing.
     //! The off-screen buffer is later, in onPartialUpdate(), used to blank out the second hand,
     //! before it is re-drawn at the new position, directly on the main display.
     //!
@@ -320,6 +320,9 @@ class ClockView extends WatchUi.WatchFace {
             if (0 == _secondHandTimer) {
                 // Delete the second hand
                 dc.drawBitmap(0, 0, _offscreenBuffer);
+            } else if (_hasAntiAlias) {
+                // Cheekily use anti-aliasing until the second hand disappears :)
+                dc.setAntiAlias(true);
             }
         }
         if (_secondHandTimer > 0) { 
