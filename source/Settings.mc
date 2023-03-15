@@ -29,7 +29,7 @@ var config as Config = new Config();
 //! This class maintains application settings and synchronises them to persistent storage.
 class Config {
     // Configuration item identifiers. Used throughout the app to refer to individual settings. The last one must be I_SIZE, it is used like size()
-    enum Item { I_BATTERY, I_DATE_DISPLAY, I_DARK_MODE, I_DM_CONTRAST, I_SECOND_HAND, I_3D_EFFECTS, I_DM_ON, I_DM_OFF, I_SIZE }
+    enum Item { I_BATTERY, I_DATE_DISPLAY, I_DARK_MODE, I_DM_CONTRAST, I_HIDE_SECONDS, I_3D_EFFECTS, I_DM_ON, I_DM_OFF, I_SIZE }
     // Configuration item display names
     private var _itemNames as Array<String> = ["Battery Level", "Date Display", "Dark Mode", "Contrast", "Seconds Disappear", "3D Effects", "Turn On", "Turn Off"] as Array<String>;
     // Configuration item labels only used as keys for storing the configuration values. Using these for persistent storage, rather than Item is more robust.
@@ -39,7 +39,7 @@ class Config {
     enum { O_BATTERY_OFF, O_BATTERY_CLASSIC_WARN, O_BATTERY_MODERN_WARN, O_BATTERY_CLASSIC, O_BATTERY_MODERN, O_BATTERY_HYBRID }
     enum { O_DATE_DISPLAY_OFF, O_DATE_DISPLAY_DAY_ONLY, O_DATE_DISPLAY_WEEKDAY_AND_DAY }
     enum { O_DARK_MODE_SCHEDULED, O_DARK_MODE_OFF, O_DARK_MODE_ON }
-    enum { O_SECOND_HAND_DARK, O_SECOND_HAND_OFF, O_SECOND_HAND_ON }
+    enum { O_HIDE_SECONDS_IN_DM, O_HIDE_SECONDS_ALWAYS, O_HIDE_SECONDS_NEVER }
     enum { O_3D_EFFECTS_ON, O_3D_EFFECTS_OFF }
     // Colors for the dark mode contrast icon menu item. The index (0, 1 or 2) is stored, but getValue() returns the color.
     static const O_DM_CONTRAST as Array<Number> = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>;
@@ -50,7 +50,7 @@ class Config {
         I_DATE_DISPLAY => ["Off", "Day Only", "Weekday and Day"],
         I_DARK_MODE    => ["Scheduled", "Off", "On"],
         I_DM_CONTRAST  => ["Light Gray", "Dark Gray", "White"],
-        I_SECOND_HAND  => ["In Dark Mode", "Never", "Always"]
+        I_HIDE_SECONDS => ["In Dark Mode", "Always", "Never"]
     } as Dictionary<Item, Array<String> >;
 
     // Option labels for simple On/Off toggle items. Used in ToggleMenuItem.
@@ -101,7 +101,7 @@ class Config {
             case I_DATE_DISPLAY:
             case I_DARK_MODE:
             case I_DM_CONTRAST:
-            case I_SECOND_HAND:
+            case I_HIDE_SECONDS:
                 var label = _labels[id] as Array<String>;
                 option = label[value];
                 break;
@@ -145,7 +145,7 @@ class Config {
             case I_DATE_DISPLAY:
             case I_DARK_MODE:
             case I_DM_CONTRAST:
-            case I_SECOND_HAND:
+            case I_HIDE_SECONDS:
                 var label = _labels[id] as Array<String>;
                 _values[id] = (value as Number + 1) % label.size();
                 Storage.setValue(_itemLabels[id as Number], _values[id]);
@@ -203,7 +203,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 {}
             ));
         }
-        addMenuItem($.Config.I_SECOND_HAND);
+        addMenuItem($.Config.I_HIDE_SECONDS);
         if ($.config.hasAlpha()) {
             Menu2.addItem(new WatchUi.ToggleMenuItem(
                 $.config.getName($.Config.I_3D_EFFECTS), 
@@ -265,7 +265,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         switch (id) {
             case $.Config.I_BATTERY:
             case $.Config.I_DATE_DISPLAY:
-            case $.Config.I_SECOND_HAND:
+            case $.Config.I_HIDE_SECONDS:
                 // Advance to the next option and show the selected option as the sub label
                 $.config.setNext(id);
                 menuItem.setSubLabel($.config.getLabel(id));
@@ -287,7 +287,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 _menu.deleteAnyItem($.Config.I_DM_ON);
                 _menu.deleteAnyItem($.Config.I_DM_OFF);
                 _menu.deleteAnyItem($.Config.I_DM_CONTRAST);
-                _menu.deleteAnyItem($.Config.I_SECOND_HAND);
+                _menu.deleteAnyItem($.Config.I_HIDE_SECONDS);
                 _menu.deleteAnyItem($.Config.I_3D_EFFECTS);
                 // Rebuild the menu with the items required based on the dark mode setting
                 switch ($.config.getValue(id)) {
@@ -308,7 +308,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                         break;
                 }
                 // Finally, re-add the second hand and 3d effects items
-                _menu.addMenuItem($.Config.I_SECOND_HAND);
+                _menu.addMenuItem($.Config.I_HIDE_SECONDS);
                 if ($.config.hasAlpha()) {
                     _menu.addItem(new WatchUi.ToggleMenuItem(
                         $.config.getName($.Config.I_3D_EFFECTS), 
