@@ -358,12 +358,10 @@ class ClockView extends WatchUi.WatchFace {
         // Rotate the center of the second hand circle
         var sin = Math.sin(angle);
         var cos = Math.cos(angle);
-        var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + 0.5).toNumber();
-        var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + 0.5).toNumber();
-        var center = [_screenCenter[0] + x, _screenCenter[1] + y] as Array<Number>;
-
+        var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + _screenCenter[0] + 0.5).toNumber();
+        var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + _screenCenter[1] + 0.5).toNumber();
         var coords = rotateCoords(S_SECONDHAND, angle);
-        return [ coords[0], coords[1], coords[2], coords[3], center ] as Array< Array<Number> >;
+        return [ coords[0], coords[1], coords[2], coords[3], [x, y] ] as Array< Array<Number> >;
     }
 
     // Set the clipping region for the second hand
