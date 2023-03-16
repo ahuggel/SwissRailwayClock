@@ -59,6 +59,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _clockRadius as Number;
     private var _secondHandTimer as Number;
     private var _hideSecondHand as Boolean;
+    private var _shadowColor as Number;
     private var _offscreenBuffer as BufferedBitmap;
 
     //! Constructor. Initialize the variables for this view.
@@ -76,6 +77,8 @@ class ClockView extends WatchUi.WatchFace {
         _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
         _secondHandTimer = SECOND_HAND_TIMER; // Time to wait (in seconds) before disabling the second hand in low-power mode
         _hideSecondHand = false;
+        _shadowColor = 0;
+        if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77); }
 
         // Allocate the buffer we use for drawing the watchface, using BufferedBitmap (API Level 2.3.0).
         // This is a full-colored buffer (with no palette), as we have enough memory :) and it makes drawing 
@@ -201,6 +204,18 @@ class ClockView extends WatchUi.WatchFace {
             }
         }
 
+        // Handle the setting to disable the second hand in sleep mode after some time
+        var secondsOption = $.config.getValue($.Config.I_HIDE_SECONDS);
+        _hideSecondHand = $.Config.O_HIDE_SECONDS_ALWAYS == secondsOption 
+            or ($.Config.O_HIDE_SECONDS_IN_DM == secondsOption and M_DARK == _colorMode);
+        if (_isAwake or !_hideSecondHand) {
+            // Reset the timer
+            _secondHandTimer = SECOND_HAND_TIMER;
+        }
+        if (!_isAwake and _hideSecondHand and _secondHandTimer > 0) {
+            _secondHandTimer -= 1;
+        }
+
         // Draw the background
         if (System.SCREEN_SHAPE_ROUND == _screenShape) {
             // Fill the entire background with the background color
@@ -259,42 +274,23 @@ class ClockView extends WatchUi.WatchFace {
             }
         }
 
-        // Handle the setting to disable the second hand in sleep mode after some time
-        var secondsOption = $.config.getValue($.Config.I_HIDE_SECONDS);
-        _hideSecondHand = $.Config.O_HIDE_SECONDS_ALWAYS == secondsOption 
-            or ($.Config.O_HIDE_SECONDS_IN_DM == secondsOption and M_DARK == _colorMode);
-        if (_isAwake or !_hideSecondHand) {
-            // Reset the timer
-            _secondHandTimer = SECOND_HAND_TIMER;
-        }
-        if (!_isAwake and _hideSecondHand and _secondHandTimer > 0) {
-            _secondHandTimer -= 1;
-        }
-
         // Draw tick marks around the edge of the screen
         targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < 60; i++) {
             targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
         }
 
-        // Draw the clock hands with shadows. All shadows first (it looks better that way), then the actual
-        // hands. As we need all the hand coordinates for the shadows, this is now a bit messy.
+        // Draw the hour and minute hands. Shadows first, then the actual hands.
         var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
         var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
         var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
-        var secondHandCoords = rotateSecondHandCoords(clockTime.sec / 60.0 * TWO_PI);
-
-        // Draw hand shadows, if 3D effects are turned on and supported by the device (also ensured by getValue()),
-        // the watch is awake and in light color mode
-        if ($.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS) and _isAwake and M_LIGHT == _colorMode) {
-            var shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77);
-            targetDc.setFill(shadowColor);
+        // Note: Whether 3D effects are supported by the device is also ensured by getValue().
+        var show3dEffects = $.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS) and _isAwake and M_LIGHT == _colorMode;
+        if (show3dEffects) {
+            targetDc.setFill(_shadowColor);
             targetDc.fillPolygon(shadowCoords(hourHandCoords, 7));
             targetDc.fillPolygon(shadowCoords(minuteHandCoords, 9));
-            drawSecondHand(targetDc, shadowCoords(secondHandCoords, 10));
         }
-
-        // Draw the hour and minute hands
         targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
         targetDc.fillPolygon(hourHandCoords);
         targetDc.fillPolygon(minuteHandCoords);
@@ -302,16 +298,14 @@ class ClockView extends WatchUi.WatchFace {
         // Output the offscreen buffer to the main display
         dc.drawBitmap(0, 0, _offscreenBuffer);
 
+        // Draw the second hand and shadow, directly on the screen
         if (_isAwake or (_doPartialUpdates and _secondHandTimer > 0)) {
-            setSecondHandClippingRegion(dc, secondHandCoords);
-            dc.setColor(_colors[_colorMode][C_SECONDS], Graphics.COLOR_TRANSPARENT);        
-            drawSecondHand(dc, secondHandCoords);
+            drawSecondHand(dc, clockTime.sec, show3dEffects);
         }
     }
 
     //! Handle the partial update event. This function is called every second when the device is
-    //! in low-power mode. See onUpdate() for the full story. We don't use antialiasing here, as
-    //! it is too expensive on larger displays.
+    //! in low-power mode. See onUpdate() for the full story.
     //! @param dc Device context
     public function onPartialUpdate(dc as Dc) as Void {
         _isAwake = false; // To state the obvious. Workaround for a firmware bug reported on an Enduro 2.
@@ -320,20 +314,15 @@ class ClockView extends WatchUi.WatchFace {
             if (0 == _secondHandTimer) {
                 // Delete the second hand
                 dc.drawBitmap(0, 0, _offscreenBuffer);
-            } else if (_hasAntiAlias) {
-                // Cheekily use anti-aliasing until the second hand disappears :)
-                dc.setAntiAlias(true);
             }
         }
-        if (_secondHandTimer > 0) { 
+        if (_secondHandTimer > 0) {
+            if (_hasAntiAlias) { dc.setAntiAlias(true); }
+            var clockTime = System.getClockTime();
             // Output the offscreen buffer to the main display and draw the second hand.
             // Note that this will only affect the clipped region, to delete the second hand.
             dc.drawBitmap(0, 0, _offscreenBuffer);
-            var clockTime = System.getClockTime();
-            var secondHandCoords = rotateSecondHandCoords(clockTime.sec / 60.0 * TWO_PI);
-            setSecondHandClippingRegion(dc, secondHandCoords);
-            dc.setColor(_colors[_colorMode][C_SECONDS], Graphics.COLOR_TRANSPARENT);
-            drawSecondHand(dc, secondHandCoords);
+            drawSecondHand(dc, clockTime.sec, false);
         }
     }
 
@@ -354,25 +343,52 @@ class ClockView extends WatchUi.WatchFace {
         _doPartialUpdates = doPartialUpdates;
     }
 
-    private function rotateSecondHandCoords(angle as Float) as Array< Array<Number> > {
-        // Rotate the center of the second hand circle
+    // Draw the second hand for the given second, including a shadow, if required, and set the clipping region
+    private function drawSecondHand(dc as Dc, second as Number, show3dEffects as Boolean) as Void {
+        var angle = second / 60.0 * TWO_PI;
+        var offsetX = _screenCenter[0] + 0.5;
+		var offsetY = _screenCenter[1] + 0.5;
         var sin = Math.sin(angle);
         var cos = Math.cos(angle);
-        var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + _screenCenter[0] + 0.5).toNumber();
-        var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + _screenCenter[1] + 0.5).toNumber();
-        var coords = rotateCoords(S_SECONDHAND, angle);
-        return [ coords[0], coords[1], coords[2], coords[3], [x, y] ] as Array< Array<Number> >;
-    }
 
-    // Set the clipping region for the second hand
-    private function setSecondHandClippingRegion(dc as Dc, coords as Array< Array<Number> >) as Void {
-        // coords[4] is the centre of the second hand circle
-        var x1 = coords[4][0] - _secondCircleRadius;
-        var y1 = coords[4][1] - _secondCircleRadius;
-        var x2 = coords[4][0] + _secondCircleRadius;
-        var y2 = coords[4][1] + _secondCircleRadius;
+        // Rotate the center of the second hand circle
+        var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + offsetX).toNumber();
+        var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + offsetY).toNumber();
+
+        // Rotate the rectangular portion of the second hand, using inlined code from rotateCoords() to improve performance
+        var idx = S_SECONDHAND * 8;
+        var idy = idx + 1;
+        var x0 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
+        var y0 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        idx = idy + 1;
+        idy += 2;
+        var x1 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
+        var y1 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        idx = idy + 1;
+        idy += 2;
+        var x2 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
+        var y2 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        idx = idy + 1;
+        idy += 2;
+        var x3 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
+        var y3 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        var coords = [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
+
+        // Draw the shadow, if required
+        if (show3dEffects) {
+            dc.setFill(_shadowColor);
+            dc.fillPolygon(shadowCoords(coords, 10));
+            var shadowCenter = shadowCoords([[x, y]] as Array< Array<Number> >, 10);
+            dc.fillCircle(shadowCenter[0][0], shadowCenter[0][1], _secondCircleRadius);
+        }
+
+        // Set the clipping region
+        var xx1 = x - _secondCircleRadius;
+        var yy1 = y - _secondCircleRadius;
+        var xx2 = x + _secondCircleRadius;
+        var yy2 = y + _secondCircleRadius;
         var clipCoords = [ // coords[1], coords[2] optimized out: only consider the tail and circle coords
-            coords[0][0], coords[0][1], coords[3][0], coords[3][1], x1, y1, x2, y1, x2, y2, x1, y2 
+            x0, y0, x3, y3, xx1, yy1, xx2, yy1, xx2, yy2, xx1, yy2 
         ] as Array<Number>;
         var minX = 65536;
         var minY = 65536;
@@ -387,11 +403,11 @@ class ClockView extends WatchUi.WatchFace {
         }
         // Add two pixels on each side for good measure
         dc.setClip(minX - 2, minY - 2, maxX + 2 - (minX - 2), maxY + 2 - (minY - 2));
-    }
 
-    private function drawSecondHand(dc as Dc, coords as Array< Array<Number> >) as Void {
-        dc.fillPolygon([coords[0], coords[1], coords[2], coords[3]] as Array< Array<Number> >);
-        dc.fillCircle(coords[4][0], coords[4][1], _secondCircleRadius);
+        // Finally, draw the second hand
+        dc.setColor(_colors[_colorMode][C_SECONDS], Graphics.COLOR_TRANSPARENT);
+        dc.fillPolygon(coords);
+        dc.fillCircle(x, y, _secondCircleRadius);
     }
 
     //! Rotate the four corner coordinates of a polygon used to draw a watch hand or a tick mark.
