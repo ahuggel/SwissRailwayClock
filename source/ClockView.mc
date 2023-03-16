@@ -404,15 +404,27 @@ class ClockView extends WatchUi.WatchFace {
     private function rotateCoords(shape as Shape, angle as Float) as Array< Array<Number> > {
         var sin = Math.sin(angle);
         var cos = Math.cos(angle);
-        var shapeIdx = shape * 8;
-        var result = new Array< Array<Number> >[4];
-        for (var i = 0; i < 4; i++) {
-            var idx = shapeIdx + i * 2;
-            var x = (_coords[idx] * cos - _coords[idx + 1] * sin + 0.5).toNumber();
-            var y = (_coords[idx] * sin + _coords[idx + 1] * cos + 0.5).toNumber();
-            result[i] = [_screenCenter[0] + x, _screenCenter[1] + y];
-        }
-        return result;
+        // Optimized: Expanded the loop and avoid repeating the same operations (Thanks Inigo Tolosa for the tip!)
+        var offsetX = _screenCenter[0] + 0.5;
+		var offsetY = _screenCenter[1] + 0.5;
+        var idx = shape * 8;
+        var idy = idx + 1;
+        var x0 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
+        var y0 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        idx = idy + 1;
+        idy += 2;
+        var x1 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
+        var y1 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        idx = idy + 1;
+        idy += 2;
+        var x2 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
+        var y2 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        idx = idy + 1;
+        idy += 2;
+        var x3 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
+        var y3 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+
+        return [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
     }
 
     // TODO: move the shadow shapes by a percentage instead of a number of pixels
