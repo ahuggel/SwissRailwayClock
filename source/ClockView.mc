@@ -373,10 +373,10 @@ class ClockView extends WatchUi.WatchFace {
     // Draw the second hand for the given second, including a shadow, if required, and set the clipping region
     private function drawSecondHand(dc as Dc, second as Number) as Void {
         var angle = second / 60.0 * TWO_PI;
-        var offsetX = _screenCenter[0] + 0.5;
-		var offsetY = _screenCenter[1] + 0.5;
         var sin = Math.sin(angle);
         var cos = Math.cos(angle);
+        var offsetX = _screenCenter[0] + 0.5;
+		var offsetY = _screenCenter[1] + 0.5;
 
         // Rotate the center of the second hand circle
         var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + offsetX).toNumber();
@@ -414,19 +414,28 @@ class ClockView extends WatchUi.WatchFace {
         var yy1 = y - _secondCircleRadius;
         var xx2 = x + _secondCircleRadius;
         var yy2 = y + _secondCircleRadius;
-        // coords[1], coords[2] optimized out: only consider the tail and circle coords
-        var clipCoords = [ x0, y0, x3, y3, xx1, yy1, xx2, yy1, xx2, yy2, xx1, yy2 ] as Array<Number>;
         var minX = 65536;
         var minY = 65536;
         var maxX = 0;
         var maxY = 0;
-        for (var i = 0; i < 12; i += 2) { // i < clipCoords.size() optimized to 12 :/
-            var j = i + 1;
-            if (clipCoords[i] < minX) { minX = clipCoords[i]; }
-            if (clipCoords[j] < minY) { minY = clipCoords[j]; }
-            if (clipCoords[i] > maxX) { maxX = clipCoords[i]; }
-            if (clipCoords[j] > maxY) { maxY = clipCoords[j]; }
-        }
+        // coords[1], coords[2] optimized out: only consider the tail and circle coords, loop unrolled for performance,
+        // use only points [x0, y0], [x3, y3], [xx1, yy1], [xx2, yy1], [xx2, yy2], [xx1, yy2], minus duplicate comparisons
+        if (x0 < minX) { minX = x0; }
+        if (y0 < minY) { minY = y0; }
+        if (x0 > maxX) { maxX = x0; }
+        if (y0 > maxY) { maxY = y0; }
+        if (x3 < minX) { minX = x3; }
+        if (y3 < minY) { minY = y3; }
+        if (x3 > maxX) { maxX = x3; }
+        if (y3 > maxY) { maxY = y3; }
+        if (xx1 < minX) { minX = xx1; }
+        if (xx1 > maxX) { maxX = xx1; }
+        if (yy1 < minY) { minY = yy1; }
+        if (yy1 > maxY) { maxY = yy1; }
+        if (xx2 < minX) { minX = xx2; }
+        if (xx2 > maxX) { maxX = xx2; }
+        if (yy2 < minY) { minY = yy2; }
+        if (yy2 > maxY) { maxY = yy2; }
         // Add two pixels on each side for good measure
         dc.setClip(minX - 2, minY - 2, maxX + 2 - (minX - 2), maxY + 2 - (minY - 2));
 
