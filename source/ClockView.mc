@@ -46,8 +46,9 @@ class ClockView extends WatchUi.WatchFace {
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
     private const TWO_PI as Float = 2 * Math.PI;
-    private const SECOND_HAND_TIMER as Number = 30; // Number of seconds before the second hand disappears, if the relevant setting is on
+    private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
 
+    private var _lastDrawn as Array<Number> = new Array<Number>[3];
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
     private var _hasAntiAlias as Boolean;
@@ -57,7 +58,8 @@ class ClockView extends WatchUi.WatchFace {
     private var _height as Number;
     private var _screenCenter as Array<Number>;
     private var _clockRadius as Number;
-    private var _secondHandTimer as Number;
+    private var _sleepTimer as Number;
+    private var _show3dEffects as Boolean;
     private var _hideSecondHand as Boolean;
     private var _shadowColor as Number;
     private var _offscreenBuffer as BufferedBitmap;
@@ -66,6 +68,7 @@ class ClockView extends WatchUi.WatchFace {
     public function initialize() {
         WatchFace.initialize();
 
+        _lastDrawn = [-1, -1, -1] as Array<Number>; // Timestamp when the watch face was last completely re-drawn
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
         _hasAntiAlias = (Toybox.Graphics.Dc has :setAntiAlias);
@@ -75,7 +78,8 @@ class ClockView extends WatchUi.WatchFace {
         _height = System.getDeviceSettings().screenHeight;
         _screenCenter = [_width/2, _height/2] as Array<Number>;
         _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
-        _secondHandTimer = SECOND_HAND_TIMER; // Time to wait (in seconds) before disabling the second hand in low-power mode
+        _sleepTimer = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
+        _show3dEffects = false;
         _hideSecondHand = false;
         _shadowColor = 0;
         if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77); }
@@ -167,6 +171,7 @@ class ClockView extends WatchUi.WatchFace {
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
         dc.clearClip();
+
         // Always use the offscreen buffer, not only in low-power mode. That simplifies the logic and is more robust.
         var targetDc = _offscreenBuffer.getDc();
         if (_hasAntiAlias) {
@@ -174,155 +179,176 @@ class ClockView extends WatchUi.WatchFace {
             targetDc.setAntiAlias(true); 
         }
 
+        // Update the low-power mode timer
+        if (_isAwake) { 
+            _sleepTimer = SECOND_HAND_TIMER; // Reset the timer
+        } else if (_sleepTimer > 0) {
+            _sleepTimer--;
+        }
+
         var clockTime = System.getClockTime();
 
-        // Set the color mode
-        switch ($.config.getValue($.Config.I_DARK_MODE)) {
-            case $.Config.O_DARK_MODE_SCHEDULED:
-                _colorMode = M_LIGHT;
-                var time = clockTime.hour * 60 + clockTime.min;
-                if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
+        // Do we really need to re-draw the entire watch face from scratch? 
+        var redraw = true; // Actually, we want to, as we always used to do..
+        // But if we're awake and the time (hh:mm) hasn't changed since we last did, then there's really no need
+        if (_isAwake and _lastDrawn[1] == clockTime.min and _lastDrawn[0] == clockTime.hour) { 
+            redraw = false;
+            // Wait, but if the settings menu has been accessed in the meantime, then we better re-draw everything anyway
+            var lastAccessed = $.config.lastAccessed();
+            if (  lastAccessed[2] + lastAccessed[1]*60 + lastAccessed[0]*3600 
+                > _lastDrawn[2] + _lastDrawn[1]*60 + _lastDrawn[0]*3600) { redraw = true; }
+        }
+        /* DEBUG
+        var lastAccessed = $.config.lastAccessed();
+        System.println("_lastDrawn = " + _lastDrawn[0].format("%02d") + ":" + _lastDrawn[1].format("%02d") + ":" + _lastDrawn[2].format("%02d") + " " +
+                       "lastAccessed = " + lastAccessed[0].format("%02d") + ":" + lastAccessed[1].format("%02d") + ":" + lastAccessed[2].format("%02d") + " " +
+                       "redraw = " + redraw);
+        */
+        if (redraw) {
+            _lastDrawn = [clockTime.hour, clockTime.min, clockTime.sec] as Array<Number>;
+
+            // Set the color mode
+            switch ($.config.getValue($.Config.I_DARK_MODE)) {
+                case $.Config.O_DARK_MODE_SCHEDULED:
+                    _colorMode = M_LIGHT;
+                    var time = clockTime.hour * 60 + clockTime.min;
+                    if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
+                        _colorMode = M_DARK;
+                    }
+                    break;
+                case $.Config.O_DARK_MODE_OFF:
+                    _colorMode = M_LIGHT;
+                    break;
+                case $.Config.O_DARK_MODE_ON:
                     _colorMode = M_DARK;
-                }
-                break;
-            case $.Config.O_DARK_MODE_OFF:
-                _colorMode = M_LIGHT;
-                break;
-            case $.Config.O_DARK_MODE_ON:
-                _colorMode = M_DARK;
-                break;
-        }
-
-        // In dark mode, adjust colors based on the contrast setting
-        if (M_DARK == _colorMode) {
-            var foregroundColor = $.config.getValue($.Config.I_DM_CONTRAST);
-            _colors[M_DARK][C_FOREGROUND] = foregroundColor;
-            if (Graphics.COLOR_WHITE == foregroundColor) {
-                _colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
-            } else {
-                _colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
+                   break;
             }
-        }
 
-        // Handle the setting to disable the second hand in sleep mode after some time
-        var secondsOption = $.config.getValue($.Config.I_HIDE_SECONDS);
-        _hideSecondHand = $.Config.O_HIDE_SECONDS_ALWAYS == secondsOption 
-            or ($.Config.O_HIDE_SECONDS_IN_DM == secondsOption and M_DARK == _colorMode);
-        if (_isAwake or !_hideSecondHand) {
-            // Reset the timer
-            _secondHandTimer = SECOND_HAND_TIMER;
-        }
-        if (!_isAwake and _hideSecondHand and _secondHandTimer > 0) {
-            _secondHandTimer -= 1;
-        }
+            // In dark mode, adjust colors based on the contrast setting
+            if (M_DARK == _colorMode) {
+                var foregroundColor = $.config.getValue($.Config.I_DM_CONTRAST);
+                _colors[M_DARK][C_FOREGROUND] = foregroundColor;
+                if (Graphics.COLOR_WHITE == foregroundColor) {
+                    _colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
+                } else {
+                    _colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
+                }
+            }
 
-        // Draw the background
-        if (System.SCREEN_SHAPE_ROUND == _screenShape) {
-            // Fill the entire background with the background color
-            targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
-            targetDc.fillRectangle(0, 0, _width, _height);
-        } else {
-            // Fill the entire background with black and draw a circle with the background color
-            targetDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-            targetDc.fillRectangle(0, 0, _width, _height);
-            if (_colors[_colorMode][C_BACKGROUND] != Graphics.COLOR_BLACK) {
+            // Note: Whether 3D effects are supported by the device is also ensured by getValue().
+            _show3dEffects = $.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS) and M_LIGHT == _colorMode;
+
+            // Handle the setting to disable the second hand in sleep mode after some time
+            var secondsOption = $.config.getValue($.Config.I_HIDE_SECONDS);
+            _hideSecondHand = $.Config.O_HIDE_SECONDS_ALWAYS == secondsOption 
+                or ($.Config.O_HIDE_SECONDS_IN_DM == secondsOption and M_DARK == _colorMode);
+
+            // Draw the background
+            if (System.SCREEN_SHAPE_ROUND == _screenShape) {
+                // Fill the entire background with the background color
                 targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
-                targetDc.fillCircle(_screenCenter[0], _screenCenter[1], _clockRadius);
-            }
-        }
-
-        // Draw the date string
-        var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
-        targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-        switch ($.config.getValue($.Config.I_DATE_DISPLAY)) {
-            case $.Config.O_DATE_DISPLAY_DAY_ONLY: 
-                var dateStr = Lang.format("$1$", [info.day.format("%02d")]);
-                targetDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
-                break;
-            case $.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY:
-                dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
-                targetDc.drawText(_width/2, _height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
-                break;
-        }
-
-        // Draw the battery level indicator
-        var batterySetting = $.config.getValue($.Config.I_BATTERY);
-        if (batterySetting > $.Config.O_BATTERY_OFF) {
-            var level = System.getSystemStats().battery;
-            if (level < 40.0 and batterySetting >= $.Config.O_BATTERY_CLASSIC_WARN) {
-                switch (batterySetting) {
-                    case $.Config.O_BATTERY_CLASSIC:
-                    case $.Config.O_BATTERY_CLASSIC_WARN:
-                        drawClassicBatteryIndicator(targetDc, level);
-                        break;
-                    case $.Config.O_BATTERY_MODERN:
-                    case $.Config.O_BATTERY_MODERN_WARN:
-                    case $.Config.O_BATTERY_HYBRID:
-                        drawModernBatteryIndicator(targetDc, level);
-                        break;
-                }
-            } else if (batterySetting >= $.Config.O_BATTERY_CLASSIC) {
-                switch (batterySetting) {
-                    case $.Config.O_BATTERY_CLASSIC:
-                    case $.Config.O_BATTERY_HYBRID:
-                        drawClassicBatteryIndicator(targetDc, level);
-                        break;
-                    case $.Config.O_BATTERY_MODERN:
-                        drawModernBatteryIndicator(targetDc, level);
-                        break;
+               targetDc.fillRectangle(0, 0, _width, _height);
+            } else {
+                // Fill the entire background with black and draw a circle with the background color
+                targetDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+                targetDc.fillRectangle(0, 0, _width, _height);
+                if (_colors[_colorMode][C_BACKGROUND] != Graphics.COLOR_BLACK) {
+                    targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
+                    targetDc.fillCircle(_screenCenter[0], _screenCenter[1], _clockRadius);
                 }
             }
-        }
 
-        // Draw tick marks around the edge of the screen
-        targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
-        for (var i = 0; i < 60; i++) {
-            targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
-        }
+            // Draw the date string
+            var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
+            targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
+            switch ($.config.getValue($.Config.I_DATE_DISPLAY)) {
+                case $.Config.O_DATE_DISPLAY_DAY_ONLY: 
+                    var dateStr = Lang.format("$1$", [info.day.format("%02d")]);
+                    targetDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
+                    break;
+                case $.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY:
+                    dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
+                    targetDc.drawText(_width/2, _height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
+                    break;
+            }
 
-        // Draw the hour and minute hands. Shadows first, then the actual hands.
-        var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
-        var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
-        var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
-        // Note: Whether 3D effects are supported by the device is also ensured by getValue().
-        var show3dEffects = $.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS) and _isAwake and M_LIGHT == _colorMode;
-        if (show3dEffects) {
-            targetDc.setFill(_shadowColor);
-            targetDc.fillPolygon(shadowCoords(hourHandCoords, 7));
-            targetDc.fillPolygon(shadowCoords(minuteHandCoords, 9));
-        }
-        targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
-        targetDc.fillPolygon(hourHandCoords);
-        targetDc.fillPolygon(minuteHandCoords);
+            // Draw the battery level indicator
+            var batterySetting = $.config.getValue($.Config.I_BATTERY);
+            if (batterySetting > $.Config.O_BATTERY_OFF) {
+                var level = System.getSystemStats().battery;
+                if (level < 40.0 and batterySetting >= $.Config.O_BATTERY_CLASSIC_WARN) {
+                    switch (batterySetting) {
+                        case $.Config.O_BATTERY_CLASSIC:
+                        case $.Config.O_BATTERY_CLASSIC_WARN:
+                            drawClassicBatteryIndicator(targetDc, level);
+                            break;
+                        case $.Config.O_BATTERY_MODERN:
+                        case $.Config.O_BATTERY_MODERN_WARN:
+                        case $.Config.O_BATTERY_HYBRID:
+                            drawModernBatteryIndicator(targetDc, level);
+                            break;
+                    }
+                } else if (batterySetting >= $.Config.O_BATTERY_CLASSIC) {
+                    switch (batterySetting) {
+                        case $.Config.O_BATTERY_CLASSIC:
+                        case $.Config.O_BATTERY_HYBRID:
+                            drawClassicBatteryIndicator(targetDc, level);
+                            break;
+                        case $.Config.O_BATTERY_MODERN:
+                            drawModernBatteryIndicator(targetDc, level);
+                            break;
+                    }
+                }
+            }
+
+            // Draw tick marks around the edge of the screen
+            targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+            for (var i = 0; i < 60; i++) {
+                targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
+            }
+
+            // Draw the hour and minute hands. Shadows first, then the actual hands.
+            var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
+            var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
+            var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
+            if (_isAwake and _show3dEffects) {
+                targetDc.setFill(_shadowColor);
+                targetDc.fillPolygon(shadowCoords(hourHandCoords, 7));
+                targetDc.fillPolygon(shadowCoords(minuteHandCoords, 9));
+            }
+            targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+            targetDc.fillPolygon(hourHandCoords);
+            targetDc.fillPolygon(minuteHandCoords);
+        } // if (redraw)
 
         // Output the offscreen buffer to the main display
         dc.drawBitmap(0, 0, _offscreenBuffer);
 
         // Draw the second hand and shadow, directly on the screen
-        if (_isAwake or (_doPartialUpdates and _secondHandTimer > 0)) {
-            drawSecondHand(dc, clockTime.sec, show3dEffects);
-        }
+        var doIt = true;
+        if (!_isAwake and !_doPartialUpdates) { doIt = false; }
+        if (!_isAwake and _doPartialUpdates and _hideSecondHand and 0 == _sleepTimer) { doIt = false; }
+        if (doIt) { drawSecondHand(dc, clockTime.sec); }
     }
 
     //! Handle the partial update event. This function is called every second when the device is
     //! in low-power mode. See onUpdate() for the full story.
     //! @param dc Device context
     public function onPartialUpdate(dc as Dc) as Void {
-        _isAwake = false; // To state the obvious. Workaround for a firmware bug reported on an Enduro 2.
-        if (_hideSecondHand and _secondHandTimer > 0) {
-            _secondHandTimer -= 1;
-            if (0 == _secondHandTimer) {
-                // Delete the second hand
+        _isAwake = false; // To state the obvious. Workaround for an Enduro 2 firmware bug.
+        if (_sleepTimer > 0) { 
+            _sleepTimer--; 
+            if (0 == _sleepTimer and _hideSecondHand) {
+                // Delete the second hand for the last time
                 dc.drawBitmap(0, 0, _offscreenBuffer);
             }
         }
-        if (_secondHandTimer > 0) {
+        if (_sleepTimer > 0 or !_hideSecondHand) {
             if (_hasAntiAlias) { dc.setAntiAlias(true); }
             var clockTime = System.getClockTime();
-            // Output the offscreen buffer to the main display and draw the second hand.
-            // Note that this will only affect the clipped region, to delete the second hand.
+            // Delete the second hand. Note that this will only affect the clipped region
             dc.drawBitmap(0, 0, _offscreenBuffer);
-            drawSecondHand(dc, clockTime.sec, false);
+            drawSecondHand(dc, clockTime.sec);
         }
     }
 
@@ -335,6 +361,7 @@ class ClockView extends WatchUi.WatchFace {
     //! This method is called when the device exits sleep mode
     public function onExitSleep() as Void {
         _isAwake = true;
+        _lastDrawn[1] = -1; // A bit of a hack to force the screen to be re-drawn
         WatchUi.requestUpdate();
     }
 
@@ -344,7 +371,7 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     // Draw the second hand for the given second, including a shadow, if required, and set the clipping region
-    private function drawSecondHand(dc as Dc, second as Number, show3dEffects as Boolean) as Void {
+    private function drawSecondHand(dc as Dc, second as Number) as Void {
         var angle = second / 60.0 * TWO_PI;
         var offsetX = _screenCenter[0] + 0.5;
 		var offsetY = _screenCenter[1] + 0.5;
@@ -375,7 +402,7 @@ class ClockView extends WatchUi.WatchFace {
         var coords = [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
 
         // Draw the shadow, if required
-        if (show3dEffects) {
+        if (_isAwake and _show3dEffects) {
             dc.setFill(_shadowColor);
             dc.fillPolygon(shadowCoords(coords, 10));
             var shadowCenter = shadowCoords([[x, y]] as Array< Array<Number> >, 10);
@@ -387,9 +414,8 @@ class ClockView extends WatchUi.WatchFace {
         var yy1 = y - _secondCircleRadius;
         var xx2 = x + _secondCircleRadius;
         var yy2 = y + _secondCircleRadius;
-        var clipCoords = [ // coords[1], coords[2] optimized out: only consider the tail and circle coords
-            x0, y0, x3, y3, xx1, yy1, xx2, yy1, xx2, yy2, xx1, yy2 
-        ] as Array<Number>;
+        // coords[1], coords[2] optimized out: only consider the tail and circle coords
+        var clipCoords = [ x0, y0, x3, y3, xx1, yy1, xx2, yy1, xx2, yy2, xx1, yy2 ] as Array<Number>;
         var minX = 65536;
         var minY = 65536;
         var maxX = 0;
