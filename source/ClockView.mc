@@ -203,7 +203,7 @@ class ClockView extends WatchUi.WatchFace {
         System.println("_lastDrawn = " + _lastDrawn[0].format("%02d") + ":" + _lastDrawn[1].format("%02d") + ":" + _lastDrawn[2].format("%02d") + " " +
                        "lastAccessed = " + lastAccessed[0].format("%02d") + ":" + lastAccessed[1].format("%02d") + ":" + lastAccessed[2].format("%02d") + " " +
                        "redraw = " + redraw);
-        */
+        //*/
         if (redraw) {
             _lastDrawn = [clockTime.hour, clockTime.min, clockTime.sec] as Array<Number>;
 
