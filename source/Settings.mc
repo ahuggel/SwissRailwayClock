@@ -38,7 +38,7 @@ class Config {
     // Options for list and toggle configuration items. Using enums, the compiler can help detect issues like typos or outdated values.
     enum { O_BATTERY_OFF, O_BATTERY_CLASSIC_WARN, O_BATTERY_MODERN_WARN, O_BATTERY_CLASSIC, O_BATTERY_MODERN, O_BATTERY_HYBRID }
     enum { O_DATE_DISPLAY_OFF, O_DATE_DISPLAY_DAY_ONLY, O_DATE_DISPLAY_WEEKDAY_AND_DAY }
-    enum { O_DARK_MODE_SCHEDULED, O_DARK_MODE_OFF, O_DARK_MODE_ON }
+    enum { O_DARK_MODE_SCHEDULED, O_DARK_MODE_OFF, O_DARK_MODE_ON, O_DARK_MODE_IN_DND }
     enum { O_HIDE_SECONDS_IN_DM, O_HIDE_SECONDS_ALWAYS, O_HIDE_SECONDS_NEVER }
     enum { O_3D_EFFECTS_ON, O_3D_EFFECTS_OFF }
     // Colors for the dark mode contrast icon menu item. The index (0, 1 or 2) is stored, but getValue() returns the color.
@@ -48,7 +48,7 @@ class Config {
     private var _labels as Dictionary<Item, Array<String> > = {
         I_BATTERY      => ["Off", "Classic Warnings", "Modern Warnings", "Classic", "Modern", "Hybrid"],
         I_DATE_DISPLAY => ["Off", "Day Only", "Weekday and Day"],
-        I_DARK_MODE    => ["Scheduled", "Off", "On"],
+        I_DARK_MODE    => ["Scheduled", "Off", "On", "In DnD Mode"],
         I_DM_CONTRAST  => ["Light Gray", "Dark Gray", "White"],
         I_HIDE_SECONDS => ["In Dark Mode", "Always", "Never"]
     } as Dictionary<Item, Array<String> >;
@@ -306,22 +306,21 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 _menu.deleteAnyItem($.Config.I_HIDE_SECONDS);
                 _menu.deleteAnyItem($.Config.I_3D_EFFECTS);
                 // Rebuild the menu with the items required based on the dark mode setting
-                switch ($.config.getValue(id)) {
-                    case $.Config.O_DARK_MODE_SCHEDULED:
-                        // Add the dark mode schedule times and contrast menu items
-                        _menu.addMenuItem($.Config.I_DM_ON);
-                        _menu.addMenuItem($.Config.I_DM_OFF);
-                        // Fallthrough
-                    case $.Config.O_DARK_MODE_ON:
-                        // Add the dark mode contrast menu item
-                        _menu.addItem(new WatchUi.IconMenuItem(
-                            $.config.getName($.Config.I_DM_CONTRAST), 
-                            $.config.getLabel($.Config.I_DM_CONTRAST), 
-                            $.Config.I_DM_CONTRAST, 
-                            new MenuIcon($.config.getValue($.Config.I_DM_CONTRAST)),
-                            {}
-                        ));
-                        break;
+                // Add menu items for the dark mode on and off times only if dark mode is set to "Scheduled"
+                var dm = $.config.getValue(id);
+                if ($.Config.O_DARK_MODE_SCHEDULED == dm) {
+                    _menu.addMenuItem($.Config.I_DM_ON);
+                    _menu.addMenuItem($.Config.I_DM_OFF);
+                }
+                // Add the menu item for dark mode contrast only if dark mode is not set to "Off"
+                if ($.Config.O_DARK_MODE_OFF != dm) {
+                    _menu.addItem(new WatchUi.IconMenuItem(
+                        $.config.getName($.Config.I_DM_CONTRAST), 
+                        $.config.getLabel($.Config.I_DM_CONTRAST), 
+                        $.Config.I_DM_CONTRAST,
+                        new MenuIcon($.config.getValue($.Config.I_DM_CONTRAST)),
+                        {}
+                    ));
                 }
                 // Finally, re-add the second hand and 3d effects items
                 _menu.addMenuItem($.Config.I_HIDE_SECONDS);

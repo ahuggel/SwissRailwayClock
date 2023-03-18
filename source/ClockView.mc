@@ -48,6 +48,7 @@ class ClockView extends WatchUi.WatchFace {
     private const TWO_PI as Float = 2 * Math.PI;
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
 
+    private var _doNotDisturb as Boolean;
     private var _lastDrawn as Array<Number> = new Array<Number>[3];
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
@@ -68,14 +69,16 @@ class ClockView extends WatchUi.WatchFace {
     public function initialize() {
         WatchFace.initialize();
 
+        var deviceSettings = System.getDeviceSettings();
+        _doNotDisturb = deviceSettings.doNotDisturb; // remembering this to be able to detect changes in the setting
         _lastDrawn = [-1, -1, -1] as Array<Number>; // Timestamp when the watch face was last completely re-drawn
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
         _hasAntiAlias = (Toybox.Graphics.Dc has :setAntiAlias);
         _colorMode = M_LIGHT;
-        _screenShape = System.getDeviceSettings().screenShape;
-        _width = System.getDeviceSettings().screenWidth;
-        _height = System.getDeviceSettings().screenHeight;
+        _screenShape = deviceSettings.screenShape;
+        _width = deviceSettings.screenWidth;
+        _height = deviceSettings.screenHeight;
         _screenCenter = [_width/2, _height/2] as Array<Number>;
         _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
         _sleepTimer = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
@@ -187,6 +190,7 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         var clockTime = System.getClockTime();
+        var deviceSettings = System.getDeviceSettings();
 
         // Only re-draw the entire watch face from scratch when required, else use the offscreen buffer
         var redraw = true;
@@ -197,6 +201,8 @@ class ClockView extends WatchUi.WatchFace {
             var lastAccessed = $.config.lastAccessed();
             if (  lastAccessed[2] + lastAccessed[1]*60 + lastAccessed[0]*3600 
                 > _lastDrawn[2] + _lastDrawn[1]*60 + _lastDrawn[0]*3600) { redraw = true; }
+            // ..or any relevant device setting changed
+            if (_doNotDisturb != deviceSettings.doNotDisturb) { redraw = true; }
         }
         /* DEBUG
         var lastAccessed = $.config.lastAccessed();
@@ -221,7 +227,11 @@ class ClockView extends WatchUi.WatchFace {
                     break;
                 case $.Config.O_DARK_MODE_ON:
                     _colorMode = M_DARK;
-                   break;
+                    break;
+                case $.Config.O_DARK_MODE_IN_DND:
+                    _doNotDisturb = deviceSettings.doNotDisturb;
+                    _colorMode = _doNotDisturb ? M_DARK : M_LIGHT;
+                    break;
             }
 
             // In dark mode, adjust colors based on the contrast setting
