@@ -188,12 +188,12 @@ class ClockView extends WatchUi.WatchFace {
 
         var clockTime = System.getClockTime();
 
-        // Do we really need to re-draw the entire watch face from scratch? 
-        var redraw = true; // Actually, we want to, as we always used to do..
-        // But if we're awake and the time (hh:mm) hasn't changed since we last did, then there's really no need
+        // Only re-draw the entire watch face from scratch when required, else use the offscreen buffer
+        var redraw = true;
+        // Don't re-draw if the minute hasn't changed since the last time..
         if (_isAwake and _lastDrawn[1] == clockTime.min and _lastDrawn[0] == clockTime.hour) { 
             redraw = false;
-            // Wait, but if the settings menu has been accessed in the meantime, then we better re-draw everything anyway
+            // ..unless the settings menu has been accessed in the meantime
             var lastAccessed = $.config.lastAccessed();
             if (  lastAccessed[2] + lastAccessed[1]*60 + lastAccessed[0]*3600 
                 > _lastDrawn[2] + _lastDrawn[1]*60 + _lastDrawn[0]*3600) { redraw = true; }
@@ -361,7 +361,7 @@ class ClockView extends WatchUi.WatchFace {
     //! This method is called when the device exits sleep mode
     public function onExitSleep() as Void {
         _isAwake = true;
-        _lastDrawn[1] = -1; // A bit of a hack to force the screen to be re-drawn
+        _lastDrawn[1] = -1; // A bit of a hack to force the watch face to be re-drawn
         WatchUi.requestUpdate();
     }
 
