@@ -29,7 +29,7 @@ var config as Config = new Config();
 //! This class maintains application settings and synchronises them to persistent storage.
 class Config {
     // Configuration item identifiers. Used throughout the app to refer to individual settings. The last one must be I_SIZE, it is used like size()
-    enum Item { I_BATTERY, I_DATE_DISPLAY, I_DARK_MODE, I_DM_CONTRAST, I_HIDE_SECONDS, I_3D_EFFECTS, I_DM_ON, I_DM_OFF, I_SIZE }
+    enum Item { I_BATTERY, I_DATE_DISPLAY, I_DARK_MODE, I_DM_CONTRAST, I_HIDE_SECONDS, I_3D_EFFECTS, I_DM_ON, I_DM_OFF, I_SIZE, I_DONE }
     // Configuration item display names
     private var _itemNames as Array<String> = ["Battery Level", "Date Display", "Dark Mode", "Contrast", "Seconds Disappear", "3D Effects", "Turn On", "Turn Off"] as Array<String>;
     // Configuration item labels only used as keys for storing the configuration values. Using these for persistent storage, rather than Item is more robust.
@@ -226,6 +226,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 {}
             ));
         }
+        Menu2.addItem(new WatchUi.MenuItem("Done", "Exit the Menu", $.Config.I_DONE, {}));
     }
 
     // Called when the menu is brought into the foreground
@@ -305,6 +306,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 _menu.deleteAnyItem($.Config.I_DM_CONTRAST);
                 _menu.deleteAnyItem($.Config.I_HIDE_SECONDS);
                 _menu.deleteAnyItem($.Config.I_3D_EFFECTS);
+                _menu.deleteAnyItem($.Config.I_DONE);
                 // Rebuild the menu with the items required based on the dark mode setting
                 // Add menu items for the dark mode on and off times only if dark mode is set to "Scheduled"
                 var dm = $.config.getValue(id);
@@ -322,7 +324,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                         {}
                     ));
                 }
-                // Finally, re-add the second hand and 3d effects items
+                // Finally, re-add the second hand, 3d effects and "Done" items
                 _menu.addMenuItem($.Config.I_HIDE_SECONDS);
                 if ($.config.hasAlpha()) {
                     _menu.addItem(new WatchUi.ToggleMenuItem(
@@ -333,6 +335,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                         {}
                     ));
                 }
+                _menu.addItem(new WatchUi.MenuItem("Done", "Exit the Menu", $.Config.I_DONE, {}));
                 break;
             case $.Config.I_3D_EFFECTS:
                 // Toggle the two possible configuration values
@@ -342,6 +345,9 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
             case $.Config.I_DM_OFF:
                 // Let the user select the time
                 WatchUi.pushView(new TimePicker(id), new TimePickerDelegate(id), WatchUi.SLIDE_IMMEDIATE);
+                break;
+            case $.Config.I_DONE:
+                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
                 break;
         }
   	}
@@ -365,9 +371,11 @@ class MenuIcon extends WatchUi.Drawable {
     //! @param dc Device Context
     public function draw(dc as Dc) as Void {
         dc.clearClip();
+        var width = dc.getWidth();
+        var height = dc.getHeight();
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-        dc.fillRectangle(0, 0, dc.getWidth(), dc.getHeight());
+        dc.fillRectangle(0, 0, width, height);
         dc.setColor(_color, _color);
-        dc.fillPolygon([[0,0], [dc.getWidth(), dc.getHeight()], [dc.getWidth(), 0]] as Array< Array<Number> >);
+        dc.fillPolygon([[0,0], [width, height], [width, 0]] as Array< Array<Number> >);
     }
 }
