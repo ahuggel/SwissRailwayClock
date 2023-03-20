@@ -154,6 +154,11 @@ class ClockView extends WatchUi.WatchFace {
     //! Called when this View is brought to the foreground. Restore the state of this view and
     //! prepare it to be shown. This includes loading resources into memory.
     public function onShow() as Void {
+        // Update relevant device settings here, to reduce the number of getDeviceSettings calls and
+        // assuming onShow() is triggered after any device settings change.
+        var deviceSettings = System.getDeviceSettings();
+        _doNotDisturb = deviceSettings.doNotDisturb;
+        _lastDrawn[1] = -1; // A bit of a hack to force the watch face to be re-drawn
     }
 
     //! Handle the update event. This function is called
@@ -190,7 +195,6 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         var clockTime = System.getClockTime();
-        var deviceSettings = System.getDeviceSettings();
 
         // Only re-draw the entire watch face from scratch when required, else use the offscreen buffer
         var redraw = true;
@@ -201,8 +205,6 @@ class ClockView extends WatchUi.WatchFace {
             var lastAccessed = $.config.lastAccessed();
             if (  lastAccessed[2] + lastAccessed[1]*60 + lastAccessed[0]*3600 
                 > _lastDrawn[2] + _lastDrawn[1]*60 + _lastDrawn[0]*3600) { redraw = true; }
-            // ..or any relevant device setting changed
-            if (_doNotDisturb != deviceSettings.doNotDisturb) { redraw = true; }
         }
         /* DEBUG
         var lastAccessed = $.config.lastAccessed();
@@ -229,7 +231,6 @@ class ClockView extends WatchUi.WatchFace {
                     _colorMode = M_DARK;
                     break;
                 case $.Config.O_DARK_MODE_IN_DND:
-                    _doNotDisturb = deviceSettings.doNotDisturb;
                     _colorMode = _doNotDisturb ? M_DARK : M_LIGHT;
                     break;
             }
