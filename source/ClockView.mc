@@ -49,7 +49,7 @@ class ClockView extends WatchUi.WatchFace {
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
 
     private var _doNotDisturb as Boolean;
-    private var _lastDrawn as Array<Number> = new Array<Number>[3];
+    private var _lastDrawn as Array<Number>;
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
     private var _hasAntiAlias as Boolean;
@@ -337,9 +337,13 @@ class ClockView extends WatchUi.WatchFace {
 
         // Draw the second hand and shadow, directly on the screen
         var doIt = true;
-        if (!_isAwake and !_doPartialUpdates) { doIt = false; }
-        if (!_isAwake and _doPartialUpdates and _hideSecondHand and 0 == _sleepTimer) { doIt = false; }
-        if (doIt) { drawSecondHand(dc, clockTime.sec); }
+        if (!_isAwake) {
+            if (!_doPartialUpdates) { doIt = false; }
+            else if (_hideSecondHand and 0 == _sleepTimer) { doIt = false; }
+        }
+        if (doIt) { 
+            drawSecondHand(dc, clockTime.sec); 
+        }
     }
 
     //! Handle the partial update event. This function is called every second when the device is
