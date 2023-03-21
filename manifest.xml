@@ -59,6 +59,7 @@
             palette to edit your compatible language list.
         -->
         <iq:languages>
+            <iq:language>deu</iq:language>
             <iq:language>eng</iq:language>
         </iq:languages>
         <!--

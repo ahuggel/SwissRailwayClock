@@ -30,10 +30,10 @@ var config as Config = new Config();
 class Config {
     // Configuration item identifiers. Used throughout the app to refer to individual settings. The last one must be I_SIZE, it is used like size()
     enum Item { I_BATTERY, I_DATE_DISPLAY, I_DARK_MODE, I_DM_CONTRAST, I_HIDE_SECONDS, I_3D_EFFECTS, I_DM_ON, I_DM_OFF, I_SIZE, I_DONE }
-    // Configuration item display names
-    private var _itemNames as Array<String> = ["Battery Level", "Date Display", "Dark Mode", "Contrast", "Seconds Disappear", "3D Effects", "Turn On", "Turn Off"] as Array<String>;
+    // Symbols for the configuration item display name resources
+	private var _itemSymbols as Array<Symbol> = [:Battery, :DateDisplay, :DarkMode, :DmContrast, :HideSeconds, :Shadows, :DmOn, :DmOff] as Array<Symbol>;
     // Configuration item labels only used as keys for storing the configuration values. Using these for persistent storage, rather than Item is more robust.
-    private var _itemLabels as Array<String> = ["battery", "dateDisplay", "darkMode", "dmContrast", "secondHand", "3deffects", "dmOn", "dmOff"] as Array<String>;
+    private var _itemLabels as Array<String> = ["battery", "dateDisplay", "darkMode", "dmContrast", "hideSeconds", "3dEffects", "dmOn", "dmOff"] as Array<String>;
 
     // Options for list and toggle configuration items. Using enums, the compiler can help detect issues like typos or outdated values.
     enum { O_BATTERY_OFF, O_BATTERY_CLASSIC_WARN, O_BATTERY_MODERN_WARN, O_BATTERY_CLASSIC, O_BATTERY_MODERN, O_BATTERY_HYBRID }
@@ -45,17 +45,15 @@ class Config {
     static const O_DM_CONTRAST as Array<Number> = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>;
 
     // Option labels for list items. One for each of the enum values above and in the same order.
-    private var _labels as Dictionary<Item, Array<String> > = {
-        I_BATTERY      => ["Off", "Classic Warnings", "Modern Warnings", "Classic", "Modern", "Hybrid"],
-        I_DATE_DISPLAY => ["Off", "Day Only", "Weekday and Day"],
-        I_DARK_MODE    => ["Scheduled", "Off", "On", "In DnD Mode"],
-        I_DM_CONTRAST  => ["Light Gray", "Dark Gray", "White"],
-        I_HIDE_SECONDS => ["In Dark Mode", "Always", "Never"]
-    } as Dictionary<Item, Array<String> >;
+    private var _labels as Dictionary<Item, Array<Symbol> > = {
+        I_BATTERY      => [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern, :BatteryHybrid],
+        I_DATE_DISPLAY => [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay],
+        I_DARK_MODE    => [:DarkModeScheduled, :Off, :On, :DarkModeInDnD],
+        I_DM_CONTRAST  => [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite],
+        I_HIDE_SECONDS => [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever]
+    } as Dictionary<Item, Array<Symbol> >;
 
-    // Option labels for simple On/Off toggle items. Used in ToggleMenuItem.
-    static const ON_OFF_OPTIONS = {:enabled=>"On", :disabled=>"Off"};
-
+    private var _stringResources as Dictionary<Symbol, String>; // String resources cache
     private var _values as Dictionary<Item, Number>;  // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
     private var _lastAccessed as Array<Number> = new Array<Number>[3];
@@ -63,6 +61,7 @@ class Config {
     //! Constructor
     public function initialize() {
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
+        _stringResources = {} as Dictionary<Symbol, String>;
         _values = {} as Dictionary<Item, Number>;
         _lastAccessed = [-1, -1, -1] as Array<Number>;
         // Read the configuration values from persistent storage 
@@ -104,8 +103,8 @@ class Config {
             case I_DARK_MODE:
             case I_DM_CONTRAST:
             case I_HIDE_SECONDS:
-                var label = _labels[id] as Array<String>;
-                option = label[value];
+                var label = _labels[id] as Array<Symbol>;
+                option = getStringResource(label[value]);
                 break;
             case I_DM_ON:
             case I_DM_OFF:
@@ -135,7 +134,7 @@ class Config {
     //!@param id Setting
     //!@return Setting name
     public function getName(id as Item) as String {
-        return _itemNames[id as Number];
+        return getStringResource(_itemSymbols[id as Number]);
     }
 
     //! Advance the setting to the next value.
@@ -190,13 +189,24 @@ class Config {
     public function lastAccessed() as Array<Number> {
         return _lastAccessed;
     }
+
+    // Return a resource string for a symbol. Load it and cache it if necessary.
+    public function getStringResource(id as Symbol) as String {
+        var resource = _stringResources[id];
+        if (null == resource) {
+            resource = WatchUi.loadResource((Rez.Strings as Array)[id] as Symbol) as String;
+            _stringResources[id] = resource;
+        }
+        // System.println(id + " = " + resource);
+        return resource;
+    }
 }
 
 //! The app settings menu
 class SettingsMenu extends WatchUi.Menu2 {
     //! Constructor
     public function initialize() {
-        Menu2.initialize({:title=>"Settings"});
+        Menu2.initialize({:title=>$.config.getStringResource(:Settings)});
         addMenuItem($.Config.I_BATTERY);
         addMenuItem($.Config.I_DATE_DISPLAY);
         addMenuItem($.Config.I_DARK_MODE);
@@ -220,13 +230,13 @@ class SettingsMenu extends WatchUi.Menu2 {
         if ($.config.hasAlpha()) {
             Menu2.addItem(new WatchUi.ToggleMenuItem(
                 $.config.getName($.Config.I_3D_EFFECTS), 
-                $.Config.ON_OFF_OPTIONS,
+                {:enabled=>$.config.getStringResource(:On), :disabled=>$.config.getStringResource(:Off)},
                 $.Config.I_3D_EFFECTS, 
                 $.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS), 
                 {}
             ));
         }
-        Menu2.addItem(new WatchUi.MenuItem("Done", "Exit the Menu", $.Config.I_DONE, {}));
+        Menu2.addItem(new WatchUi.MenuItem($.config.getStringResource(:Done), $.config.getStringResource(:DoneLabel), $.Config.I_DONE, {}));
     }
 
     // Called when the menu is brought into the foreground
@@ -329,13 +339,13 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 if ($.config.hasAlpha()) {
                     _menu.addItem(new WatchUi.ToggleMenuItem(
                         $.config.getName($.Config.I_3D_EFFECTS), 
-                        $.Config.ON_OFF_OPTIONS,
+                        {:enabled=>$.config.getStringResource(:On), :disabled=>$.config.getStringResource(:Off)},
                         $.Config.I_3D_EFFECTS, 
                         $.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS), 
                         {}
                     ));
                 }
-                _menu.addItem(new WatchUi.MenuItem("Done", "Exit the Menu", $.Config.I_DONE, {}));
+                _menu.addItem(new WatchUi.MenuItem($.config.getStringResource(:Done), $.config.getStringResource(:DoneLabel), $.Config.I_DONE, {}));
                 break;
             case $.Config.I_3D_EFFECTS:
                 // Toggle the two possible configuration values

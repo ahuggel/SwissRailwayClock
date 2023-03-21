@@ -1,3 +1,34 @@
 <strings>
     <string id="AppName">SwissRailwayClock</string>
+
+    <string id="Settings">Settings</string>
+
+    <string id="Battery">Battery Level</string>
+    <string id="DateDisplay">Date Display</string>
+    <string id="DarkMode">Dark Mode</string>
+    <string id="DmContrast">Contrast</string>
+    <string id="HideSeconds">Seconds Disappear</string>
+    <string id="Shadows">3D Effects</string>
+    <string id="DmOn">Turn On</string>
+    <string id="DmOff">Turn Off</string>
+    <string id="Done">Done</string>
+
+    <string id="On">On</string>
+    <string id="Off">Off</string>
+    <string id="BatteryClassicWarnings">Classic Warnings</string>
+    <string id="BatteryModernWarnings">Modern Warnings</string>
+    <string id="BatteryClassic">Classic</string>
+    <string id="BatteryModern">Modern</string>
+    <string id="BatteryHybrid">Hybrid</string>
+    <string id="DateDisplayDayOnly">Day Only</string>
+    <string id="DateDisplayWeekdayAndDay">Weekday and Day</string>
+    <string id="DarkModeScheduled">Scheduled</string>
+    <string id="DarkModeInDnD">In DnD Mode</string>
+    <string id="DmContrastLtGray">Light Gray</string>
+    <string id="DmContrastDkGray">Dark Gray</string>
+    <string id="DmContrastWhite">White</string>
+    <string id="HideSecondsInDm">In Dark Mode</string>
+    <string id="HideSecondsAlways">Always</string>
+    <string id="HideSecondsNever">Never</string>
+    <string id="DoneLabel">Exit the Menu</string>
 </strings>
