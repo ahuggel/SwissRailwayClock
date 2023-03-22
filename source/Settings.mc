@@ -26,6 +26,12 @@ import Toybox.WatchUi;
 //! Global variable that keeps track of the settings and makes them available to the app.
 var config as Config = new Config();
 
+// Global helper function to load string resources, just to keep the code simpler and see only one compiler warning. 
+// Decided not to cache the strings.
+function getStringResource(id as Symbol) as String {
+    return WatchUi.loadResource(Rez.Strings[id] as Symbol) as String;
+}
+
 //! This class maintains application settings and synchronises them to persistent storage.
 class Config {
     // Configuration item identifiers. Used throughout the app to refer to individual settings. The last one must be I_SIZE, it is used like size()
@@ -53,7 +59,6 @@ class Config {
         I_HIDE_SECONDS => [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever]
     } as Dictionary<Item, Array<Symbol> >;
 
-    private var _stringResources as Dictionary<Symbol, String>; // String resources cache
     private var _values as Dictionary<Item, Number>;  // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
     private var _lastAccessed as Array<Number> = new Array<Number>[3];
@@ -61,7 +66,6 @@ class Config {
     //! Constructor
     public function initialize() {
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
-        _stringResources = {} as Dictionary<Symbol, String>;
         _values = {} as Dictionary<Item, Number>;
         _lastAccessed = [-1, -1, -1] as Array<Number>;
         // Read the configuration values from persistent storage 
@@ -104,7 +108,7 @@ class Config {
             case I_DM_CONTRAST:
             case I_HIDE_SECONDS:
                 var label = _labels[id] as Array<Symbol>;
-                option = getStringResource(label[value]);
+                option = $.getStringResource(label[value]);
                 break;
             case I_DM_ON:
             case I_DM_OFF:
@@ -134,7 +138,7 @@ class Config {
     //!@param id Setting
     //!@return Setting name
     public function getName(id as Item) as String {
-        return getStringResource(_itemSymbols[id as Number]);
+        return $.getStringResource(_itemSymbols[id as Number]);
     }
 
     //! Advance the setting to the next value.
@@ -189,24 +193,13 @@ class Config {
     public function lastAccessed() as Array<Number> {
         return _lastAccessed;
     }
-
-    // Return a resource string for a symbol. Load it and cache it if necessary.
-    public function getStringResource(id as Symbol) as String {
-        var resource = _stringResources[id];
-        if (null == resource) {
-            resource = WatchUi.loadResource((Rez.Strings as Array)[id] as Symbol) as String;
-            _stringResources[id] = resource;
-        }
-        // System.println(id + " = " + resource);
-        return resource;
-    }
 }
 
 //! The app settings menu
 class SettingsMenu extends WatchUi.Menu2 {
     //! Constructor
     public function initialize() {
-        Menu2.initialize({:title=>$.config.getStringResource(:Settings)});
+        Menu2.initialize({:title=>$.getStringResource(:Settings)});
         addMenuItem($.Config.I_BATTERY);
         addMenuItem($.Config.I_DATE_DISPLAY);
         addMenuItem($.Config.I_DARK_MODE);
@@ -230,13 +223,13 @@ class SettingsMenu extends WatchUi.Menu2 {
         if ($.config.hasAlpha()) {
             Menu2.addItem(new WatchUi.ToggleMenuItem(
                 $.config.getName($.Config.I_3D_EFFECTS), 
-                {:enabled=>$.config.getStringResource(:On), :disabled=>$.config.getStringResource(:Off)},
+                {:enabled=>$.getStringResource(:On), :disabled=>$.getStringResource(:Off)},
                 $.Config.I_3D_EFFECTS, 
                 $.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS), 
                 {}
             ));
         }
-        Menu2.addItem(new WatchUi.MenuItem($.config.getStringResource(:Done), $.config.getStringResource(:DoneLabel), $.Config.I_DONE, {}));
+        Menu2.addItem(new WatchUi.MenuItem($.getStringResource(:Done), $.getStringResource(:DoneLabel), $.Config.I_DONE, {}));
     }
 
     // Called when the menu is brought into the foreground
@@ -339,13 +332,13 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 if ($.config.hasAlpha()) {
                     _menu.addItem(new WatchUi.ToggleMenuItem(
                         $.config.getName($.Config.I_3D_EFFECTS), 
-                        {:enabled=>$.config.getStringResource(:On), :disabled=>$.config.getStringResource(:Off)},
+                        {:enabled=>$.getStringResource(:On), :disabled=>$.getStringResource(:Off)},
                         $.Config.I_3D_EFFECTS, 
                         $.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS), 
                         {}
                     ));
                 }
-                _menu.addItem(new WatchUi.MenuItem($.config.getStringResource(:Done), $.config.getStringResource(:DoneLabel), $.Config.I_DONE, {}));
+                _menu.addItem(new WatchUi.MenuItem($.getStringResource(:Done), $.getStringResource(:DoneLabel), $.Config.I_DONE, {}));
                 break;
             case $.Config.I_3D_EFFECTS:
                 // Toggle the two possible configuration values

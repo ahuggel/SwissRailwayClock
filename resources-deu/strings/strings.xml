@@ -3,14 +3,14 @@
 
     <string id="Settings">Einstellungen</string>
 
-    <string id="Battery">Batterie</string>
+    <string id="Battery">Batterieanzeige</string>
     <string id="DateDisplay">Datum</string>
     <string id="DarkMode">Dunkelmodus</string>
     <string id="DmContrast">Kontrast</string>
     <string id="HideSeconds">Sekunden ausblenden</string>
     <string id="Shadows">3D Effekt</string>
-    <string id="DmOn">Ein</string>
-    <string id="DmOff">Aus</string>
+    <string id="DmOn">Einschalten</string>
+    <string id="DmOff">Ausschalten</string>
     <string id="Done">Schliessen</string>
 
     <string id="On">Ein</string>
@@ -21,8 +21,8 @@
     <string id="BatteryModern">Modern</string>
     <string id="BatteryHybrid">Hybrid</string>
     <string id="DateDisplayDayOnly">Tag</string>
-    <string id="DateDisplayWeekdayAndDay">Wochentag and Tag</string>
-    <string id="DarkModeScheduled">Von/Bis</string>
+    <string id="DateDisplayWeekdayAndDay">Wochentag und Tag</string>
+    <string id="DarkModeScheduled">Nach Uhrzeit</string>
     <string id="DarkModeInDnD">Im DnD Modus</string>
     <string id="DmContrastLtGray">Hellgrau</string>
     <string id="DmContrastDkGray">Dunkelgrau</string>
@@ -30,5 +30,5 @@
     <string id="HideSecondsInDm">Im Dunkelmodus</string>
     <string id="HideSecondsAlways">Immer</string>
     <string id="HideSecondsNever">Nie</string>
-    <string id="DoneLabel">Menu verlassen</string>
+    <string id="DoneLabel">Menü verlassen</string>
 </strings>
