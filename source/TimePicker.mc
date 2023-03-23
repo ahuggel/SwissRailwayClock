@@ -43,8 +43,9 @@ class TimePicker extends WatchUi.Picker {
             :color=>Graphics.COLOR_WHITE
         });
 
-        var factories = new Array<PickerFactory or Text>[3];
-        factories[0] = new TimeFactory(TimeFactory.T_HOUR);
+        var is24Hour = System.getDeviceSettings().is24Hour;
+        var factories = new Array<PickerFactory or Text>[is24Hour ? 3 : 4];
+        factories[0] = new TimeFactory(TimeFactory.T_HOUR, is24Hour);
         factories[1] = new WatchUi.Text({
             :text=>":",
             :font=>Graphics.FONT_MEDIUM,
@@ -52,13 +53,18 @@ class TimePicker extends WatchUi.Picker {
             :locY=>WatchUi.LAYOUT_VALIGN_CENTER,
             :color=>Graphics.COLOR_WHITE 
         });
-        factories[2] = new TimeFactory(TimeFactory.T_MINUTE);
+        factories[2] = new TimeFactory(TimeFactory.T_MINUTE, is24Hour);
+        if (!is24Hour) { factories[3] = new AmPmFactory(); }
 
-        var defaults = new Array<Number>[3];
+        var defaults = new Array<Number>[is24Hour ? 3 : 4];
         var value = $.config.getValue(id);
         defaults[0] = (value / 60).toNumber();
         defaults[1] = 0;
         defaults[2] = value % 60;
+        if (!is24Hour) {
+            defaults[3] = defaults[0] < 12 ? 0 : 1;
+            defaults[0] %= 12; 
+        }
 
         Picker.initialize({:title=>title, :pattern=>factories, :defaults=>defaults});
     }
@@ -70,17 +76,21 @@ class TimePicker extends WatchUi.Picker {
 }
 
 class TimeFactory extends WatchUi.PickerFactory {
-    enum { T_HOUR, T_MINUTE }
+    enum Mode { T_HOUR, T_MINUTE }
+    private var _mode as Mode;
+    private var _is24Hour as Boolean;
     private var _stop as Number;
     private var _format as String;
 
-    public function initialize(mode as Number) {
+    public function initialize(mode as Mode, is24Hour as Boolean) {
         PickerFactory.initialize();
+        _mode = mode;
+        _is24Hour = is24Hour;
         _stop = 0;
         _format = "%d";
         switch (mode) {
             case T_HOUR:
-                _stop = 23;
+                _stop = _is24Hour ? 23 : 11;
                 break;
             case T_MINUTE:
                 _stop = 59;
@@ -90,6 +100,7 @@ class TimeFactory extends WatchUi.PickerFactory {
     }
 
     public function getDrawable(item as Number, isSelected as Boolean) as Drawable? {
+        if (T_HOUR == _mode and !_is24Hour and 0 == item) { item = 12; } 
         return new WatchUi.Text({
             :text=>item.format(_format),
             :font=>Graphics.FONT_MEDIUM,
@@ -108,6 +119,33 @@ class TimeFactory extends WatchUi.PickerFactory {
     }
 }
 
+class AmPmFactory extends WatchUi.PickerFactory {
+    private var _values as Array<String>;
+
+    public function initialize() {
+        PickerFactory.initialize();
+        _values = ["am", "pm"] as Array<String>;
+    }
+
+    public function getDrawable(item as Number, isSelected as Boolean) as Drawable? {
+        return new WatchUi.Text({
+            :text=>_values[item],
+            :font=>Graphics.FONT_MEDIUM,
+            :locX=>WatchUi.LAYOUT_HALIGN_CENTER, 
+            :locY=>WatchUi.LAYOUT_VALIGN_CENTER, 
+            :color=>Graphics.COLOR_WHITE 
+        });
+    }
+
+    public function getValue(item as Number) as Object? {
+        return item;
+    }
+
+    public function getSize() as Number { 
+        return _values.size();
+    }
+}
+
 class TimePickerDelegate extends WatchUi.PickerDelegate {
     private var _id as Config.Item;
 
@@ -117,7 +155,8 @@ class TimePickerDelegate extends WatchUi.PickerDelegate {
     }
 
     public function onAccept(values as Array) as Boolean {
-        $.config.setValue(_id, values[0] as Number * 60 + values[2] as Number);
+        var pm = 4 == values.size() and 1 == values[3] as Number ? 12 : 0;
+        $.config.setValue(_id, (values[0] as Number + pm) * 60 + values[2] as Number);
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         return true;
     }
