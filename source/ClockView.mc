@@ -258,11 +258,11 @@ class ClockView extends WatchUi.WatchFace {
             if (System.SCREEN_SHAPE_ROUND == _screenShape) {
                 // Fill the entire background with the background color
                 targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
-               targetDc.fillRectangle(0, 0, _width, _height);
+                targetDc.clear();
             } else {
                 // Fill the entire background with black and draw a circle with the background color
                 targetDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-                targetDc.fillRectangle(0, 0, _width, _height);
+                targetDc.clear();
                 if (_colors[_colorMode][C_BACKGROUND] != Graphics.COLOR_BLACK) {
                     targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
                     targetDc.fillCircle(_screenCenter[0], _screenCenter[1], _clockRadius);
@@ -444,12 +444,12 @@ class ClockView extends WatchUi.WatchFace {
         if (x3 > maxX) { maxX = x3; }
         if (y3 > maxY) { maxY = y3; }
         if (xx1 < minX) { minX = xx1; }
-        if (xx1 > maxX) { maxX = xx1; }
         if (yy1 < minY) { minY = yy1; }
+        if (xx1 > maxX) { maxX = xx1; }
         if (yy1 > maxY) { maxY = yy1; }
         if (xx2 < minX) { minX = xx2; }
-        if (xx2 > maxX) { maxX = xx2; }
         if (yy2 < minY) { minY = yy2; }
+        if (xx2 > maxX) { maxX = xx2; }
         if (yy2 > maxY) { maxY = yy2; }
         // Add two pixels on each side for good measure
         dc.setClip(minX - 2, minY - 2, maxX + 2 - (minX - 2), maxY + 2 - (minY - 2));

@@ -387,7 +387,7 @@ class MenuIcon extends WatchUi.Drawable {
         var width = dc.getWidth();
         var height = dc.getHeight();
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-        dc.fillRectangle(0, 0, width, height);
+        dc.clear();
         dc.setColor(_color, _color);
         dc.fillPolygon([[0,0], [width, height], [width, 0]] as Array< Array<Number> >);
     }
