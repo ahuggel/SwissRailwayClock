@@ -65,14 +65,14 @@ class Config {
     private var _values as Dictionary<Item, Number>;  // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
-    private var _is24Hour as Boolean?;
+    private var _is24Hour as Boolean;
     private var _lastAccessed as Array<Number> = new Array<Number>[3];
 
     //! Constructor
     public function initialize() {
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasBatteryInDays = (System.Stats has :batteryInDays);
-        _is24Hour = null; // Calling System.getDeviceSettings() here results in a runtime error
+        _is24Hour = System.getDeviceSettings().is24Hour;  // It seems the watchface is restarted when system settings are changed
         _values = {} as Dictionary<Item, Number>;
         _lastAccessed = [-1, -1, -1] as Array<Number>;
         // Read the configuration values from persistent storage 
@@ -126,8 +126,7 @@ class Config {
             case I_DM_OFF:
                 var pm = "";
                 var hour = (value as Number / 60).toNumber();
-                if (null == _is24Hour) { _is24Hour = System.getDeviceSettings().is24Hour; }
-                if (!(_is24Hour as Boolean)) {
+                if (!_is24Hour) {
                     pm = hour < 12 ? " am" : " pm";
                     hour %= 12;
                     if (0 == hour) { hour = 12; }
@@ -319,12 +318,12 @@ class SettingsMenu extends WatchUi.Menu2 {
     }
 
     //! Add a MenuItem to the menu.
-    public function addMenuItem(item as Config.Item) as Void {
+    private function addMenuItem(item as Config.Item) as Void {
         Menu2.addItem(new WatchUi.MenuItem($.config.getName(item), $.config.getLabel(item), item, {}));
     }
 
     //! Add a ToggleMenuItem to the menu.
-    public function addToggleMenuItem(item as Config.Item, isEnabled as Number) as Void {
+    private function addToggleMenuItem(item as Config.Item, isEnabled as Number) as Void {
         Menu2.addItem(new WatchUi.ToggleMenuItem(
             $.config.getName(item), 
             {:enabled=>$.getStringResource(:On), :disabled=>$.getStringResource(:Off)},
@@ -335,7 +334,7 @@ class SettingsMenu extends WatchUi.Menu2 {
     }
 
     //! Delete any menu item. Returns true if an item was deleted, else false
-    public function deleteAnyItem(item as Config.Item) as Boolean {
+    private function deleteAnyItem(item as Config.Item) as Boolean {
         var idx = findItemById(item);
         var del = -1 != idx;
         if (del) { Menu2.deleteItem(idx); }
@@ -373,9 +372,8 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 $.config.setNext(id);
                 menuItem.setSubLabel($.config.getLabel(id));
                 // Update the color of the icon
-                var menuIcon = (menuItem as WatchUi.IconMenuItem).getIcon() as MenuIcon;
+                var menuIcon = menuItem.getIcon() as MenuIcon;
                 menuIcon.setColor($.config.getValue(id));
-                WatchUi.requestUpdate();
                 break;
             case $.Config.I_BATTERY:
             case $.Config.I_DARK_MODE:
@@ -399,6 +397,9 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 break;
             case $.Config.I_DONE:
                 WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+                break;
+            default:
+                System.println("ERROR: SettingsMenuDelegate.onSelect() is not implemented for id = " + id);
                 break;
         }
   	}

@@ -154,7 +154,7 @@ class ClockView extends WatchUi.WatchFace {
     //! Called when this View is brought to the foreground. Restore the state of this view and
     //! prepare it to be shown. This includes loading resources into memory.
     public function onShow() as Void {
-        // Update relevant device settings here, to reduce the number of getDeviceSettings calls and
+        // Update relevant device settings here, to reduce the number of getDeviceSettings() calls and
         // assuming onShow() is triggered after any device settings change.
         var deviceSettings = System.getDeviceSettings();
         _doNotDisturb = deviceSettings.doNotDisturb;
@@ -299,7 +299,7 @@ class ClockView extends WatchUi.WatchFace {
                 var color = Graphics.COLOR_GREEN;
                 if (level < warnLevel / 2) { color = M_LIGHT == _colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_YELLOW; }
                 if (level < warnLevel / 4) { color = Graphics.COLOR_RED; }
-                if (level < warnLevel and batterySetting >= $.Config.O_BATTERY_CLASSIC_WARN) {
+                if (level < warnLevel) {
                     switch (batterySetting) {
                         case $.Config.O_BATTERY_CLASSIC:
                         case $.Config.O_BATTERY_CLASSIC_WARN:
@@ -464,7 +464,7 @@ class ClockView extends WatchUi.WatchFace {
         if (xx2 > maxX) { maxX = xx2; }
         if (yy2 > maxY) { maxY = yy2; }
         // Add two pixels on each side for good measure
-        dc.setClip(minX - 2, minY - 2, maxX + 2 - (minX - 2), maxY + 2 - (minY - 2));
+        dc.setClip(minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4);
 
         // Finally, draw the second hand
         dc.setColor(_colors[_colorMode][C_SECONDS], Graphics.COLOR_TRANSPARENT);
