@@ -4,7 +4,7 @@
     <string id="Settings">Einstellungen</string>
 
     <string id="Battery">Batterieanzeige</string>
-    <string id="DateDisplay">Datum</string>
+    <string id="DateDisplay">Datumsanzeige</string>
     <string id="DarkMode">Dunkelmodus</string>
     <string id="DmContrast">Kontrast</string>
     <string id="HideSeconds">Sekunden ausblenden</string>
@@ -20,6 +20,8 @@
     <string id="BatteryClassic">Klassisch</string>
     <string id="BatteryModern">Modern</string>
     <string id="BatteryHybrid">Hybrid</string>
+    <string id="BatteryPct">Batterie Prozente</string>
+    <string id="BatteryDays">Batterie Tage</string>
     <string id="DateDisplayDayOnly">Tag</string>
     <string id="DateDisplayWeekdayAndDay">Wochentag und Tag</string>
     <string id="DarkModeScheduled">Nach Uhrzeit</string>
@@ -31,4 +33,6 @@
     <string id="HideSecondsAlways">Immer</string>
     <string id="HideSecondsNever">Nie</string>
     <string id="DoneLabel">Menü verlassen</string>
+
+    <string id="DayUnit">T</string>
 </strings>

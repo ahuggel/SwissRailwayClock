@@ -20,6 +20,8 @@
     <string id="BatteryClassic">Classic</string>
     <string id="BatteryModern">Modern</string>
     <string id="BatteryHybrid">Hybrid</string>
+    <string id="BatteryPct">Battery Percentage</string>
+    <string id="BatteryDays">Battery Days</string>
     <string id="DateDisplayDayOnly">Day Only</string>
     <string id="DateDisplayWeekdayAndDay">Weekday and Day</string>
     <string id="DarkModeScheduled">Scheduled</string>
@@ -31,4 +33,6 @@
     <string id="HideSecondsAlways">Always</string>
     <string id="HideSecondsNever">Never</string>
     <string id="DoneLabel">Exit the Menu</string>
+
+    <string id="DayUnit">d</string>
 </strings>

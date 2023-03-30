@@ -274,7 +274,7 @@ class ClockView extends WatchUi.WatchFace {
             targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
             switch ($.config.getValue($.Config.I_DATE_DISPLAY)) {
                 case $.Config.O_DATE_DISPLAY_DAY_ONLY: 
-                    var dateStr = Lang.format("$1$", [info.day.format("%02d")]);
+                    var dateStr = info.day.format("%02d");
                     targetDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                     break;
                 case $.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY:
@@ -286,27 +286,39 @@ class ClockView extends WatchUi.WatchFace {
             // Draw the battery level indicator
             var batterySetting = $.config.getValue($.Config.I_BATTERY);
             if (batterySetting > $.Config.O_BATTERY_OFF) {
-                var level = System.getSystemStats().battery;
-                if (level < 40.0 and batterySetting >= $.Config.O_BATTERY_CLASSIC_WARN) {
+                var systemStats = System.getSystemStats();
+                var level = systemStats.battery;
+                var levelInDays = 0.0;
+                var warnLevel = 40.0; // Default is 40%
+                if (systemStats has :batteryInDays ) { // since API Level 3.3.0
+                    levelInDays = systemStats.batteryInDays;
+                    warnLevel = level / levelInDays * 6.0; // If the device has battery in days, use 6 days
+                }
+                var xpos = (_width/2.0 + 0.5).toNumber();
+                var ypos = (_clockRadius/2.0 + 0.5).toNumber();
+                var color = Graphics.COLOR_GREEN;
+                if (level < warnLevel * 2/3) { color = M_LIGHT == _colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_YELLOW; }
+                if (level < warnLevel * 1/3) { color = Graphics.COLOR_RED; }
+                if (level < warnLevel and batterySetting >= $.Config.O_BATTERY_CLASSIC_WARN) {
                     switch (batterySetting) {
                         case $.Config.O_BATTERY_CLASSIC:
                         case $.Config.O_BATTERY_CLASSIC_WARN:
-                            drawClassicBatteryIndicator(targetDc, level);
+                            drawClassicBatteryIndicator(targetDc, xpos, ypos, level, levelInDays, color);
                             break;
                         case $.Config.O_BATTERY_MODERN:
                         case $.Config.O_BATTERY_MODERN_WARN:
                         case $.Config.O_BATTERY_HYBRID:
-                            drawModernBatteryIndicator(targetDc, level);
+                            drawModernBatteryIndicator(targetDc, xpos, ypos, level, levelInDays, color);
                             break;
                     }
                 } else if (batterySetting >= $.Config.O_BATTERY_CLASSIC) {
                     switch (batterySetting) {
                         case $.Config.O_BATTERY_CLASSIC:
                         case $.Config.O_BATTERY_HYBRID:
-                            drawClassicBatteryIndicator(targetDc, level);
+                            drawClassicBatteryIndicator(targetDc, xpos, ypos, level, levelInDays, color);
                             break;
                         case $.Config.O_BATTERY_MODERN:
-                            drawModernBatteryIndicator(targetDc, level);
+                            drawModernBatteryIndicator(targetDc, xpos, ypos, level, levelInDays, color);
                             break;
                     }
                 }
@@ -505,38 +517,27 @@ class ClockView extends WatchUi.WatchFace {
         return result;
     }
 
-    private function drawModernBatteryIndicator(dc as Dc, level as Float) as Void {
+    // Very simple battery indicator showing just a color dot
+    private function drawModernBatteryIndicator(dc as Dc, xpos as Number, ypos as Number, level as Float, levelInDays as Float, color as Number) as Void {
         var radius = (3.2 * _clockRadius / 50.0 + 0.5).toNumber();
-        if (level < 20) {
-            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(_width/2, _clockRadius/2, radius);
-/*
-            TODO: THIS IS WORK IN PROGRESS
-            dc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
-            var pts = [ [_width/2, _clockRadius/2],
-                        [_width/2, _clockRadius/2 - radius],
-                        [_width/2 + radius, _clockRadius/2 - radius],
-                        [_width/2 + radius, _clockRadius/2 - radius/2] ] as Array< Array<Number> >;
-            dc.fillPolygon(pts);
-*/
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(xpos, ypos, radius);
+
+        // Add labels depending on the settings
+        if ($.Config.O_BATTERY_PCT_ON == $.config.getValue($.Config.I_BATTERY_PCT)) {
+            dc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
+            var str = (level + 0.5).toNumber() + "% ";
+            dc.drawText(xpos - radius, ypos - Graphics.getFontHeight(Graphics.FONT_XTINY)/2, Graphics.FONT_XTINY, str, Graphics.TEXT_JUSTIFY_RIGHT);
         }
-        else if (level < 40) {
-            var warnColor = [Graphics.COLOR_ORANGE, Graphics.COLOR_YELLOW] as Array<Number>;
-            dc.setColor(warnColor[_colorMode], Graphics.COLOR_TRANSPARENT);
-            var x = (level - 20.0) / 20.0;
-            dc.fillCircle(_width/2-radius*x, _clockRadius/2, radius);
-            dc.fillCircle(_width/2+radius*x, _clockRadius/2, radius);
-        }
-        else {
-            dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
-            var a = (radius * (level - 40.0) / 60.0 + 0.5).toNumber();
-            dc.fillCircle(_width/2-radius-a, _clockRadius/2, radius);
-            dc.fillEllipse(_width/2, _clockRadius/2, a, radius);
-            dc.fillCircle(_width/2+radius+a, _clockRadius/2, radius);
+        // Note: Whether the device provides battery in days is also ensured by getValue().
+        if ($.Config.O_BATTERY_DAYS_ON == $.config.getValue($.Config.I_BATTERY_DAYS)) {
+            dc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
+            var str = " " + (levelInDays + 0.5).toNumber() + WatchUi.loadResource(Rez.Strings.DayUnit);
+            dc.drawText(xpos + radius, ypos - Graphics.getFontHeight(Graphics.FONT_XTINY)/2, Graphics.FONT_XTINY, str, Graphics.TEXT_JUSTIFY_LEFT);
         }
     }
 
-    private function drawClassicBatteryIndicator(dc as Dc, level as Float) as Void {
+    private function drawClassicBatteryIndicator(dc as Dc, xpos as Number, ypos as Number, level as Float, levelInDays as Float, color as Number) as Void {
         // Dimensions of the battery level indicator, based on percentages of the clock diameter
         var pw = (1.2 * _clockRadius / 50.0 + 0.5).toNumber(); // pen size for the battery rectangle 
         if (0 == pw % 2) { pw += 1; }                          // make sure pw is an odd number
@@ -549,8 +550,8 @@ class ClockView extends WatchUi.WatchFace {
         // Draw the battery shape
         var width = 5*bw + 6*ts + pw+1;
         var height = bh + 2*ts + pw+1;
-        var x = _width/2 - width/2 + pw/2;
-        var y = _clockRadius/2 - height/2;
+        var x = xpos - width/2 + pw/2;
+        var y = ypos - height/2;
         var frameColor = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY] as Array<Number>;
         dc.setColor(frameColor[_colorMode], Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(pw);
@@ -561,10 +562,6 @@ class ClockView extends WatchUi.WatchFace {
         dc.fillRoundedRectangle(x + width + (pw-1)/2 + ts, y + height/2 - ch/2, cw, ch, (cw-1)/2);
 
         // Draw battery level segments according to the battery level
-        var color = Graphics.COLOR_GREEN;
-        var warnColor = [Graphics.COLOR_ORANGE, Graphics.COLOR_YELLOW] as Array<Number>;
-        if (level < 40.0) { color = warnColor[_colorMode]; }
-        if (level < 20.0) { color = Graphics.COLOR_RED; }
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         level = (level + 0.5).toNumber();
         var xb = x + (pw-1)/2 + 1 + ts;
@@ -576,6 +573,19 @@ class ClockView extends WatchUi.WatchFace {
         var bl = level % 20 * bw / 20;
         if (bl > 0) {
             dc.fillRectangle(xb + fb*(bw+ts), yb, bl, bh);
+        }
+
+        // Add labels depending on the settings
+        if ($.Config.O_BATTERY_PCT_ON == $.config.getValue($.Config.I_BATTERY_PCT)) {
+            dc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
+            var str = (level + 0.5).toNumber() + "% ";
+            dc.drawText(x - pw, ypos - Graphics.getFontHeight(Graphics.FONT_XTINY)/2, Graphics.FONT_XTINY, str, Graphics.TEXT_JUSTIFY_RIGHT);
+        }
+        // Note: Whether the device provides battery in days is also ensured by getValue().
+        if ($.Config.O_BATTERY_DAYS_ON == $.config.getValue($.Config.I_BATTERY_DAYS)) {
+            dc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
+            var str = " " + (levelInDays + 0.5).toNumber() + WatchUi.loadResource(Rez.Strings.DayUnit);
+            dc.drawText(x + width + (pw-1)/2 + cw, ypos - Graphics.getFontHeight(Graphics.FONT_XTINY)/2, Graphics.FONT_XTINY, str, Graphics.TEXT_JUSTIFY_LEFT);
         }
     }
 }
