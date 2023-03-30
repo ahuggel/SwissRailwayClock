@@ -286,6 +286,8 @@ class ClockView extends WatchUi.WatchFace {
             // Draw the battery level indicator
             var batterySetting = $.config.getValue($.Config.I_BATTERY);
             if (batterySetting > $.Config.O_BATTERY_OFF) {
+                var xpos = (_width/2.0 + 0.5).toNumber();
+                var ypos = (_clockRadius/2.0 + 0.5).toNumber();
                 var systemStats = System.getSystemStats();
                 var level = systemStats.battery;
                 var levelInDays = 0.0;
@@ -294,11 +296,9 @@ class ClockView extends WatchUi.WatchFace {
                     levelInDays = systemStats.batteryInDays;
                     warnLevel = level / levelInDays * 6.0; // If the device has battery in days, use 6 days
                 }
-                var xpos = (_width/2.0 + 0.5).toNumber();
-                var ypos = (_clockRadius/2.0 + 0.5).toNumber();
                 var color = Graphics.COLOR_GREEN;
-                if (level < warnLevel * 2/3) { color = M_LIGHT == _colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_YELLOW; }
-                if (level < warnLevel * 1/3) { color = Graphics.COLOR_RED; }
+                if (level < warnLevel / 2) { color = M_LIGHT == _colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_YELLOW; }
+                if (level < warnLevel / 4) { color = Graphics.COLOR_RED; }
                 if (level < warnLevel and batterySetting >= $.Config.O_BATTERY_CLASSIC_WARN) {
                     switch (batterySetting) {
                         case $.Config.O_BATTERY_CLASSIC:

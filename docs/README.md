@@ -9,7 +9,7 @@
 - The program compiles without warnings with the compiler type checking level set to "Strict";
 - All modern Garmin watches should be able to run this watchface (```minApiLevel``` is set to 3.2.0, mostly to keep the code simple). It fails miserably in the always-on mode of watches with an AMOLED display though.
 
-This program is the result of my recent journey to learn basic Monkey C and the Garmin SDK. I tried to keep the source code simple and straightforward, with a generous amount of comments, and implement an easy to understand yet robust logic. I am making it available for others to hopefully be able to learn the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
+This program is the result of my recent journey to learn basic Monkey C and the Garmin Connect IQ ecosystem. I tried to keep the source code simple and straightforward, with a generous amount of comments, and implement an easy to understand yet robust logic. I am making it available for others to hopefully be able to learn the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
 
 ## Credits
 
