@@ -65,14 +65,12 @@ class Config {
     private var _values as Dictionary<Item, Number>;  // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
-    private var _is24Hour as Boolean;
     private var _lastAccessed as Array<Number> = new Array<Number>[3];
 
     //! Constructor
     public function initialize() {
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasBatteryInDays = (System.Stats has :batteryInDays);
-        _is24Hour = System.getDeviceSettings().is24Hour;  // It seems the watchface is restarted when system settings are changed
         _values = {} as Dictionary<Item, Number>;
         _lastAccessed = [-1, -1, -1] as Array<Number>;
         // Read the configuration values from persistent storage 
@@ -126,7 +124,7 @@ class Config {
             case I_DM_OFF:
                 var pm = "";
                 var hour = (value as Number / 60).toNumber();
-                if (!_is24Hour) {
+                if (!System.getDeviceSettings().is24Hour) {
                     pm = hour < 12 ? " am" : " pm";
                     hour %= 12;
                     if (0 == hour) { hour = 12; }
