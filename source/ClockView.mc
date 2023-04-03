@@ -283,17 +283,9 @@ class ClockView extends WatchUi.WatchFace {
                     break;
             }
 
-            // Draw the device information icons
-            if ($.Config.O_INDICATORS_ON == $.config.getValue($.Config.I_INDICATORS)) {
-                var icons = (deviceSettings.alarmCount > 0 ? "A " : "_ ")
-                          + (deviceSettings.phoneConnected ? "B " : "_ ")
-                          + (deviceSettings.notificationCount > 0 ? "M" : "_");
-                targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-                targetDc.drawText(_width/2, _height*0.3, _iconFont as FontReference, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
-            }
-
             // Draw the battery level indicator
             var batterySetting = $.config.getValue($.Config.I_BATTERY);
+            var batteryDrawn = false;
             if (batterySetting > $.Config.O_BATTERY_OFF) {
                 var xpos = (_width/2.0 + 0.5).toNumber();
                 var ypos = (_clockRadius/2.0 + 0.5).toNumber();
@@ -313,11 +305,13 @@ class ClockView extends WatchUi.WatchFace {
                         case $.Config.O_BATTERY_CLASSIC:
                         case $.Config.O_BATTERY_CLASSIC_WARN:
                             drawClassicBatteryIndicator(targetDc, xpos, ypos, level, levelInDays, color);
+                            batteryDrawn = true;
                             break;
                         case $.Config.O_BATTERY_MODERN:
                         case $.Config.O_BATTERY_MODERN_WARN:
                         case $.Config.O_BATTERY_HYBRID:
                             drawModernBatteryIndicator(targetDc, xpos, ypos, level, levelInDays, color);
+                            batteryDrawn = true;
                             break;
                     }
                 } else if (batterySetting >= $.Config.O_BATTERY_CLASSIC) {
@@ -325,12 +319,23 @@ class ClockView extends WatchUi.WatchFace {
                         case $.Config.O_BATTERY_CLASSIC:
                         case $.Config.O_BATTERY_HYBRID:
                             drawClassicBatteryIndicator(targetDc, xpos, ypos, level, levelInDays, color);
+                            batteryDrawn = true;
                             break;
                         case $.Config.O_BATTERY_MODERN:
                             drawModernBatteryIndicator(targetDc, xpos, ypos, level, levelInDays, color);
+                            batteryDrawn = true;
                             break;
                     }
                 }
+            }
+
+            // Draw the device information indicators
+            if ($.Config.O_INDICATORS_ON == $.config.getValue($.Config.I_INDICATORS)) {
+                var icons = (deviceSettings.alarmCount > 0 ? "A " : "_ ")
+                          + (deviceSettings.phoneConnected ? "B " : "_ ")
+                          + (deviceSettings.notificationCount > 0 ? "M" : "_");
+                targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
+                targetDc.drawText(_width/2, batteryDrawn ? _height*0.3 : _clockRadius/2.0, _iconFont as FontReference, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
             }
 
             // Draw tick marks around the edge of the screen
