@@ -287,8 +287,8 @@ class ClockView extends WatchUi.WatchFace {
             var batterySetting = $.config.getValue($.Config.I_BATTERY);
             var batteryDrawn = false;
             if (batterySetting > $.Config.O_BATTERY_OFF) {
-                var xpos = (_width/2.0 + 0.5).toNumber();
-                var ypos = (_clockRadius/2.0 + 0.5).toNumber();
+                var xpos = _width/2;
+                var ypos = _clockRadius/2;
                 var systemStats = System.getSystemStats();
                 var level = systemStats.battery;
                 var levelInDays = 0.0;
@@ -335,7 +335,7 @@ class ClockView extends WatchUi.WatchFace {
                           + (deviceSettings.phoneConnected ? "B " : "_ ")
                           + (deviceSettings.notificationCount > 0 ? "M" : "_");
                 targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-                targetDc.drawText(_width/2, batteryDrawn ? _height*0.3 : _clockRadius/2.0, _iconFont as FontReference, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
+                targetDc.drawText(_width/2, batteryDrawn ? _height*0.3 : _height*0.2, _iconFont as FontReference, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
             }
 
             // Draw tick marks around the edge of the screen
