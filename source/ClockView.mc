@@ -30,13 +30,14 @@ import Toybox.WatchUi;
 class ClockView extends WatchUi.WatchFace {
 
     enum { M_LIGHT, M_DARK } // Color modes
+    // Review optimizations in drawSecondHand() before changing the following enum or the _colors Array.
     enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
     private var _colors as Array< Array<Number> > = [
         [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED, Graphics.COLOR_DK_GRAY],
         [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_DK_GRAY]
     ] as Array< Array<Number> >;
 
-    // List of watchface shapes, used as indexes
+    // List of watchface shapes, used as indexes. Review optimizations in drawSecondHand() before changing the Shape enum.
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
     // A 2 dimensional array for the geometry of the watchface shapes - because the initialisation is more intuitive that way
     private var _shapes as Array< Array<Float> > = new Array< Array<Float> >[S_SIZE];
@@ -411,9 +412,11 @@ class ClockView extends WatchUi.WatchFace {
         _doPartialUpdates = doPartialUpdates;
     }
 
-    // Draw the second hand for the given second, including a shadow, if required, and set the clipping region
+    // Draw the second hand for the given second, including a shadow, if required, and set the clipping region.
+    // This function is performance critical (when !_isAwake) and has been optimized.
     private function drawSecondHand(dc as Dc, second as Number) as Void {
-        var angle = second / 60.0 * TWO_PI;
+        // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
+        var angle = second * 0.104719758; // TWO_PI / 60.0
         var sin = Math.sin(angle);
         var cos = Math.cos(angle);
         var offsetX = _screenCenter[0] + 0.5;
@@ -424,22 +427,15 @@ class ClockView extends WatchUi.WatchFace {
         var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + offsetY).toNumber();
 
         // Rotate the rectangular portion of the second hand, using inlined code from rotateCoords() to improve performance
-        var idx = S_SECONDHAND * 8;
-        var idy = idx + 1;
-        var x0 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y0 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
-        idx = idy + 1;
-        idy += 2;
-        var x1 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y1 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
-        idx = idy + 1;
-        idy += 2;
-        var x2 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y2 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
-        idx = idy + 1;
-        idy += 2;
-        var x3 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y3 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        // Optimized: idx = S_SECONDHAND * 8; idy = idx + 1; and etc.
+        var x0 = (_coords[32] * cos - _coords[33] * sin + offsetX).toNumber();
+        var y0 = (_coords[32] * sin + _coords[33] * cos + offsetY).toNumber();
+        var x1 = (_coords[34] * cos - _coords[35] * sin + offsetX).toNumber();
+        var y1 = (_coords[34] * sin + _coords[35] * cos + offsetY).toNumber();
+        var x2 = (_coords[36] * cos - _coords[37] * sin + offsetX).toNumber();
+        var y2 = (_coords[36] * sin + _coords[37] * cos + offsetY).toNumber();
+        var x3 = (_coords[38] * cos - _coords[39] * sin + offsetX).toNumber();
+        var y3 = (_coords[38] * sin + _coords[39] * cos + offsetY).toNumber();
         var coords = [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
 
         // Draw the shadow, if required
@@ -481,7 +477,7 @@ class ClockView extends WatchUi.WatchFace {
         dc.setClip(minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4);
 
         // Finally, draw the second hand
-        dc.setColor(_colors[_colorMode][C_SECONDS], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_RED /* _colors[_colorMode][C_SECONDS] */, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(coords);
         dc.fillCircle(x, y, _secondCircleRadius);
     }
