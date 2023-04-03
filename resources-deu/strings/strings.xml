@@ -5,6 +5,7 @@
 
     <string id="Battery">Batterieanzeige</string>
     <string id="DateDisplay">Datumsanzeige</string>
+    <string id="Indicators">Indikatoren</string>
     <string id="DarkMode">Dunkelmodus</string>
     <string id="DmContrast">Kontrast</string>
     <string id="HideSeconds">Sekunden ausblenden</string>

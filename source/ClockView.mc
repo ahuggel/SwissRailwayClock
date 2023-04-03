@@ -48,7 +48,6 @@ class ClockView extends WatchUi.WatchFace {
     private const TWO_PI as Float = 2 * Math.PI;
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
 
-    private var _doNotDisturb as Boolean;
     private var _lastDrawn as Array<Number>;
     private var _isAwake as Boolean;
     private var _doPartialUpdates as Boolean;
@@ -64,13 +63,13 @@ class ClockView extends WatchUi.WatchFace {
     private var _hideSecondHand as Boolean;
     private var _shadowColor as Number;
     private var _offscreenBuffer as BufferedBitmap;
+    private var _iconFont as FontReference?;
 
     //! Constructor. Initialize the variables for this view.
     public function initialize() {
         WatchFace.initialize();
 
         var deviceSettings = System.getDeviceSettings();
-        _doNotDisturb = deviceSettings.doNotDisturb; // remembering this to be able to detect changes in the setting
         _lastDrawn = [-1, -1, -1] as Array<Number>; // Timestamp when the watch face was last completely re-drawn
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
@@ -149,16 +148,16 @@ class ClockView extends WatchUi.WatchFace {
     //! Load resources and configure the layout of the watchface for this device
     //! @param dc Device context
     public function onLayout(dc as Dc) as Void {
+        _iconFont = WatchUi.loadResource(Rez.Fonts.Icons) as FontReference;
     }
 
     //! Called when this View is brought to the foreground. Restore the state of this view and
     //! prepare it to be shown. This includes loading resources into memory.
     public function onShow() as Void {
-        // Update relevant device settings here, to reduce the number of getDeviceSettings() calls and
-        // assuming onShow() is triggered after any device settings change.
-        var deviceSettings = System.getDeviceSettings();
-        _doNotDisturb = deviceSettings.doNotDisturb;
-        _lastDrawn[1] = -1; // A bit of a hack to force the watch face to be re-drawn
+        // Assuming onShow() is triggered after any device settings change, force the watch face
+        // to be re-drawn in the next call to onUpdate(). This is to immediately react to a
+        // possible change of the DND setting.
+        _lastDrawn[1] = -1;
     }
 
     //! Handle the update event. This function is called
@@ -214,6 +213,7 @@ class ClockView extends WatchUi.WatchFace {
         //*/
         if (redraw) {
             _lastDrawn = [clockTime.hour, clockTime.min, clockTime.sec] as Array<Number>;
+            var deviceSettings = System.getDeviceSettings();
 
             // Set the color mode
             switch ($.config.getValue($.Config.I_DARK_MODE)) {
@@ -231,7 +231,7 @@ class ClockView extends WatchUi.WatchFace {
                     _colorMode = M_DARK;
                     break;
                 case $.Config.O_DARK_MODE_IN_DND:
-                    _colorMode = _doNotDisturb ? M_DARK : M_LIGHT;
+                    _colorMode = deviceSettings.doNotDisturb ? M_DARK : M_LIGHT;
                     break;
             }
 
@@ -281,6 +281,15 @@ class ClockView extends WatchUi.WatchFace {
                     dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
                     targetDc.drawText(_width/2, _height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                     break;
+            }
+
+            // Draw the device information icons
+            if ($.Config.O_INDICATORS_ON == $.config.getValue($.Config.I_INDICATORS)) {
+                var icons = (deviceSettings.alarmCount > 0 ? "A " : "_ ")
+                          + (deviceSettings.phoneConnected ? "B " : "_ ")
+                          + (deviceSettings.notificationCount > 0 ? "M" : "_");
+                targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
+                targetDc.drawText(_width/2, _height*0.3, _iconFont as FontReference, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
             }
 
             // Draw the battery level indicator
