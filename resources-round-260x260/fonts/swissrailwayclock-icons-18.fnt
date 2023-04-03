@@ -1,8 +1,7 @@
 info face="Swiss Railway Clock Icons" size=18 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=1,1 outline=0
 common lineHeight=18 base=18 scaleW=256 scaleH=256 pages=1 packed=0 alphaChnl=0 redChnl=0 greenChnl=0 blueChnl=0
 page id=0 file="swissrailwayclock-icons-18.png"
-chars count=4
-char id=32   x=54    y=0     width=18    height=18    xoffset=0     yoffset=0    xadvance=18    page=0  chnl=15
+chars count=5
 char id=65   x=0     y=0     width=18    height=18    xoffset=0     yoffset=0    xadvance=18    page=0  chnl=15
 char id=66   x=18    y=0     width=18    height=18    xoffset=0     yoffset=0    xadvance=18    page=0  chnl=15
 char id=77   x=36    y=0     width=18    height=18    xoffset=0     yoffset=0    xadvance=18    page=0  chnl=15
