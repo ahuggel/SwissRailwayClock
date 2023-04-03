@@ -17,8 +17,10 @@ This program is the result of my recent journey to learn basic Monkey C and the 
 I've used several samples that come with the Garmin SDK, in particular: Analog, Menu2Sample and Picker.
 I also looked at the code at https://github.com/markwmuller/SwissWatchFace/, which is for a similar watchface, and
 read lots of very helpful posts in the Garmin Developer forum.
+
 The [Swiss railway clock] design was created by Hans Hilfiker in the 1940s and 1950s and it continues to be used at
 every railway station in Switzerland until today.
+
 Alarm, Bluetooth and SMS icons created by Google - [Flaticon]. License [CC 3.0 BY].
 
 [Swiss railway clock]: https://en.wikipedia.org/wiki/Swiss_railway_clock
