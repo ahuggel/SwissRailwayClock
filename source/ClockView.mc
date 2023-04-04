@@ -29,8 +29,8 @@ import Toybox.WatchUi;
 //! Implements the Swiss Railway Clock watch face
 class ClockView extends WatchUi.WatchFace {
 
+    // Review optimizations in drawSecondHand() before changing the following enums or the _colors Array.
     enum { M_LIGHT, M_DARK } // Color modes
-    // Review optimizations in drawSecondHand() before changing the following enum or the _colors Array.
     enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
     private var _colors as Array< Array<Number> > = [
         [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED, Graphics.COLOR_DK_GRAY],
