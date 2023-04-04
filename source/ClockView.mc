@@ -31,10 +31,10 @@ class ClockView extends WatchUi.WatchFace {
 
     // Review optimizations in drawSecondHand() before changing the following enums or the _colors Array.
     enum { M_LIGHT, M_DARK } // Color modes
-    enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
+    enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT, C_BLUETOOTH } // Indexes into the color arrays
     private var _colors as Array< Array<Number> > = [
-        [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED, Graphics.COLOR_DK_GRAY],
-        [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_DK_GRAY]
+        [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED, Graphics.COLOR_DK_GRAY, Graphics.COLOR_BLUE],
+        [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_DK_GRAY, Graphics.COLOR_DK_BLUE]
     ] as Array< Array<Number> >;
 
     // List of watchface shapes, used as indexes. Review optimizations in drawSecondHand() before changing the Shape enum.
@@ -240,10 +240,19 @@ class ClockView extends WatchUi.WatchFace {
             if (M_DARK == _colorMode) {
                 var foregroundColor = $.config.getValue($.Config.I_DM_CONTRAST);
                 _colors[M_DARK][C_FOREGROUND] = foregroundColor;
-                if (Graphics.COLOR_WHITE == foregroundColor) {
-                    _colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
-                } else {
-                    _colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
+                switch (foregroundColor) {
+                    case Graphics.COLOR_WHITE:
+                        _colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
+                        _colors[M_DARK][C_BLUETOOTH] = Graphics.COLOR_DK_BLUE;
+                        break;
+                    case Graphics.COLOR_LT_GRAY:
+                        _colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
+                        _colors[M_DARK][C_BLUETOOTH] = Graphics.COLOR_DK_BLUE;
+                        break;
+                    case Graphics.COLOR_DK_GRAY:
+                        _colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
+                        _colors[M_DARK][C_BLUETOOTH] = Graphics.COLOR_BLUE;
+                        break;
                 }
             }
 
@@ -268,6 +277,12 @@ class ClockView extends WatchUi.WatchFace {
                     targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
                     targetDc.fillCircle(_screenCenter[0], _screenCenter[1], _clockRadius);
                 }
+            }
+
+            // Draw tick marks around the edge of the screen
+            targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+            for (var i = 0; i < 60; i++) {
+                targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
             }
 
             // Draw the date string
@@ -332,17 +347,25 @@ class ClockView extends WatchUi.WatchFace {
 
             // Draw the device information indicators
             if ($.Config.O_INDICATORS_ON == $.config.getValue($.Config.I_INDICATORS)) {
-                var icons = (deviceSettings.alarmCount > 0 ? "A " : "_ ")
-                          + (deviceSettings.phoneConnected ? "B " : "_ ")
-                          + (deviceSettings.notificationCount > 0 ? "M" : "_");
-                targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-                targetDc.drawText(_width/2, batteryDrawn ? _height*0.3 : _height*0.2, _iconFont as FontReference, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
-            }
-
-            // Draw tick marks around the edge of the screen
-            targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
-            for (var i = 0; i < 60; i++) {
-                targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
+                var icons = "";
+                var space = "";
+                var indicators = [deviceSettings.alarmCount > 0, deviceSettings.notificationCount > 0];
+                for (var i = 0; i < indicators.size(); i++) {
+                    if (indicators[i]) {
+                        icons += space + ["A", "M"][i];
+                        space = " ";
+                    }
+                }
+                var xpos = _width/2;
+                if (icons != "") {
+                    targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
+                    targetDc.drawText(xpos, batteryDrawn ? _height*0.3 : _height*0.2, _iconFont as FontReference, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
+                }
+                if (deviceSettings.phoneConnected) {
+                    var ypos = (_height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(_iconFont as FontReference))/3).toNumber();
+                    targetDc.setColor(_colors[_colorMode][C_BLUETOOTH], Graphics.COLOR_TRANSPARENT);
+                    targetDc.drawText(xpos, ypos, _iconFont as FontReference, "B" as String, Graphics.TEXT_JUSTIFY_CENTER);
+                }
             }
 
             // Draw the hour and minute hands. Shadows first, then the actual hands.
