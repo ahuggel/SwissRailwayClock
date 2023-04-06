@@ -18,6 +18,8 @@
    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+import Toybox.Activity;
+import Toybox.ActivityMonitor;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
@@ -366,6 +368,31 @@ class ClockView extends WatchUi.WatchFace {
                     targetDc.setColor(_colors[_colorMode][C_BLUETOOTH], Graphics.COLOR_TRANSPARENT);
                     targetDc.drawText(xpos, ypos, _iconFont as FontReference, "B" as String, Graphics.TEXT_JUSTIFY_CENTER);
                 }
+            }
+
+            // PROTOTYPING HEART RATE
+            // Draw the heart rate
+            // TODO: If HR is selected and we're awake and the heartrate is different from the one last drawn, always redraw
+			var heartRate = null;
+            var activityInfo = Activity.getActivityInfo();
+            if (activityInfo != null) {
+                heartRate = activityInfo.currentHeartRate;
+            }
+            if (null == heartRate) {
+				var sample = ActivityMonitor.getHeartRateHistory(1, true).next();
+				if (sample != null and sample.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) { 
+                    heartRate = sample.heartRate;
+                }
+			}
+            if (heartRate != null) {
+                //heartRate = 220;
+                var hr = heartRate.format("%d");
+                var font = Graphics.FONT_TINY;
+                var w = targetDc.getTextWidthInPixels(hr, font);
+                targetDc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+                targetDc.drawText(_width*0.81 - w, _height/2-1, _iconFont as FontReference, _isAwake ? "H" : "I" as String, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
+                targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
+                targetDc.drawText(_width*0.83, _height/2-1, font, hr, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
             }
 
             // Draw the hour and minute hands. Shadows first, then the actual hands.
