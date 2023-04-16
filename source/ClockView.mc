@@ -668,7 +668,7 @@ class HeartRate {
         _x = x;
         _y = y;
         _height = Graphics.getFontHeight(FONT);
-        _width = _height * 2;
+        _width = (_height * 2.1).toNumber();
         _locX = x - _width/2;
         _locY = y - _height/2;
         _iconFont = iconFont;
@@ -691,11 +691,11 @@ class HeartRate {
         dc.setColor(backgroundColor, backgroundColor);
         dc.clear();
         if (heartRate != null) {
-            //heartRate = 223;
+            //heartRate = 123;
             var hr = heartRate.format("%d");
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                heartRate > 99 ? _x - _width * 3/16: _x, _y, 
+                heartRate > 99 ? _x - _width*2/16 - 1 : _x, _y, 
                 _iconFont as FontReference, 
                 isAwake ? "H" : "I" as String, 
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
