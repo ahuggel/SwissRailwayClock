@@ -67,6 +67,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _shadowColor as Number;
     private var _offscreenBuffer as BufferedBitmap;
     private var _iconFont as FontReference?;
+    private var _heartRate as HeartRate?;
 
     //! Constructor. Initialize the variables for this view.
     public function initialize() {
@@ -370,30 +371,11 @@ class ClockView extends WatchUi.WatchFace {
                 }
             }
 
-            // PROTOTYPING HEART RATE
-            // Draw the heart rate
-            // TODO: If HR is selected and we're awake and the heartrate is different from the one last drawn, always redraw
-			var heartRate = null;
-            var activityInfo = Activity.getActivityInfo();
-            if (activityInfo != null) {
-                heartRate = activityInfo.currentHeartRate;
+            if (null == _heartRate) {
+                _heartRate = new HeartRate(_width*0.73 as Number, _height/2-1, _iconFont as FontReference);
             }
-            if (null == heartRate) {
-				var sample = ActivityMonitor.getHeartRateHistory(1, true).next();
-				if (sample != null and sample.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) { 
-                    heartRate = sample.heartRate;
-                }
-			}
-            if (heartRate != null) {
-                //heartRate = 220;
-                var hr = heartRate.format("%d");
-                var font = Graphics.FONT_TINY;
-                var w = targetDc.getTextWidthInPixels(hr, font);
-                targetDc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-                targetDc.drawText(_width*0.81 - w, _height/2-1, _iconFont as FontReference, _isAwake ? "H" : "I" as String, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
-                targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-                targetDc.drawText(_width*0.83, _height/2-1, font, hr, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
-            }
+            (_heartRate as HeartRate).draw(targetDc, _colors[_colorMode][C_TEXT], _colors[_colorMode][C_BACKGROUND], _isAwake);
+            targetDc.clearClip();
 
             // Draw the hour and minute hands. Shadows first, then the actual hands.
             var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
@@ -666,6 +648,71 @@ class ClockDelegate extends WatchUi.WatchFaceDelegate {
         _view.setPartialUpdates(false);
     }
 }
+
+// A heart rate indicator.
+// It behaves like a drawable, but as it's not used like one, there is no need to derive from Drawable.
+class HeartRate {
+
+    private const FONT as Graphics.FontDefinition = Graphics.FONT_TINY;
+
+    private var _x as Number; // Centre X coordinate
+    private var _y as Number; // Centre Y coordinate
+    private var _locX as Number; // Clip top left X coordinate
+    private var _locY as Number; // Clip top left Y coordinate
+    private var _width as Number; // Clip width
+    private var _height as Number; // Clip height
+    private var _iconFont as FontReference;
+
+    // Constructor. Called with the center coordinates where the indicator should be drawn and the font for the heart icon
+    public function initialize(x as Number, y as Number, iconFont as FontReference) {
+        _x = x;
+        _y = y;
+        _height = Graphics.getFontHeight(FONT);
+        _width = _height * 2;
+        _locX = x - _width/2;
+        _locY = y - _height/2;
+        _iconFont = iconFont;
+    }
+
+    // Draw the heart rate. Note: Sets the clip of the Dc.
+    public function draw(dc as Dc, textColor as Number, backgroundColor as Number, isAwake as Boolean) as Void {
+		var heartRate = null;
+        var activityInfo = Activity.getActivityInfo();
+        if (activityInfo != null) {
+            heartRate = activityInfo.currentHeartRate;
+        }
+        if (null == heartRate) {
+			var sample = ActivityMonitor.getHeartRateHistory(1, true).next();
+			if (sample != null and sample.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) { 
+                heartRate = sample.heartRate;
+            }
+		}
+        dc.setClip(_locX, _locY, _width, _height);
+        dc.setColor(backgroundColor, backgroundColor);
+        dc.clear();
+        if (heartRate != null) {
+            //heartRate = 223;
+            var hr = heartRate.format("%d");
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(
+                heartRate > 99 ? _x - _width * 3/16: _x, _y, 
+                _iconFont as FontReference, 
+                isAwake ? "H" : "I" as String, 
+                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
+            );
+            dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(
+                _x + _width/2, 
+                _y, 
+                FONT, 
+                hr, 
+                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
+            );
+            //dc.drawRectangle(_locX, _locY, _width, _height);
+        }
+    }
+}
+
 
 /*
     // DEBUG
