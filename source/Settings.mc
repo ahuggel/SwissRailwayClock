@@ -36,16 +36,59 @@ function getStringResource(id as Symbol) as String {
 //! This class maintains application settings and synchronises them to persistent storage.
 class Config {
     // Configuration item identifiers. Used throughout the app to refer to individual settings. The last one must be I_SIZE, it is used like size(), those after I_SIZE are hacks
-    enum Item { I_BATTERY, I_DATE_DISPLAY, I_INDICATORS, I_DARK_MODE, I_DM_CONTRAST, I_HIDE_SECONDS, I_3D_EFFECTS, I_BATTERY_PCT, I_BATTERY_DAYS, I_DM_ON, I_DM_OFF, I_SIZE, I_DONE, I_ALL }
+    enum Item { 
+        I_BATTERY, 
+        I_DATE_DISPLAY, 
+        I_INDICATORS, 
+        I_HEART_RATE,
+        I_DARK_MODE, 
+        I_DM_CONTRAST, 
+        I_HIDE_SECONDS, 
+        I_3D_EFFECTS, 
+        I_BATTERY_PCT, 
+        I_BATTERY_DAYS, 
+        I_DM_ON, 
+        I_DM_OFF, 
+        I_SIZE, 
+        I_DONE, 
+        I_ALL 
+    }
     // Symbols for the configuration item display name resources
-	private var _itemSymbols as Array<Symbol> = [:Battery, :DateDisplay, :Indicators, :DarkMode, :DmContrast, :HideSeconds, :Shadows, :BatteryPct, :BatteryDays, :DmOn, :DmOff] as Array<Symbol>;
+	private var _itemSymbols as Array<Symbol> = [
+        :Battery, 
+        :DateDisplay, 
+        :Indicators, 
+        :HeartRate,
+        :DarkMode, 
+        :DmContrast, 
+        :HideSeconds, 
+        :Shadows, 
+        :BatteryPct, 
+        :BatteryDays, 
+        :DmOn, 
+        :DmOff
+    ] as Array<Symbol>;
     // Configuration item labels only used as keys for storing the configuration values. Using these for persistent storage, rather than Item is more robust.
-    private var _itemLabels as Array<String> = ["battery", "dateDisplay", "indicators", "darkMode", "dmContrast", "hideSeconds", "3dEffects", "batteryPct", "batteryDays", "dmOn", "dmOff"] as Array<String>;
+    private var _itemLabels as Array<String> = [
+        "battery", 
+        "dateDisplay", 
+        "indicators", 
+        "heartRate", 
+        "darkMode", 
+        "dmContrast", 
+        "hideSeconds", 
+        "3dEffects", 
+        "batteryPct", 
+        "batteryDays", 
+        "dmOn", 
+        "dmOff"
+    ] as Array<String>;
 
     // Options for list and toggle configuration items. Using enums, the compiler can help detect issues like typos or outdated values.
     enum { O_BATTERY_OFF, O_BATTERY_CLASSIC_WARN, O_BATTERY_MODERN_WARN, O_BATTERY_CLASSIC, O_BATTERY_MODERN, O_BATTERY_HYBRID }
     enum { O_DATE_DISPLAY_OFF, O_DATE_DISPLAY_DAY_ONLY, O_DATE_DISPLAY_WEEKDAY_AND_DAY }
     enum { O_INDICATORS_ON, O_INDICATORS_OFF } // Default: On
+    enum { O_HEART_RATE_OFF, O_HEART_RATE_ON } // Default: Off
     enum { O_DARK_MODE_SCHEDULED, O_DARK_MODE_OFF, O_DARK_MODE_ON, O_DARK_MODE_IN_DND }
     enum { O_HIDE_SECONDS_IN_DM, O_HIDE_SECONDS_ALWAYS, O_HIDE_SECONDS_NEVER }
     enum { O_3D_EFFECTS_ON, O_3D_EFFECTS_OFF } // Default: On
@@ -174,6 +217,7 @@ class Config {
                 Storage.setValue(_itemLabels[id as Number], _values[id]);
                 break;
             case I_INDICATORS:
+            case I_HEART_RATE:
             case I_3D_EFFECTS:
             case I_BATTERY_PCT:
             case I_BATTERY_DAYS:
@@ -263,6 +307,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 }
                 addMenuItem($.Config.I_DATE_DISPLAY);
                 addToggleMenuItem($.Config.I_INDICATORS, $.Config.O_INDICATORS_ON);
+                addToggleMenuItem($.Config.I_HEART_RATE, $.Config.O_HEART_RATE_ON);
                 addMenuItem($.Config.I_DARK_MODE);
                 //Fallthrough
             case $.Config.I_DARK_MODE:
@@ -302,6 +347,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 deleteAnyItem($.Config.I_BATTERY_DAYS);
                 deleteAnyItem($.Config.I_DATE_DISPLAY);
                 deleteAnyItem($.Config.I_INDICATORS);
+                deleteAnyItem($.Config.I_HEART_RATE);
                 deleteAnyItem($.Config.I_DARK_MODE);
                 // Fallthrough
             case $.Config.I_DARK_MODE:
@@ -387,6 +433,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 _menu.buildMenu(id);
                 break;
             case $.Config.I_INDICATORS:
+            case $.Config.I_HEART_RATE:
             case $.Config.I_3D_EFFECTS:
             case $.Config.I_BATTERY_PCT:
             case $.Config.I_BATTERY_DAYS:

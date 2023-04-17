@@ -330,11 +330,14 @@ class ClockView extends WatchUi.WatchFace {
                 (_simpleIndicators as SimpleIndicators).drawPhoneConnected(targetDc, xpos, ypos);
             }
 
-            if (null == _heartRate) {
-                _heartRate = new HeartRate(self, _width*0.73 as Number, _height/2-1);
+            // Draw the heart rate indicator
+            if ($.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
+                if (null == _heartRate) {
+                    _heartRate = new HeartRate(self, _width*0.73 as Number, _height/2-1);
+                }
+                (_heartRate as HeartRate).draw(targetDc);
+                targetDc.clearClip();
             }
-            (_heartRate as HeartRate).draw(targetDc);
-            targetDc.clearClip();
 
             // Draw the hour and minute hands. Shadows first, then the actual hands.
             var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
