@@ -188,33 +188,22 @@ class SimpleIndicators {
     }
 } // class IndicatorSymbols
 
-// Simple heart rate indicator.
-// It behaves like a drawable, but as it's not used like one, there is no need to derive from Drawable.
+// A heart rate indicator.
 class HeartRate {
 
     private const FONT as Graphics.FontDefinition = Graphics.FONT_TINY;
 
     private var _view as ClockView;
-    private var _x as Number; // Centre X coordinate
-    private var _y as Number; // Centre Y coordinate
-    private var _locX as Number; // Clip top left X coordinate
-    private var _locY as Number; // Clip top left Y coordinate
-    private var _width as Number; // Clip width
-    private var _height as Number; // Clip height
+    private var _width as Number; // Indicator width
 
     // Constructor. Called with the view and the center coordinates where the indicator should be drawn
-    public function initialize(view as ClockView, x as Number, y as Number) {
+    public function initialize(view as ClockView) {
         _view = view;
-        _x = x;
-        _y = y;
-        _height = Graphics.getFontHeight(FONT);
-        _width = (_height * 2.1).toNumber();
-        _locX = x - _width/2;
-        _locY = y - _height/2;
+        _width = (Graphics.getFontHeight(FONT) * 2.1).toNumber();
     }
 
-    // Draw the heart rate. Note: Sets the clip of the Dc.
-    public function draw(dc as Dc) as Void {
+    // Draw the heart rate.
+    public function draw(dc as Dc, xpos as Number, ypos as Number) as Void {
 		var heartRate = null;
         var activityInfo = Activity.getActivityInfo();
         if (activityInfo != null) {
@@ -226,29 +215,24 @@ class HeartRate {
                 heartRate = sample.heartRate;
             }
 		}
-        dc.setClip(_locX, _locY, _width, _height);
-        var backgroundColor = _view.colors[_view.colorMode][ClockView.C_BACKGROUND];
-        dc.setColor(backgroundColor, backgroundColor);
-        dc.clear();
         if (heartRate != null) {
             //heartRate = 123;
             var hr = heartRate.format("%d");
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                heartRate > 99 ? _x - _width*2/16 - 1 : _x, _y, 
+                heartRate > 99 ? xpos - _width*2/16 - 1 : xpos, ypos, 
                 _view.iconFont as FontReference, 
                 _view.isAwake ? "H" : "I" as String, 
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
             );
             dc.setColor(_view.colors[_view.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                _x + _width/2, 
-                _y, 
+                xpos + _width/2, 
+                ypos, 
                 FONT, 
                 hr, 
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
             );
-            //dc.drawRectangle(_locX, _locY, _width, _height);
         }
     }
 }

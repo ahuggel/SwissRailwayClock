@@ -297,8 +297,9 @@ class ClockView extends WatchUi.WatchFace {
 
             // Draw the date string
             var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
+            var dateDisplay = $.config.getValue($.Config.I_DATE_DISPLAY);
             targetDc.setColor(colors[colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-            switch ($.config.getValue($.Config.I_DATE_DISPLAY)) {
+            switch (dateDisplay) {
                 case $.Config.O_DATE_DISPLAY_DAY_ONLY: 
                     var dateStr = info.day.format("%02d");
                     targetDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
@@ -326,6 +327,7 @@ class ClockView extends WatchUi.WatchFace {
                 var xpos = _width/2;
                 var ypos = batteryDrawn ? (_height*0.3).toNumber() : (_height*0.2).toNumber();
                 (_simpleIndicators as SimpleIndicators).drawSymbols(targetDc, xpos, ypos);
+
                 ypos = (_height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(iconFont as FontReference))/3).toNumber();
                 (_simpleIndicators as SimpleIndicators).drawPhoneConnected(targetDc, xpos, ypos);
             }
@@ -333,10 +335,17 @@ class ClockView extends WatchUi.WatchFace {
             // Draw the heart rate indicator
             if ($.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
                 if (null == _heartRate) {
-                    _heartRate = new HeartRate(self, _width*0.73 as Number, _height/2-1);
+                    _heartRate = new HeartRate(self);
                 }
-                (_heartRate as HeartRate).draw(targetDc);
-                targetDc.clearClip();
+                // Draw the heart rate in the spot which is not occupied by the date display,
+                // by default on the right side
+                var xpos = _width*0.73;
+                var ypos = _height/2-1;
+                if ($.Config.O_DATE_DISPLAY_DAY_ONLY == dateDisplay) {
+                    xpos = _width*0.48;
+                    ypos = _height*0.75;
+                }
+                (_heartRate as HeartRate).draw(targetDc, xpos as Number, ypos as Number);
             }
 
             // Draw the hour and minute hands. Shadows first, then the actual hands.
