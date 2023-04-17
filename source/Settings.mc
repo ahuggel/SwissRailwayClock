@@ -35,7 +35,8 @@ function getStringResource(id as Symbol) as String {
 
 //! This class maintains application settings and synchronises them to persistent storage.
 class Config {
-    // Configuration item identifiers. Used throughout the app to refer to individual settings. The last one must be I_SIZE, it is used like size(), those after I_SIZE are hacks
+    // Configuration item identifiers. Used throughout the app to refer to individual settings.
+    // The last one must be I_SIZE, it is used like size(), those after I_SIZE are hacks
     enum Item { 
         I_BATTERY, 
         I_DATE_DISPLAY, 
@@ -68,7 +69,8 @@ class Config {
         :DmOn, 
         :DmOff
     ] as Array<Symbol>;
-    // Configuration item labels only used as keys for storing the configuration values. Using these for persistent storage, rather than Item is more robust.
+    // Configuration item labels only used as keys for storing the configuration values.
+    // Using these for persistent storage, rather than Item, is more robust.
     private var _itemLabels as Array<String> = [
         "battery", 
         "dateDisplay", 
