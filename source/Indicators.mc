@@ -152,11 +152,6 @@ class SimpleIndicators {
         _view = view;
     }
 
-    // Return true if the alarm or notification symbols need to be drawn
-    public function checkSymbolsToDraw() as Boolean {
-        return _view.deviceSettings.alarmCount > 0 or _view.deviceSettings.notificationCount > 0;
-    }
-
     // Draw alarm and notification symbols, return true if something was drawn, else false
     public function drawSymbols(dc as Dc, xpos as Number, ypos as Number) as Boolean {
         var icons = "";
@@ -169,7 +164,7 @@ class SimpleIndicators {
             }
         }
         var ret = false;
-        if (icons != "") {
+        if (!(icons as String).equals("")) { // Why does the typechecker not know icons is a String??
             dc.setColor(_view.colors[_view.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(xpos, ypos, _view.iconFont as FontReference, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
             ret = true;

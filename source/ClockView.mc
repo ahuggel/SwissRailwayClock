@@ -314,28 +314,22 @@ class ClockView extends WatchUi.WatchFace {
                     break;
             }
 
-            // Find out if any symbols need to be drawn
-            var symbolsToDraw = false;
-            var indicatorConfig = $.config.getValue($.Config.I_INDICATORS);
-            if ($.Config.O_INDICATORS_ON == indicatorConfig) {
-                symbolsToDraw = _simpleIndicators.checkSymbolsToDraw();
+            var symbolsDrawn = false;
+            // Draw alarm, notification and phone connection indicators
+            if ($.Config.O_INDICATORS_ON == $.config.getValue($.Config.I_INDICATORS)) {
+                var xpos = _width/2;
+                var ypos = _height * 0.18;
+                symbolsDrawn = _simpleIndicators.drawSymbols(targetDc, xpos as Number, ypos as Number);
+                
+                ypos = _height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(iconFont as FontReference))/3;
+                _simpleIndicators.drawPhoneConnected(targetDc, xpos as Number, ypos as Number);
             }
 
             // Draw the battery level indicator
             if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
                 var xpos = _width/2;
-                var ypos = symbolsToDraw ? clockRadius * 0.64 : clockRadius * 0.5;
+                var ypos = symbolsDrawn ? clockRadius * 0.64 : clockRadius * 0.5;
                 _batteryLevel.draw(targetDc, xpos as Number, ypos as Number);
-            }
-
-            // Draw alarm, notification and phone connection indicators
-            if ($.Config.O_INDICATORS_ON == indicatorConfig) {
-                var xpos = _width/2;
-                var ypos = _height * 0.18;
-                _simpleIndicators.drawSymbols(targetDc, xpos as Number, ypos as Number);
-                
-                ypos = _height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(iconFont as FontReference))/3;
-                _simpleIndicators.drawPhoneConnected(targetDc, xpos as Number, ypos as Number);
             }
 
             // Draw the heart rate indicator at the spot which is not occupied by the date display,
@@ -555,6 +549,7 @@ class ClockDelegate extends WatchUi.WatchFaceDelegate {
 
 /*
     // DEBUG
+    (:typecheck(false))
     function typeName(obj) {
         if (obj instanceof Toybox.Lang.Number) {
             return "Number";
@@ -594,4 +589,4 @@ class ClockDelegate extends WatchUi.WatchFaceDelegate {
             return "???";
         }
     }
-*/
+//*/
