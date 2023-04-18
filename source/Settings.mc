@@ -222,7 +222,7 @@ class Config {
             case I_DARK_MODE:
             case I_DM_CONTRAST:
             case I_HIDE_SECONDS:
-                var label = _labels[id] as Array<String>;
+                var label = _labels[id] as Array<Symbol>;
                 _values[id] = (value as Number + 1) % label.size();
                 Storage.setValue(_itemLabels[id as Number], _values[id]);
                 break;

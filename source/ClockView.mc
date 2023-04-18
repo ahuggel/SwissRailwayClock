@@ -349,19 +349,19 @@ class ClockView extends WatchUi.WatchFace {
                 or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
                 var xpos = _width/2;
                 var ypos = _height * 0.18;
-                symbolsDrawn = _simpleIndicators.drawSymbols(targetDc, xpos as Number, ypos as Number);
+                symbolsDrawn = _simpleIndicators.drawSymbols(targetDc, xpos.toNumber(), ypos.toNumber());
             }
             if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) {
                 var xpos = _width/2;
                 var ypos = _height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(_cd.iconFont as FontReference))/3;
-                _simpleIndicators.drawPhoneConnected(targetDc, xpos as Number, ypos as Number);
+                _simpleIndicators.drawPhoneConnected(targetDc, xpos.toNumber(), ypos.toNumber());
             }
 
             // Draw the battery level indicator
             if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
                 var xpos = _width/2;
                 var ypos = symbolsDrawn ? _cd.clockRadius * 0.64 : _cd.clockRadius * 0.5;
-                _batteryLevel.draw(targetDc, xpos as Number, ypos as Number);
+                _batteryLevel.draw(targetDc, xpos.toNumber(), ypos.toNumber());
             }
 
             // Draw the heart rate indicator at the spot which is not occupied by the date display,
@@ -373,7 +373,7 @@ class ClockView extends WatchUi.WatchFace {
                     xpos = _width * 0.48;
                     ypos = _height * 0.75;
                 }
-                _heartRate.draw(targetDc, xpos as Number, ypos as Number);
+                _heartRate.draw(targetDc, xpos.toNumber(), ypos.toNumber());
             }
 
             // Draw the hour and minute hands. Shadows first, then the actual hands.
