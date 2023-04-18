@@ -28,17 +28,13 @@ import Toybox.System;
 class BatteryLevel {
 
     private var _view as ClockView;
-    private var _xpos as Number;
-    private var _ypos as Number;
     
-    public function initialize(view as ClockView, xpos as Number, ypos as Number) {
+    public function initialize(view as ClockView) {
         _view = view;
-        _xpos = xpos;
-        _ypos = ypos;
     }
 
     // Draw the battery indicator according to the settings, return true if it was actually drawn, else false
-    public function draw(dc as Dc) as Boolean {
+    public function draw(dc as Dc, xpos as Number, ypos as Number) as Boolean {
         var ret = false;
         var batterySetting = $.config.getValue($.Config.I_BATTERY);
         var systemStats = System.getSystemStats();
@@ -56,13 +52,13 @@ class BatteryLevel {
             switch (batterySetting) {
                 case $.Config.O_BATTERY_CLASSIC:
                 case $.Config.O_BATTERY_CLASSIC_WARN:
-                    drawClassicBatteryIndicator(dc, _xpos, _ypos, level, levelInDays, color);
+                    drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, color);
                     ret = true;
                     break;
                 case $.Config.O_BATTERY_MODERN:
                 case $.Config.O_BATTERY_MODERN_WARN:
                 case $.Config.O_BATTERY_HYBRID:
-                    drawModernBatteryIndicator(dc, _xpos, _ypos, level, levelInDays, color);
+                    drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, color);
                     ret = true;
                     break;
             }
@@ -70,11 +66,11 @@ class BatteryLevel {
             switch (batterySetting) {
                 case $.Config.O_BATTERY_CLASSIC:
                 case $.Config.O_BATTERY_HYBRID:
-                    drawClassicBatteryIndicator(dc, _xpos, _ypos, level, levelInDays, color);
+                    drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, color);
                     ret = true;
                     break;
                 case $.Config.O_BATTERY_MODERN:
-                    drawModernBatteryIndicator(dc, _xpos, _ypos, level, levelInDays, color);
+                    drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, color);
                     ret = true;
                     break;
             }
@@ -154,6 +150,11 @@ class SimpleIndicators {
     
     public function initialize(view as ClockView) {
         _view = view;
+    }
+
+    // Return true if the alarm or notification symbols need to be drawn
+    public function checkSymbolsToDraw() as Boolean {
+        return _view.deviceSettings.alarmCount > 0 or _view.deviceSettings.notificationCount > 0;
     }
 
     // Draw alarm and notification symbols, return true if something was drawn, else false

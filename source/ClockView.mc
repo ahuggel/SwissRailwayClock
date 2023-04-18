@@ -72,10 +72,10 @@ class ClockView extends WatchUi.WatchFace {
     private var _shadowColor as Number;
     private var _offscreenBuffer as BufferedBitmap;
     // Indicators 
-    // TODO: Group into an array or dictionary?
-    private var _batteryLevel as BatteryLevel?;
-    private var _heartRate as HeartRate?;
-    private var _simpleIndicators as SimpleIndicators?;
+    // TODO: Make them Drawables? Or at least derive from some common base class? Group into an array or dictionary?
+    private var _batteryLevel as BatteryLevel;
+    private var _heartRate as HeartRate;
+    private var _simpleIndicators as SimpleIndicators;
 
     //! Constructor. Initialize the variables for this view.
     public function initialize() {
@@ -96,6 +96,10 @@ class ClockView extends WatchUi.WatchFace {
         _hideSecondHand = false;
         _shadowColor = 0;
         if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77); }
+        // Indicators
+        _batteryLevel = new BatteryLevel(self);
+        _heartRate = new HeartRate(self);
+        _simpleIndicators = new SimpleIndicators(self);
 
         // Allocate the buffer we use for drawing the watchface, using BufferedBitmap (API Level 2.3.0).
         // This is a full-colored buffer (with no palette), as we have enough memory :) and it makes drawing 
@@ -310,42 +314,40 @@ class ClockView extends WatchUi.WatchFace {
                     break;
             }
 
+            // Find out if any symbols need to be drawn
+            var symbolsToDraw = false;
+            var indicatorConfig = $.config.getValue($.Config.I_INDICATORS);
+            if ($.Config.O_INDICATORS_ON == indicatorConfig) {
+                symbolsToDraw = _simpleIndicators.checkSymbolsToDraw();
+            }
+
             // Draw the battery level indicator
-            var batteryDrawn = false;
             if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
-                if (null == _batteryLevel) {
-                    _batteryLevel = new BatteryLevel(self, _width/2, clockRadius/2);
-                }
-                batteryDrawn = (_batteryLevel as BatteryLevel).draw(targetDc);
+                var xpos = _width/2;
+                var ypos = symbolsToDraw ? clockRadius * 0.64 : clockRadius * 0.5;
+                _batteryLevel.draw(targetDc, xpos as Number, ypos as Number);
             }
 
             // Draw alarm, notification and phone connection indicators
-            if ($.Config.O_INDICATORS_ON == $.config.getValue($.Config.I_INDICATORS)) {
-                if (null == _simpleIndicators) {
-                    _simpleIndicators = new SimpleIndicators(self);
-                }
+            if ($.Config.O_INDICATORS_ON == indicatorConfig) {
                 var xpos = _width/2;
-                var ypos = batteryDrawn ? (_height*0.3).toNumber() : (_height*0.2).toNumber();
-                (_simpleIndicators as SimpleIndicators).drawSymbols(targetDc, xpos, ypos);
-
-                ypos = (_height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(iconFont as FontReference))/3).toNumber();
-                (_simpleIndicators as SimpleIndicators).drawPhoneConnected(targetDc, xpos, ypos);
+                var ypos = _height * 0.18;
+                _simpleIndicators.drawSymbols(targetDc, xpos as Number, ypos as Number);
+                
+                ypos = _height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(iconFont as FontReference))/3;
+                _simpleIndicators.drawPhoneConnected(targetDc, xpos as Number, ypos as Number);
             }
 
-            // Draw the heart rate indicator
+            // Draw the heart rate indicator at the spot which is not occupied by the date display,
+            // by default on the right side
             if ($.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
-                if (null == _heartRate) {
-                    _heartRate = new HeartRate(self);
-                }
-                // Draw the heart rate in the spot which is not occupied by the date display,
-                // by default on the right side
-                var xpos = _width*0.73;
-                var ypos = _height/2-1;
+                var xpos = _width * 0.73;
+                var ypos = _height/2 - 1;
                 if ($.Config.O_DATE_DISPLAY_DAY_ONLY == dateDisplay) {
-                    xpos = _width*0.48;
-                    ypos = _height*0.75;
+                    xpos = _width * 0.48;
+                    ypos = _height * 0.75;
                 }
-                (_heartRate as HeartRate).draw(targetDc, xpos as Number, ypos as Number);
+                _heartRate.draw(targetDc, xpos as Number, ypos as Number);
             }
 
             // Draw the hour and minute hands. Shadows first, then the actual hands.
