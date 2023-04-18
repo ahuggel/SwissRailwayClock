@@ -316,12 +316,15 @@ class ClockView extends WatchUi.WatchFace {
 
             var symbolsDrawn = false;
             // Draw alarm, notification and phone connection indicators
-            if ($.Config.O_INDICATORS_ON == $.config.getValue($.Config.I_INDICATORS)) {
+            if ($.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS)
+                or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
                 var xpos = _width/2;
                 var ypos = _height * 0.18;
                 symbolsDrawn = _simpleIndicators.drawSymbols(targetDc, xpos as Number, ypos as Number);
-                
-                ypos = _height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(iconFont as FontReference))/3;
+            }
+            if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) {
+                var xpos = _width/2;
+                var ypos = _height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(iconFont as FontReference))/3;
                 _simpleIndicators.drawPhoneConnected(targetDc, xpos as Number, ypos as Number);
             }
 

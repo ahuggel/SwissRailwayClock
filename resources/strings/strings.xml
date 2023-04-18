@@ -5,7 +5,9 @@
 
     <string id="Battery">Battery Level</string>
     <string id="DateDisplay">Date Display</string>
-    <string id="Indicators">Indicators</string>
+    <string id="Alarms">Alarms</string>
+    <string id="Notifications">Notifications</string>
+    <string id="Connected">Phone Connection</string>
     <string id="HeartRate">Heart Rate</string>
     <string id="DarkMode">Dark Mode</string>
     <string id="DmContrast">Contrast</string>

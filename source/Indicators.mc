@@ -156,7 +156,10 @@ class SimpleIndicators {
     public function drawSymbols(dc as Dc, xpos as Number, ypos as Number) as Boolean {
         var icons = "";
         var space = "";
-        var indicators = [_view.deviceSettings.alarmCount > 0, _view.deviceSettings.notificationCount > 0];
+        var indicators = [
+            $.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS) and _view.deviceSettings.alarmCount > 0, 
+            $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS) and _view.deviceSettings.notificationCount > 0
+        ];
         for (var i = 0; i < indicators.size(); i++) {
             if (indicators[i]) {
                 icons += space + ["A", "M"][i];
@@ -164,7 +167,7 @@ class SimpleIndicators {
             }
         }
         var ret = false;
-        if (!(icons as String).equals("")) { // Why does the typechecker not know icons is a String??
+        if (!(icons as String).equals("")) { // Why does the typechecker not know that icons is a String??
             dc.setColor(_view.colors[_view.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(xpos, ypos, _view.iconFont as FontReference, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
             ret = true;

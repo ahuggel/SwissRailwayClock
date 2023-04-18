@@ -40,7 +40,9 @@ class Config {
     enum Item { 
         I_BATTERY, 
         I_DATE_DISPLAY, 
-        I_INDICATORS, 
+        I_ALARMS,
+        I_NOTIFICATIONS,
+        I_CONNECTED,
         I_HEART_RATE,
         I_DARK_MODE, 
         I_DM_CONTRAST, 
@@ -58,7 +60,9 @@ class Config {
 	private var _itemSymbols as Array<Symbol> = [
         :Battery, 
         :DateDisplay, 
-        :Indicators, 
+        :Alarms,
+        :Notifications,
+        :Connected,
         :HeartRate,
         :DarkMode, 
         :DmContrast, 
@@ -74,7 +78,9 @@ class Config {
     private var _itemLabels as Array<String> = [
         "battery", 
         "dateDisplay", 
-        "indicators", 
+        "alarms", 
+        "notifications", 
+        "connected", 
         "heartRate", 
         "darkMode", 
         "dmContrast", 
@@ -89,7 +95,9 @@ class Config {
     // Options for list and toggle configuration items. Using enums, the compiler can help detect issues like typos or outdated values.
     enum { O_BATTERY_OFF, O_BATTERY_CLASSIC_WARN, O_BATTERY_MODERN_WARN, O_BATTERY_CLASSIC, O_BATTERY_MODERN, O_BATTERY_HYBRID }
     enum { O_DATE_DISPLAY_OFF, O_DATE_DISPLAY_DAY_ONLY, O_DATE_DISPLAY_WEEKDAY_AND_DAY }
-    enum { O_INDICATORS_ON, O_INDICATORS_OFF } // Default: On
+    enum { O_ALARMS_ON, O_ALARMS_OFF } // Default: On
+    enum { O_NOTIFICATIONS_OFF, O_NOTIFICATIONS_ON } // Default: Off
+    enum { O_CONNECTED_ON, O_CONNECTED_OFF } // Default: On
     enum { O_HEART_RATE_OFF, O_HEART_RATE_ON } // Default: Off
     enum { O_DARK_MODE_SCHEDULED, O_DARK_MODE_OFF, O_DARK_MODE_ON, O_DARK_MODE_IN_DND }
     enum { O_HIDE_SECONDS_IN_DM, O_HIDE_SECONDS_ALWAYS, O_HIDE_SECONDS_NEVER }
@@ -218,7 +226,9 @@ class Config {
                 _values[id] = (value as Number + 1) % label.size();
                 Storage.setValue(_itemLabels[id as Number], _values[id]);
                 break;
-            case I_INDICATORS:
+            case I_ALARMS:
+            case I_NOTIFICATIONS:
+            case I_CONNECTED:
             case I_HEART_RATE:
             case I_3D_EFFECTS:
             case I_BATTERY_PCT:
@@ -308,7 +318,9 @@ class SettingsMenu extends WatchUi.Menu2 {
                     }
                 }
                 addMenuItem($.Config.I_DATE_DISPLAY);
-                addToggleMenuItem($.Config.I_INDICATORS, $.Config.O_INDICATORS_ON);
+                addToggleMenuItem($.Config.I_ALARMS, $.Config.O_ALARMS_ON);
+                addToggleMenuItem($.Config.I_NOTIFICATIONS, $.Config.O_NOTIFICATIONS_ON);
+                addToggleMenuItem($.Config.I_CONNECTED, $.Config.O_CONNECTED_ON);
                 addToggleMenuItem($.Config.I_HEART_RATE, $.Config.O_HEART_RATE_ON);
                 addMenuItem($.Config.I_DARK_MODE);
                 //Fallthrough
@@ -348,7 +360,9 @@ class SettingsMenu extends WatchUi.Menu2 {
                 deleteAnyItem($.Config.I_BATTERY_PCT);
                 deleteAnyItem($.Config.I_BATTERY_DAYS);
                 deleteAnyItem($.Config.I_DATE_DISPLAY);
-                deleteAnyItem($.Config.I_INDICATORS);
+                deleteAnyItem($.Config.I_ALARMS);
+                deleteAnyItem($.Config.I_NOTIFICATIONS);
+                deleteAnyItem($.Config.I_CONNECTED);
                 deleteAnyItem($.Config.I_HEART_RATE);
                 deleteAnyItem($.Config.I_DARK_MODE);
                 // Fallthrough
@@ -434,7 +448,9 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 _menu.deleteMenu(id);
                 _menu.buildMenu(id);
                 break;
-            case $.Config.I_INDICATORS:
+            case $.Config.I_ALARMS:
+            case $.Config.I_NOTIFICATIONS:
+            case $.Config.I_CONNECTED:
             case $.Config.I_HEART_RATE:
             case $.Config.I_3D_EFFECTS:
             case $.Config.I_BATTERY_PCT:
