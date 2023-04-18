@@ -27,10 +27,10 @@ import Toybox.System;
 // Battery level indicator.
 class BatteryLevel {
 
-    private var _view as ClockView;
+    private var _cd as ClockData;
     
-    public function initialize(view as ClockView) {
-        _view = view;
+    public function initialize() {
+        _cd = ClockData.getInstance();
     }
 
     // Draw the battery indicator according to the settings, return true if it was actually drawn, else false
@@ -46,7 +46,7 @@ class BatteryLevel {
             warnLevel = level / levelInDays * 6.0; // If the device has battery in days, use 6 days
         }
         var color = Graphics.COLOR_GREEN;
-        if (level < warnLevel / 2) { color = ClockView.M_LIGHT == _view.colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_YELLOW; }
+        if (level < warnLevel / 2) { color = ClockData.M_LIGHT == _cd.colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_YELLOW; }
         if (level < warnLevel / 4) { color = Graphics.COLOR_RED; }
         if (level < warnLevel) {
             switch (batterySetting) {
@@ -80,7 +80,7 @@ class BatteryLevel {
 
     // Very simple battery indicator showing just a colored dot
     private function drawModernBatteryIndicator(dc as Dc, xpos as Number, ypos as Number, level as Float, levelInDays as Float, color as Number) as Void {
-        var radius = (3.2 * _view.clockRadius / 50.0 + 0.5).toNumber();
+        var radius = (3.2 * _cd.clockRadius / 50.0 + 0.5).toNumber();
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(xpos, ypos, radius);
         drawBatteryLabels(dc, xpos - radius, xpos + radius, ypos, level, levelInDays);
@@ -88,13 +88,13 @@ class BatteryLevel {
 
     private function drawClassicBatteryIndicator(dc as Dc, xpos as Number, ypos as Number, level as Float, levelInDays as Float, color as Number) as Void {
         // Dimensions of the battery level indicator, based on percentages of the clock diameter
-        var pw = (1.2 * _view.clockRadius / 50.0 + 0.5).toNumber(); // pen size for the battery rectangle 
+        var pw = (1.2 * _cd.clockRadius / 50.0 + 0.5).toNumber(); // pen size for the battery rectangle 
         if (0 == pw % 2) { pw += 1; }                          // make sure pw is an odd number
-        var bw = (1.9 * _view.clockRadius / 50.0 + 0.5).toNumber(); // width of the battery level segments
-        var bh = (4.2 * _view.clockRadius / 50.0 + 0.5).toNumber(); // height of the battery level segments
-        var ts = (0.4 * _view.clockRadius / 50.0 + 0.5).toNumber(); // tiny space around everything
+        var bw = (1.9 * _cd.clockRadius / 50.0 + 0.5).toNumber(); // width of the battery level segments
+        var bh = (4.2 * _cd.clockRadius / 50.0 + 0.5).toNumber(); // height of the battery level segments
+        var ts = (0.4 * _cd.clockRadius / 50.0 + 0.5).toNumber(); // tiny space around everything
         var cw = pw;                                           // width of the little knob on the right side of the battery
-        var ch = (2.3 * _view.clockRadius / 50.0 + 0.5).toNumber(); // height of the little knob
+        var ch = (2.3 * _cd.clockRadius / 50.0 + 0.5).toNumber(); // height of the little knob
 
         // Draw the battery shape
         var width = 5*bw + 6*ts + pw+1;
@@ -102,7 +102,7 @@ class BatteryLevel {
         var x = xpos - width/2 + pw/2;
         var y = ypos - height/2;
         var frameColor = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY] as Array<Number>;
-        dc.setColor(frameColor[_view.colorMode], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(frameColor[_cd.colorMode], Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(pw);
         dc.drawRoundedRectangle(x, y, width, height, pw);
         dc.setPenWidth(1);
@@ -130,7 +130,7 @@ class BatteryLevel {
     // Draw battery labels for percentage and days depending on the settings
     private function drawBatteryLabels(dc as Dc, x1 as Number, x2 as Number, y as Number, level as Float, levelInDays as Float) as Void {
         var font = Graphics.FONT_XTINY;
-        dc.setColor(_view.colors[_view.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_cd.colors[_cd.colorMode][ClockData.C_TEXT], Graphics.COLOR_TRANSPARENT);
         if ($.Config.O_BATTERY_PCT_ON == $.config.getValue($.Config.I_BATTERY_PCT)) {
             var str = (level + 0.5).toNumber() + "% ";
             dc.drawText(x1, y - Graphics.getFontHeight(font)/2, font, str, Graphics.TEXT_JUSTIFY_RIGHT);
@@ -146,10 +146,10 @@ class BatteryLevel {
 // Alarm, notification and phone connection indicators
 class SimpleIndicators {
 
-    private var _view as ClockView;
+    private var _cd as ClockData;
     
-    public function initialize(view as ClockView) {
-        _view = view;
+    public function initialize() {
+        _cd = ClockData.getInstance();
     }
 
     // Draw alarm and notification symbols, return true if something was drawn, else false
@@ -157,8 +157,8 @@ class SimpleIndicators {
         var icons = "";
         var space = "";
         var indicators = [
-            $.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS) and _view.deviceSettings.alarmCount > 0, 
-            $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS) and _view.deviceSettings.notificationCount > 0
+            $.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS) and _cd.alarmCount > 0, 
+            $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS) and _cd.notificationCount > 0
         ];
         for (var i = 0; i < indicators.size(); i++) {
             if (indicators[i]) {
@@ -168,8 +168,8 @@ class SimpleIndicators {
         }
         var ret = false;
         if (!(icons as String).equals("")) { // Why does the typechecker not know that icons is a String??
-            dc.setColor(_view.colors[_view.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(xpos, ypos, _view.iconFont as FontReference, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
+            dc.setColor(_cd.colors[_cd.colorMode][ClockData.C_TEXT], Graphics.COLOR_TRANSPARENT);
+            dc.drawText(xpos, ypos, _cd.iconFont as FontReference, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
             ret = true;
         }
         return ret;
@@ -178,9 +178,9 @@ class SimpleIndicators {
     // Draw the Bluetooth symbol when the watch is connected to a phone, return true if something was drawn
     public function drawPhoneConnected(dc as Dc, xpos as Number, ypos as Number) as Boolean {
         var ret = false;
-        if (_view.deviceSettings.phoneConnected) {
-            dc.setColor(_view.colors[_view.colorMode][ClockView.C_BLUETOOTH], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(xpos, ypos, _view.iconFont as FontReference, "B" as String, Graphics.TEXT_JUSTIFY_CENTER);
+        if (_cd.phoneConnected) {
+            dc.setColor(_cd.colors[_cd.colorMode][ClockData.C_BLUETOOTH], Graphics.COLOR_TRANSPARENT);
+            dc.drawText(xpos, ypos, _cd.iconFont as FontReference, "B" as String, Graphics.TEXT_JUSTIFY_CENTER);
             ret = true;
         }
         return ret;
@@ -192,12 +192,12 @@ class HeartRate {
 
     private const FONT as Graphics.FontDefinition = Graphics.FONT_TINY;
 
-    private var _view as ClockView;
+    private var _cd as ClockData;
     private var _width as Number; // Indicator width
-
+    
     // Constructor. Called with the view and the center coordinates where the indicator should be drawn
-    public function initialize(view as ClockView) {
-        _view = view;
+    public function initialize() {
+        _cd = ClockData.getInstance();
         _width = (Graphics.getFontHeight(FONT) * 2.1).toNumber();
     }
 
@@ -220,11 +220,11 @@ class HeartRate {
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
             dc.drawText(
                 heartRate > 99 ? xpos - _width*2/16 - 1 : xpos, ypos, 
-                _view.iconFont as FontReference, 
-                _view.isAwake ? "H" : "I" as String, 
+                _cd.iconFont as FontReference, 
+                _cd.isAwake ? "H" : "I" as String, 
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
             );
-            dc.setColor(_view.colors[_view.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+            dc.setColor(_cd.colors[_cd.colorMode][ClockData.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
                 xpos + _width/2, 
                 ypos, 
