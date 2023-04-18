@@ -306,7 +306,7 @@ class ClockView extends WatchUi.WatchFace {
             switch (dateDisplay) {
                 case $.Config.O_DATE_DISPLAY_DAY_ONLY: 
                     var dateStr = info.day.format("%02d");
-                    targetDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
+                    targetDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                     break;
                 case $.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY:
                     dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
