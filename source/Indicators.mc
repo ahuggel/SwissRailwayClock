@@ -201,8 +201,9 @@ class HeartRate {
         _width = (Graphics.getFontHeight(FONT) * 2.1).toNumber();
     }
 
-    // Draw the heart rate.
-    public function draw(dc as Dc, xpos as Number, ypos as Number) as Void {
+    // Draw the heart rate if it is available, return true if it was drawn
+    public function draw(dc as Dc, xpos as Number, ypos as Number) as Boolean {
+        var ret = false;
 		var heartRate = null;
         var activityInfo = Activity.getActivityInfo();
         if (activityInfo != null) {
@@ -232,6 +233,8 @@ class HeartRate {
                 hr, 
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
             );
+            ret = true;
         }
+        return ret;
     }
-}
+} // class HeartRate

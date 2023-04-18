@@ -26,8 +26,9 @@ import Toybox.Time;
 import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
 
-//! Singleton class for watch face data which needs to be accessible from other classes
+// Singleton class for watch face data which needs to be accessible from other classes
 class ClockData {
+
     // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the colors Array.
     enum { M_LIGHT, M_DARK } // Color modes
     enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT, C_BLUETOOTH } // Indexes into the color arrays
@@ -48,14 +49,15 @@ class ClockData {
 
     private static var _instance as ClockData?;
 
-    //! Constructor
+    // Constructor
     public function initialize() {
         colorMode = M_LIGHT;
         isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
-        clockRadius = 0;
+        clockRadius = 0; // Initialized in ClockView.initialize()
         updDeviceSettings();
     }
 
+    // Update device settings variables. Keeping only the variables we actually need to save memory.
     public function updDeviceSettings() as Void {
         var deviceSettings = System.getDeviceSettings();
         doNotDisturb = deviceSettings.doNotDisturb;
@@ -64,6 +66,7 @@ class ClockData {
         phoneConnected = deviceSettings.phoneConnected;
     }
 
+    // Return the singleton instance after creating it if necessary.
     static function getInstance() as ClockData {
         if (null == _instance) {
             _instance = new ClockData();
@@ -99,6 +102,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _hideSecondHand as Boolean;
     private var _shadowColor as Number;
     private var _offscreenBuffer as BufferedBitmap;
+
     // Indicators 
     // TODO: Make them Drawables? Or at least derive from some common base class? Group into an array or dictionary?
     private var _batteryLevel as BatteryLevel;
@@ -343,14 +347,16 @@ class ClockView extends WatchUi.WatchFace {
                     break;
             }
 
+            // Draw alarm and notification indicators
             var symbolsDrawn = false;
-            // Draw alarm, notification and phone connection indicators
             if ($.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS)
                 or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
                 var xpos = _width/2;
                 var ypos = _height * 0.18;
                 symbolsDrawn = _simpleIndicators.drawSymbols(targetDc, xpos.toNumber(), ypos.toNumber());
             }
+
+            // Draw the phone connection indicator on the 6 o'clock tick mark
             if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) {
                 var xpos = _width/2;
                 var ypos = _height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(_cd.iconFont as FontReference))/3;
