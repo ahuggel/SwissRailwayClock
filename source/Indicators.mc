@@ -44,7 +44,9 @@ class Indicators {
         var warnLevel = 40.0; // Default is 40%
         if (systemStats has :batteryInDays ) { // since API Level 3.3.0
             levelInDays = systemStats.batteryInDays;
+/* Ursli didn't like this
             warnLevel = level / levelInDays * 6.0; // If the device has battery in days, use 6 days
+ */
         }
         var color = Graphics.COLOR_GREEN;
         if (level < warnLevel / 2) { color = ClockData.M_LIGHT == _cd.colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_YELLOW; }
