@@ -21,7 +21,7 @@ read lots of very helpful posts in the Garmin Developer forum.
 The [Swiss railway clock] design was created by Hans Hilfiker in the 1940s and 1950s and it continues to be used at
 every railway station in Switzerland until today.
 
-Alarm, Bluetooth and SMS icons created by Google - [Flaticon]. License [CC 3.0 BY].
+Alarm, Bluetooth, Heart and SMS icons created by Google - [Flaticon]. License [CC 3.0 BY].
 
 [Swiss railway clock]: https://en.wikipedia.org/wiki/Swiss_railway_clock
 [Flaticon]: https://www.flaticon.com/packs/material-design/

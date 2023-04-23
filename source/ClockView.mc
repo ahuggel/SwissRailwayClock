@@ -49,15 +49,15 @@ class ClockData {
 
     private static var _instance as ClockData?;
 
-    // Constructor
-    public function initialize() {
+    // Constructor. Private to prevent direct instantiation.
+    private function initialize() {
         colorMode = M_LIGHT;
         isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         clockRadius = 0; // Initialized in ClockView.initialize()
         updDeviceSettings();
     }
 
-    // Update device settings variables. Keeping only the variables we actually need to save memory.
+    // Update device settings variables. Keeping only those that we actually need to save memory.
     public function updDeviceSettings() as Void {
         var deviceSettings = System.getDeviceSettings();
         doNotDisturb = deviceSettings.doNotDisturb;
@@ -102,12 +102,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _hideSecondHand as Boolean;
     private var _shadowColor as Number;
     private var _offscreenBuffer as BufferedBitmap;
-
-    // Indicators 
-    // TODO: Make them Drawables? Or at least derive from some common base class? Group into an array or dictionary?
-    private var _batteryLevel as BatteryLevel;
-    private var _heartRate as HeartRate;
-    private var _simpleIndicators as SimpleIndicators;
+    private var _indicators as Indicators;
 
     private var _cd as ClockData; // Singleton instance with the public data
 
@@ -129,10 +124,7 @@ class ClockView extends WatchUi.WatchFace {
         _hideSecondHand = false;
         _shadowColor = 0;
         if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77); }
-        // Indicators
-        _batteryLevel = new BatteryLevel();
-        _heartRate = new HeartRate();
-        _simpleIndicators = new SimpleIndicators();
+        _indicators = new Indicators();
 
         // Allocate the buffer we use for drawing the watchface, using BufferedBitmap (API Level 2.3.0).
         // This is a full-colored buffer (with no palette), as we have enough memory :) and it makes drawing 
@@ -353,21 +345,21 @@ class ClockView extends WatchUi.WatchFace {
                 or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
                 var xpos = _width/2;
                 var ypos = _height * 0.18;
-                symbolsDrawn = _simpleIndicators.drawSymbols(targetDc, xpos.toNumber(), ypos.toNumber());
+                symbolsDrawn = _indicators.drawSymbols(targetDc, xpos.toNumber(), ypos.toNumber());
             }
 
             // Draw the phone connection indicator on the 6 o'clock tick mark
             if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) {
                 var xpos = _width/2;
                 var ypos = _height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(_cd.iconFont as FontReference))/3;
-                _simpleIndicators.drawPhoneConnected(targetDc, xpos.toNumber(), ypos.toNumber());
+                _indicators.drawPhoneConnected(targetDc, xpos.toNumber(), ypos.toNumber());
             }
 
             // Draw the battery level indicator
             if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
                 var xpos = _width/2;
                 var ypos = symbolsDrawn ? _cd.clockRadius * 0.64 : _cd.clockRadius * 0.5;
-                _batteryLevel.draw(targetDc, xpos.toNumber(), ypos.toNumber());
+                _indicators.drawBatteryLevel(targetDc, xpos.toNumber(), ypos.toNumber());
             }
 
             // Draw the heart rate indicator at the spot which is not occupied by the date display,
@@ -379,7 +371,7 @@ class ClockView extends WatchUi.WatchFace {
                     xpos = _width * 0.48;
                     ypos = _height * 0.75;
                 }
-                _heartRate.draw(targetDc, xpos.toNumber(), ypos.toNumber());
+                _indicators.drawHeartRate(targetDc, xpos.toNumber(), ypos.toNumber());
             }
 
             // Draw the hour and minute hands. Shadows first, then the actual hands.

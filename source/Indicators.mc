@@ -24,17 +24,18 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.System;
 
-// Battery level indicator.
-class BatteryLevel {
+// This class draws various indicators. Keeping them all in one class saves some memory.
+class Indicators {
 
     private var _cd as ClockData;
-    
+
+    // Constructor.
     public function initialize() {
         _cd = ClockData.getInstance();
     }
 
     // Draw the battery indicator according to the settings, return true if it was actually drawn, else false
-    public function draw(dc as Dc, xpos as Number, ypos as Number) as Boolean {
+    public function drawBatteryLevel(dc as Dc, xpos as Number, ypos as Number) as Boolean {
         var ret = false;
         var batterySetting = $.config.getValue($.Config.I_BATTERY);
         var systemStats = System.getSystemStats();
@@ -141,16 +142,6 @@ class BatteryLevel {
             dc.drawText(x2, y - Graphics.getFontHeight(font)/2, font, str, Graphics.TEXT_JUSTIFY_LEFT);
         }
     }
-} // class BatteryLevel
-
-// Alarm, notification and phone connection indicators
-class SimpleIndicators {
-
-    private var _cd as ClockData;
-    
-    public function initialize() {
-        _cd = ClockData.getInstance();
-    }
 
     // Draw alarm and notification symbols, return true if something was drawn, else false
     public function drawSymbols(dc as Dc, xpos as Number, ypos as Number) as Boolean {
@@ -185,24 +176,9 @@ class SimpleIndicators {
         }
         return ret;
     }
-} // class IndicatorSymbols
-
-// A heart rate indicator.
-class HeartRate {
-
-    private const FONT as Graphics.FontDefinition = Graphics.FONT_TINY;
-
-    private var _cd as ClockData;
-    private var _width as Number; // Indicator width
-    
-    // Constructor. Called with the view and the center coordinates where the indicator should be drawn
-    public function initialize() {
-        _cd = ClockData.getInstance();
-        _width = (Graphics.getFontHeight(FONT) * 2.1).toNumber();
-    }
 
     // Draw the heart rate if it is available, return true if it was drawn
-    public function draw(dc as Dc, xpos as Number, ypos as Number) as Boolean {
+    public function drawHeartRate(dc as Dc, xpos as Number, ypos as Number) as Boolean {
         var ret = false;
 		var heartRate = null;
         var activityInfo = Activity.getActivityInfo();
@@ -217,19 +193,21 @@ class HeartRate {
 		}
         if (heartRate != null) {
             //heartRate = 123;
+            var font = Graphics.FONT_TINY;
+            var width = (Graphics.getFontHeight(font) * 2.1).toNumber(); // Indicator width
             var hr = heartRate.format("%d");
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                heartRate > 99 ? xpos - _width*2/16 - 1 : xpos, ypos, 
+                heartRate > 99 ? xpos - width*2/16 - 1 : xpos, ypos, 
                 _cd.iconFont as FontReference, 
                 _cd.isAwake ? "H" : "I" as String, 
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
             );
             dc.setColor(_cd.colors[_cd.colorMode][ClockData.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                xpos + _width/2, 
+                xpos + width/2, 
                 ypos, 
-                FONT, 
+                font, 
                 hr, 
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
             );
@@ -237,4 +215,4 @@ class HeartRate {
         }
         return ret;
     }
-} // class HeartRate
+} // class Indicators
