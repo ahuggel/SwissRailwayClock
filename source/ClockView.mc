@@ -71,6 +71,8 @@ class ClockView extends WatchUi.WatchFace {
     private var _sleepTimer as Number;
     private var _show3dEffects as Boolean;
     private var _hideSecondHand as Boolean;
+    private var _drawHeartRate as Boolean;
+    private var _dateDisplay as Number;
     private var _shadowColor as Number;
     private var _backgroundDc as Dc;
     private var _hourMinuteDc as Dc;
@@ -94,6 +96,8 @@ class ClockView extends WatchUi.WatchFace {
         _sleepTimer = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
         _show3dEffects = false;
         _hideSecondHand = false;
+        _drawHeartRate = false;
+        _dateDisplay = 0;
         _shadowColor = 0;
         if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77); }
 
@@ -301,9 +305,9 @@ class ClockView extends WatchUi.WatchFace {
 
             // Draw the date string
             var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
-            var dateDisplay = $.config.getValue($.Config.I_DATE_DISPLAY);
+            _dateDisplay = $.config.getValue($.Config.I_DATE_DISPLAY);
             _backgroundDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-            switch (dateDisplay) {
+            switch (_dateDisplay) {
                 case $.Config.O_DATE_DISPLAY_DAY_ONLY: 
                     var dateStr = info.day.format("%02d");
                     _backgroundDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
@@ -337,17 +341,8 @@ class ClockView extends WatchUi.WatchFace {
                 drawBatteryLevel(_backgroundDc, xpos.toNumber(), ypos.toNumber());
             }
 
-            // Draw the heart rate indicator at the spot which is not occupied by the date display,
-            // by default on the right side
-            if ($.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
-                var xpos = _width * 0.73;
-                var ypos = _height/2 - 1;
-                if ($.Config.O_DATE_DISPLAY_DAY_ONLY == dateDisplay) {
-                    xpos = _width * 0.48;
-                    ypos = _height * 0.75;
-                }
-                drawHeartRate(_backgroundDc, xpos.toNumber(), ypos.toNumber());
-            }
+            // Get the heart rate setting
+            _drawHeartRate = $.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE);
 
             // Clear the layer used for the hour and minute hands
             if (_hasAntiAlias) { _hourMinuteDc.setAntiAlias(true); }
@@ -368,14 +363,26 @@ class ClockView extends WatchUi.WatchFace {
             _hourMinuteDc.fillPolygon(minuteHandCoords);
         } // if (redraw)
 
-        // Draw the second hand and shadow on its own layer
         var doIt = true;
         if (!_isAwake) {
             if (!_doPartialUpdates) { doIt = false; }
             else if (_hideSecondHand and 0 == _sleepTimer) { doIt = false; }
         }
         if (doIt) {
-            _secondDc.clearClip(); // TODO: This is to clear the entire layer in high-power mode. Can it be improved?
+            // Draw the heart rate indicator at the spot which is not occupied by the date display,
+            // by default on the right side
+            if (_drawHeartRate) {
+                var xpos = _width * 0.73;
+                var ypos = _height/2 - 1;
+                if ($.Config.O_DATE_DISPLAY_DAY_ONLY == _dateDisplay) {
+                    xpos = _width * 0.48;
+                    ypos = _height * 0.75;
+                }
+                drawHeartRate(_backgroundDc, xpos.toNumber(), ypos.toNumber());
+            }
+
+            // Clear the second hand layer and draw the second hand and shadow.
+            _secondDc.clearClip();
             drawSecondHand(_secondDc, clockTime.sec);
         }
     }
@@ -395,6 +402,18 @@ class ClockView extends WatchUi.WatchFace {
         }
         if (_sleepTimer > 0 or !_hideSecondHand) {
             var second = System.getClockTime().sec;
+
+            // Continue to draw the heart rate indicator every 5 seconds
+            if (_drawHeartRate and 0 == second % 5) {
+                var xpos = _width * 0.73;
+                var ypos = _height/2 - 1;
+                if ($.Config.O_DATE_DISPLAY_DAY_ONLY == _dateDisplay) {
+                    xpos = _width * 0.48;
+                    ypos = _height * 0.75;
+                }
+                drawHeartRate(_backgroundDc, xpos.toNumber(), ypos.toNumber());
+            }
+
             drawSecondHand(_secondDc, second);
         }
     }
@@ -577,9 +596,15 @@ class ClockView extends WatchUi.WatchFace {
 		}
         if (heartRate != null) {
             //heartRate = 123;
+            //heartRate = System.getClockTime().sec + 60;
             var font = Graphics.FONT_TINY;
-            var width = (Graphics.getFontHeight(font) * 2.1).toNumber(); // Indicator width
+            var fontHeight = Graphics.getFontHeight(font);
+            var width = (fontHeight * 2.1).toNumber(); // Indicator width
             var hr = heartRate.format("%d");
+
+            dc.setClip(xpos - width/2, ypos - fontHeight/2, width, fontHeight);
+            dc.setColor(Graphics.COLOR_TRANSPARENT, _colors[_colorMode][C_BACKGROUND]);
+            dc.clear();
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
             dc.drawText(
                 heartRate > 99 ? xpos - width*2/16 - 1 : xpos, ypos, 
