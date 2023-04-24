@@ -47,7 +47,6 @@ class Config {
         I_DARK_MODE, 
         I_DM_CONTRAST, 
         I_HIDE_SECONDS, 
-        I_3D_EFFECTS, 
         I_BATTERY_PCT, 
         I_BATTERY_DAYS, 
         I_DM_ON, 
@@ -67,7 +66,6 @@ class Config {
         :DarkMode, 
         :DmContrast, 
         :HideSeconds, 
-        :Shadows, 
         :BatteryPct, 
         :BatteryDays, 
         :DmOn, 
@@ -85,7 +83,6 @@ class Config {
         "darkMode", 
         "dmContrast", 
         "hideSeconds", 
-        "3dEffects", 
         "batteryPct", 
         "batteryDays", 
         "dmOn", 
@@ -101,7 +98,6 @@ class Config {
     enum { O_HEART_RATE_OFF, O_HEART_RATE_ON } // Default: Off
     enum { O_DARK_MODE_SCHEDULED, O_DARK_MODE_OFF, O_DARK_MODE_ON, O_DARK_MODE_IN_DND }
     enum { O_HIDE_SECONDS_IN_DM, O_HIDE_SECONDS_ALWAYS, O_HIDE_SECONDS_NEVER }
-    enum { O_3D_EFFECTS_ON, O_3D_EFFECTS_OFF } // Default: On
     enum { O_BATTERY_PCT_OFF, O_BATTERY_PCT_ON } // Default: Off
     enum { O_BATTERY_DAYS_OFF, O_BATTERY_DAYS_ON } // Default: Off
     // Colors for the dark mode contrast icon menu item. The index (0, 1 or 2) is stored, but getValue() returns the color.
@@ -117,13 +113,11 @@ class Config {
     } as Dictionary<Item, Array<Symbol> >;
 
     private var _values as Dictionary<Item, Number>;  // Values for the configuration items
-    private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
     private var _lastAccessed as Array<Number> = new Array<Number>[3];
 
     //! Constructor
     public function initialize() {
-        _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasBatteryInDays = (System.Stats has :batteryInDays);
         _values = {} as Dictionary<Item, Number>;
         _lastAccessed = [-1, -1, -1] as Array<Number>;
@@ -140,11 +134,6 @@ class Config {
                     if (null == value or value < 0 or value > 1439) {
                         value = 420; // Default time to turn dark more off: 07:00
                     }
-                    break;
-                case I_3D_EFFECTS:
-                    if (null == value) { value = 0; }
-                    // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
-                    if (!_hasAlpha and O_3D_EFFECTS_ON == value) { value = O_3D_EFFECTS_OFF; }
                     break;
                 case I_BATTERY_DAYS:
                     if (null == value) { value = 0; }
@@ -230,7 +219,6 @@ class Config {
             case I_NOTIFICATIONS:
             case I_CONNECTED:
             case I_HEART_RATE:
-            case I_3D_EFFECTS:
             case I_BATTERY_PCT:
             case I_BATTERY_DAYS:
                 _values[id] = (value as Number + 1) % 2;
@@ -253,11 +241,6 @@ class Config {
                 System.println("ERROR: Config.seValue() is not implemented for id = " + id);
                 break;
         }
-    }
-
-    // Returns true if the device supports an alpha channel, false if not.
-    public function hasAlpha() as Boolean {
-        return _hasAlpha;
     }
 
     // Returns true if the device provides battery in days estimates, false if not.
@@ -342,9 +325,6 @@ class SettingsMenu extends WatchUi.Menu2 {
                     ));
                 }
                 addMenuItem($.Config.I_HIDE_SECONDS);
-                if ($.config.hasAlpha()) {
-                    addToggleMenuItem($.Config.I_3D_EFFECTS, $.Config.O_3D_EFFECTS_ON); 
-                }
                 Menu2.addItem(new WatchUi.MenuItem($.getStringResource(:Done), $.getStringResource(:DoneLabel), $.Config.I_DONE, {}));
                 break;
             default:
@@ -372,7 +352,6 @@ class SettingsMenu extends WatchUi.Menu2 {
                 deleteAnyItem($.Config.I_DM_OFF);
                 deleteAnyItem($.Config.I_DM_CONTRAST);
                 deleteAnyItem($.Config.I_HIDE_SECONDS);
-                deleteAnyItem($.Config.I_3D_EFFECTS);
                 deleteAnyItem($.Config.I_DONE);
                 break;
             default:
@@ -452,7 +431,6 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
             case $.Config.I_NOTIFICATIONS:
             case $.Config.I_CONNECTED:
             case $.Config.I_HEART_RATE:
-            case $.Config.I_3D_EFFECTS:
             case $.Config.I_BATTERY_PCT:
             case $.Config.I_BATTERY_DAYS:
                 // Toggle the two possible configuration values

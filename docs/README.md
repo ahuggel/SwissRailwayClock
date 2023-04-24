@@ -4,7 +4,7 @@
 
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a second hand in both high and low-power mode;
 - The operation differs from the original Swiss railway clock in that the second hand updates only every second and it does not pause at 12 o'clock. There is also an option to make the second hand disappear in low-power mode, after about 30s;
-- On-device settings allow the configuration of battery level indicator, date display, dark mode, 3D effects and some other options. The menu implements three different types of menu items as well as a basic time picker;
+- On-device settings allow the configuration of battery level indicator, date display, dark mode and some other options. The menu implements three different types of menu items as well as a basic time picker;
 - Symbols for active alarms, phone connection and notifications done with very few lines of code and a custom icon font;
 - A global settings class synchronises the selected options to persistent storage and makes them available across the app;
 - The program compiles without warnings with the compiler type checking level set to "Strict";

@@ -69,9 +69,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _height as Number;
     private var _screenCenter as Array<Number>;
     private var _sleepTimer as Number;
-    private var _show3dEffects as Boolean;
     private var _hideSecondHand as Boolean;
-    private var _shadowColor as Number;
     private var _offscreenBuffer as BufferedBitmap;
 
     //! Constructor. Initialize the variables for this view.
@@ -90,10 +88,7 @@ class ClockView extends WatchUi.WatchFace {
         _screenCenter = [_width/2, _height/2] as Array<Number>;
         _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
         _sleepTimer = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
-        _show3dEffects = false;
         _hideSecondHand = false;
-        _shadowColor = 0;
-        if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77); }
 
         // Allocate the buffer we use for drawing the watchface, using BufferedBitmap (API Level 2.3.0).
         // This is a full-colored buffer (with no palette), as we have enough memory :) and it makes drawing 
@@ -268,9 +263,6 @@ class ClockView extends WatchUi.WatchFace {
                 }
             }
 
-            // Note: Whether 3D effects are supported by the device is also ensured by getValue().
-            _show3dEffects = $.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS) and M_LIGHT == _colorMode;
-
             // Handle the setting to disable the second hand in sleep mode after some time
             var secondsOption = $.config.getValue($.Config.I_HIDE_SECONDS);
             _hideSecondHand = $.Config.O_HIDE_SECONDS_ALWAYS == secondsOption 
@@ -347,24 +339,17 @@ class ClockView extends WatchUi.WatchFace {
                 drawHeartRate(targetDc, xpos.toNumber(), ypos.toNumber());
             }
 
-            // Draw the hour and minute hands. Shadows first, then the actual hands.
+            // Draw the hour and minute hands.
             var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
-            var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
-            var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
-            if (_isAwake and _show3dEffects) {
-                targetDc.setFill(_shadowColor);
-                targetDc.fillPolygon(shadowCoords(hourHandCoords, 7));
-                targetDc.fillPolygon(shadowCoords(minuteHandCoords, 9));
-            }
             targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
-            targetDc.fillPolygon(hourHandCoords);
-            targetDc.fillPolygon(minuteHandCoords);
+            targetDc.fillPolygon(rotateCoords(S_HOURHAND, hourHandAngle));
+            targetDc.fillPolygon(rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI));
         } // if (redraw)
 
         // Output the offscreen buffer to the main display
         dc.drawBitmap(0, 0, _offscreenBuffer);
 
-        // Draw the second hand and shadow, directly on the screen
+        // Draw the second hand, directly on the screen
         var doIt = true;
         if (!_isAwake) {
             if (!_doPartialUpdates) { doIt = false; }
@@ -597,8 +582,8 @@ class ClockView extends WatchUi.WatchFace {
         return ret;
     }
 
-    // Draw the second hand for the given second, including a shadow, if required, and set the clipping region.
-    // This function is performance critical (when !isAwake) and has been optimized.
+    // Draw the second hand for the given second, and set the clipping region.
+    // This function is performance critical and has been optimized.
     private function drawSecondHand(dc as Dc, second as Number) as Void {
         // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
         var angle = second * 0.104719758; // TWO_PI / 60.0
@@ -622,14 +607,6 @@ class ClockView extends WatchUi.WatchFace {
         var x3 = (_coords[38] * cos - _coords[39] * sin + offsetX).toNumber();
         var y3 = (_coords[38] * sin + _coords[39] * cos + offsetY).toNumber();
         var coords = [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
-
-        // Draw the shadow, if required
-        if (_isAwake and _show3dEffects) {
-            dc.setFill(_shadowColor);
-            dc.fillPolygon(shadowCoords(coords, 10));
-            var shadowCenter = shadowCoords([[x, y]] as Array< Array<Number> >, 10);
-            dc.fillCircle(shadowCenter[0][0], shadowCenter[0][1], _secondCircleRadius);
-        }
 
         // Set the clipping region
         var xx1 = x - _secondCircleRadius;
@@ -696,20 +673,6 @@ class ClockView extends WatchUi.WatchFace {
         var y3 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
 
         return [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
-    }
-
-    // TODO: move the shadow shapes by a percentage instead of a number of pixels
-    private function shadowCoords(coords as Array< Array<Number> >, len as Number) as Array< Array<Number> > {
-        var size = coords.size();
-        var result = new Array< Array<Number> >[size];
-        // Direction to move points, clockwise from 12 o'clock
-        var angle = 3 * Math.PI / 4;
-        var dx = (Math.sin(angle) * len + 0.5).toNumber();
-        var dy = (-Math.cos(angle) * len + 0.5).toNumber();
-        for (var i = 0; i < size; i++) {
-            result[i] = [coords[i][0] + dx, coords[i][1] + dy];
-        }
-        return result;
     }
 } // class ClockView
 
