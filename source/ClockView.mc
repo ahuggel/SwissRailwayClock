@@ -72,7 +72,9 @@ class ClockView extends WatchUi.WatchFace {
     private var _show3dEffects as Boolean;
     private var _hideSecondHand as Boolean;
     private var _shadowColor as Number;
-    private var _offscreenBuffer as BufferedBitmap;
+    private var _backgroundDc as Dc;
+    private var _hourMinuteDc as Dc;
+    private var _secondDc as Dc;
 
     //! Constructor. Initialize the variables for this view.
     public function initialize() {
@@ -95,19 +97,25 @@ class ClockView extends WatchUi.WatchFace {
         _shadowColor = 0;
         if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77); }
 
-        // Allocate the buffer we use for drawing the watchface, using BufferedBitmap (API Level 2.3.0).
-        // This is a full-colored buffer (with no palette), as we have enough memory :) and it makes drawing 
-        // text with anti-aliased fonts much more straightforward.
-        // Doing this in initialize() rather than onLayout() so _offscreenBuffer does not need to be 
-        // nullable, which makes the type checker complain less.
-        var bbmo = {:width=>_width, :height=>_height};
-        // CIQ 4 devices *need* to use createBufferBitmaps() 
-  	    if (Graphics has :createBufferedBitmap) {
-    		var bbRef = Graphics.createBufferedBitmap(bbmo);
-			_offscreenBuffer = bbRef.get() as BufferedBitmap;
-    	} else {
-    		_offscreenBuffer = new Graphics.BufferedBitmap(bbmo);
-		}
+        // Instead of a buffered bitmap, this version uses layers (since API Level 3.1.0).
+        // 1) A background layer with the tick marks and any indicators.
+        // 2) A full screen layer for the hour and minute hands.
+        // 3) A dedicated layer for the second hand. Still using a clip to limit the area
+        //    affected by draw operations.
+        //
+        // Using layers is elegant and makes it possible to update some indicators even in low-power mode,
+        // but requires more memory and is only feasible on CIQ 4 devices, which have a Graphics Pool.
+
+        // Initialize layers and add them to the view
+        var backgroundLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
+        var hourMinuteLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
+        var secondLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
+        addLayer(backgroundLayer);
+        addLayer(hourMinuteLayer);
+        addLayer(secondLayer);
+        _backgroundDc = backgroundLayer.getDc() as Dc;
+        _hourMinuteDc = hourMinuteLayer.getDc() as Dc;
+        _secondDc = secondLayer.getDc() as Dc;
 
         // Geometry of the hands and tick marks of the clock, as percentages of the diameter of the
         // clock face. Each of these shapes is a polygon (trapezoid), defined by
@@ -178,22 +186,14 @@ class ClockView extends WatchUi.WatchFace {
     //! In low-power mode, onPartialUpdate() is called every second, except on the full minute,
     //! and the system enforces a power budget, which the code must not exceed.
     //!
-    //! The processing logic is as follows:
-    //! Draw the screen into the off-screen buffer and then output the buffer to the main display.
-    //! Finally, the second hand is drawn directly on the screen. If supported, use anti-aliasing.
-    //! The off-screen buffer is later, in onPartialUpdate(), used to blank out the second hand,
-    //! before it is re-drawn at the new position, directly on the main display.
+    //! The watchface is redrawn every full minute and when the watch enters or exists sleep.
+    //! Even then, the background with the tick marks doesn't change and is not re-drawn.
+    //! During sleep, onPartialUpdate deletes and redraws the second hand.
     //!
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
-        dc.clearClip();
 
-        // Always use the offscreen buffer, not only in low-power mode. That simplifies the logic and is more robust.
-        var targetDc = _offscreenBuffer.getDc();
-        if (_hasAntiAlias) {
-            dc.setAntiAlias(true);
-            targetDc.setAntiAlias(true); 
-        }
+        var clockTime = System.getClockTime();
 
         // Update the low-power mode timer
         if (_isAwake) { 
@@ -202,9 +202,7 @@ class ClockView extends WatchUi.WatchFace {
             _sleepTimer--;
         }
 
-        var clockTime = System.getClockTime();
-
-        // Only re-draw the entire watch face from scratch when required, else use the offscreen buffer
+        // Only re-draw the watch face when required
         var redraw = true;
         // Don't re-draw if the minute hasn't changed since the last time..
         if (_isAwake and _lastDrawn[1] == clockTime.min and _lastDrawn[0] == clockTime.hour) { 
@@ -222,6 +220,7 @@ class ClockView extends WatchUi.WatchFace {
         //*/
         if (redraw) {
             _lastDrawn = [clockTime.hour, clockTime.min, clockTime.sec] as Array<Number>;
+
             var deviceSettings = System.getDeviceSettings();
             _doNotDisturb = deviceSettings.doNotDisturb;
             _alarmCount = deviceSettings.alarmCount;
@@ -276,39 +275,42 @@ class ClockView extends WatchUi.WatchFace {
             _hideSecondHand = $.Config.O_HIDE_SECONDS_ALWAYS == secondsOption 
                 or ($.Config.O_HIDE_SECONDS_IN_DM == secondsOption and M_DARK == _colorMode);
 
+            // Clear the background layer with the background color
+            _backgroundDc.clearClip();
+            if (_hasAntiAlias) { _backgroundDc.setAntiAlias(true); }
             // Draw the background
             if (System.SCREEN_SHAPE_ROUND == _screenShape) {
                 // Fill the entire background with the background color
-                targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
-                targetDc.clear();
+                _backgroundDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
+                _backgroundDc.clear();
             } else {
                 // Fill the entire background with black and draw a circle with the background color
-                targetDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-                targetDc.clear();
+                _backgroundDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+                _backgroundDc.clear();
                 if (_colors[_colorMode][C_BACKGROUND] != Graphics.COLOR_BLACK) {
-                    targetDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
-                    targetDc.fillCircle(_screenCenter[0], _screenCenter[1], _clockRadius);
+                    _backgroundDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
+                    _backgroundDc.fillCircle(_screenCenter[0], _screenCenter[1], _clockRadius);
                 }
             }
 
-            // Draw tick marks around the edge of the screen
-            targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+            // Draw tick marks around the edge of the screen on the background layer
+            _backgroundDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
             for (var i = 0; i < 60; i++) {
-                targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
+                _backgroundDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
             }
 
             // Draw the date string
             var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
             var dateDisplay = $.config.getValue($.Config.I_DATE_DISPLAY);
-            targetDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
+            _backgroundDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
             switch (dateDisplay) {
                 case $.Config.O_DATE_DISPLAY_DAY_ONLY: 
                     var dateStr = info.day.format("%02d");
-                    targetDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
+                    _backgroundDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                     break;
                 case $.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY:
                     dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
-                    targetDc.drawText(_width/2, _height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
+                    _backgroundDc.drawText(_width/2, _height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                     break;
             }
 
@@ -318,21 +320,21 @@ class ClockView extends WatchUi.WatchFace {
                 or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
                 var xpos = _width/2;
                 var ypos = _height * 0.18;
-                symbolsDrawn = drawSymbols(targetDc, xpos.toNumber(), ypos.toNumber());
+                symbolsDrawn = drawSymbols(_backgroundDc, xpos.toNumber(), ypos.toNumber());
             }
 
             // Draw the phone connection indicator on the 6 o'clock tick mark
             if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) {
                 var xpos = _width/2;
                 var ypos = _height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(_iconFont as FontReference))/3;
-                drawPhoneConnected(targetDc, xpos.toNumber(), ypos.toNumber());
+                drawPhoneConnected(_backgroundDc, xpos.toNumber(), ypos.toNumber());
             }
 
             // Draw the battery level indicator
             if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
                 var xpos = _width/2;
                 var ypos = symbolsDrawn ? _clockRadius * 0.64 : _clockRadius * 0.5;
-                drawBatteryLevel(targetDc, xpos.toNumber(), ypos.toNumber());
+                drawBatteryLevel(_backgroundDc, xpos.toNumber(), ypos.toNumber());
             }
 
             // Draw the heart rate indicator at the spot which is not occupied by the date display,
@@ -344,34 +346,37 @@ class ClockView extends WatchUi.WatchFace {
                     xpos = _width * 0.48;
                     ypos = _height * 0.75;
                 }
-                drawHeartRate(targetDc, xpos.toNumber(), ypos.toNumber());
+                drawHeartRate(_backgroundDc, xpos.toNumber(), ypos.toNumber());
             }
 
-            // Draw the hour and minute hands. Shadows first, then the actual hands.
+            // Clear the layer used for the hour and minute hands
+            if (_hasAntiAlias) { _hourMinuteDc.setAntiAlias(true); }
+            _hourMinuteDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
+            _hourMinuteDc.clear();
+
+            // Draw the hour and minute hands and their shadows on the corresponding layer.
             var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
             var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
             var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
             if (_isAwake and _show3dEffects) {
-                targetDc.setFill(_shadowColor);
-                targetDc.fillPolygon(shadowCoords(hourHandCoords, 7));
-                targetDc.fillPolygon(shadowCoords(minuteHandCoords, 9));
+                _hourMinuteDc.setFill(_shadowColor);
+                _hourMinuteDc.fillPolygon(shadowCoords(hourHandCoords, 7));
+                _hourMinuteDc.fillPolygon(shadowCoords(minuteHandCoords, 9));
             }
-            targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
-            targetDc.fillPolygon(hourHandCoords);
-            targetDc.fillPolygon(minuteHandCoords);
+            _hourMinuteDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+            _hourMinuteDc.fillPolygon(hourHandCoords);
+            _hourMinuteDc.fillPolygon(minuteHandCoords);
         } // if (redraw)
 
-        // Output the offscreen buffer to the main display
-        dc.drawBitmap(0, 0, _offscreenBuffer);
-
-        // Draw the second hand and shadow, directly on the screen
+        // Draw the second hand and shadow on its own layer
         var doIt = true;
         if (!_isAwake) {
             if (!_doPartialUpdates) { doIt = false; }
             else if (_hideSecondHand and 0 == _sleepTimer) { doIt = false; }
         }
-        if (doIt) { 
-            drawSecondHand(dc, clockTime.sec); 
+        if (doIt) {
+            _secondDc.clearClip(); // TODO: This is to clear the entire layer in high-power mode. Can it be improved?
+            drawSecondHand(_secondDc, clockTime.sec);
         }
     }
 
@@ -384,15 +389,13 @@ class ClockView extends WatchUi.WatchFace {
             _sleepTimer--; 
             if (0 == _sleepTimer and _hideSecondHand) {
                 // Delete the second hand for the last time
-                dc.drawBitmap(0, 0, _offscreenBuffer);
+                _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
+                _secondDc.clear();
             }
         }
         if (_sleepTimer > 0 or !_hideSecondHand) {
-            if (_hasAntiAlias) { dc.setAntiAlias(true); }
-            var clockTime = System.getClockTime();
-            // Delete the second hand. Note that this will only affect the clipped region
-            dc.drawBitmap(0, 0, _offscreenBuffer);
-            drawSecondHand(dc, clockTime.sec);
+            var second = System.getClockTime().sec;
+            drawSecondHand(_secondDc, second);
         }
     }
 
@@ -600,6 +603,11 @@ class ClockView extends WatchUi.WatchFace {
     // Draw the second hand for the given second, including a shadow, if required, and set the clipping region.
     // This function is performance critical (when !isAwake) and has been optimized.
     private function drawSecondHand(dc as Dc, second as Number) as Void {
+        // Clear the clip of the layer to delete the second hand
+        if (_hasAntiAlias) { dc.setAntiAlias(true); }
+        dc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
+        dc.clear();
+
         // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
         var angle = second * 0.104719758; // TWO_PI / 60.0
         var sin = Math.sin(angle);
