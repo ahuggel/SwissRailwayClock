@@ -196,6 +196,23 @@ class ClockView extends WatchUi.WatchFace {
         _lastDrawn[1] = -1;
     }
 
+    //! This method is called when the device re-enters sleep mode
+    public function onEnterSleep() as Void {
+        _isAwake = false;
+        WatchUi.requestUpdate();
+    }
+
+    //! This method is called when the device exits sleep mode
+    public function onExitSleep() as Void {
+        _isAwake = true;
+        _lastDrawn[1] = -1; // A bit of a hack to force the watch face to be re-drawn
+        WatchUi.requestUpdate();
+    }
+
+    public function stopPartialUpdates() as Void {
+        _doPartialUpdates = false;
+    }
+
     //! Handle the update event. This function is called
     //! 1) every second when the device is awake,
     //! 2) every full minute in low-power mode, and
@@ -206,7 +223,6 @@ class ClockView extends WatchUi.WatchFace {
     //! and the system enforces a power budget, which the code must not exceed.
     //!
     //! The watchface is redrawn every full minute and when the watch enters or exists sleep.
-    //! Even then, the background with the tick marks doesn't change and is not re-drawn.
     //! During sleep, onPartialUpdate deletes and redraws the second hand.
     //!
     //! @param dc Device context
@@ -434,21 +450,125 @@ class ClockView extends WatchUi.WatchFace {
         }
     }
 
-    //! This method is called when the device re-enters sleep mode
-    public function onEnterSleep() as Void {
-        _isAwake = false;
-        WatchUi.requestUpdate();
+    // Draw the second hand for the given second, including a shadow, if required, and set the clipping region.
+    // This function is performance critical (when !isAwake) and has been optimized.
+    private function drawSecondHand(dc as Dc, second as Number) as Void {
+        // Clear the clip of the layer to delete the second hand
+        dc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
+        dc.clear();
+
+        // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
+        var angle = second * 0.104719758; // TWO_PI / 60.0
+        var sin = Math.sin(angle);
+        var cos = Math.cos(angle);
+        var offsetX = _screenCenter[0] + 0.5;
+		var offsetY = _screenCenter[1] + 0.5;
+
+        // Rotate the center of the second hand circle
+        var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + offsetX).toNumber();
+        var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + offsetY).toNumber();
+
+        // Rotate the rectangular portion of the second hand, using inlined code from rotateCoords() to improve performance
+        // Optimized: idx = S_SECONDHAND * 8; idy = idx + 1; and etc.
+        var x0 = (_coords[32] * cos - _coords[33] * sin + offsetX).toNumber();
+        var y0 = (_coords[32] * sin + _coords[33] * cos + offsetY).toNumber();
+        var x1 = (_coords[34] * cos - _coords[35] * sin + offsetX).toNumber();
+        var y1 = (_coords[34] * sin + _coords[35] * cos + offsetY).toNumber();
+        var x2 = (_coords[36] * cos - _coords[37] * sin + offsetX).toNumber();
+        var y2 = (_coords[36] * sin + _coords[37] * cos + offsetY).toNumber();
+        var x3 = (_coords[38] * cos - _coords[39] * sin + offsetX).toNumber();
+        var y3 = (_coords[38] * sin + _coords[39] * cos + offsetY).toNumber();
+        var coords = [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
+
+        if (_isAwake and _show3dEffects) {
+            // Clear the second hand shadow layer and draw the shadow
+            _secondShadowDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
+            _secondShadowDc.clear();
+            _secondShadowDc.setFill(_shadowColor);
+            _secondShadowDc.fillPolygon(shadowCoords(coords, 10));
+            var shadowCenter = shadowCoords([[x, y]] as Array< Array<Number> >, 10);
+            _secondShadowDc.fillCircle(shadowCenter[0][0], shadowCenter[0][1], _secondCircleRadius);
+        }
+
+        // Set the clipping region
+        var xx1 = x - _secondCircleRadius;
+        var yy1 = y - _secondCircleRadius;
+        var xx2 = x + _secondCircleRadius;
+        var yy2 = y + _secondCircleRadius;
+        var minX = 65536;
+        var minY = 65536;
+        var maxX = 0;
+        var maxY = 0;
+        // coords[1], coords[2] optimized out: only consider the tail and circle coords, loop unrolled for performance,
+        // use only points [x0, y0], [x3, y3], [xx1, yy1], [xx2, yy1], [xx2, yy2], [xx1, yy2], minus duplicate comparisons
+        if (x0 < minX) { minX = x0; }
+        if (y0 < minY) { minY = y0; }
+        if (x0 > maxX) { maxX = x0; }
+        if (y0 > maxY) { maxY = y0; }
+        if (x3 < minX) { minX = x3; }
+        if (y3 < minY) { minY = y3; }
+        if (x3 > maxX) { maxX = x3; }
+        if (y3 > maxY) { maxY = y3; }
+        if (xx1 < minX) { minX = xx1; }
+        if (yy1 < minY) { minY = yy1; }
+        if (xx1 > maxX) { maxX = xx1; }
+        if (yy1 > maxY) { maxY = yy1; }
+        if (xx2 < minX) { minX = xx2; }
+        if (yy2 < minY) { minY = yy2; }
+        if (xx2 > maxX) { maxX = xx2; }
+        if (yy2 > maxY) { maxY = yy2; }
+        // Add two pixels on each side for good measure
+        dc.setClip(minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4);
+
+        // Finally, draw the second hand
+        dc.setColor(_colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_RED /* colors[colorMode][C_SECONDS] */, Graphics.COLOR_TRANSPARENT);
+        dc.fillPolygon(coords);
+        dc.fillCircle(x, y, _secondCircleRadius);
     }
 
-    //! This method is called when the device exits sleep mode
-    public function onExitSleep() as Void {
-        _isAwake = true;
-        _lastDrawn[1] = -1; // A bit of a hack to force the watch face to be re-drawn
-        WatchUi.requestUpdate();
+    //! Rotate the four corner coordinates of a polygon used to draw a watch hand or a tick mark.
+    //! 0 degrees is at the 12 o'clock position, and increases in the clockwise direction.
+    //! @param shape Index of the shape
+    //! @param angle Rotation angle in radians
+    //! @return The rotated coordinates of the polygon (watch hand or tick mark)
+    private function rotateCoords(shape as Shape, angle as Float) as Array< Array<Number> > {
+        var sin = Math.sin(angle);
+        var cos = Math.cos(angle);
+        // Optimized: Expanded the loop and avoid repeating the same operations (Thanks Inigo Tolosa for the tip!)
+        var offsetX = _screenCenter[0] + 0.5;
+		var offsetY = _screenCenter[1] + 0.5;
+        var idx = shape * 8;
+        var idy = idx + 1;
+        var x0 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
+        var y0 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        idx = idy + 1;
+        idy += 2;
+        var x1 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
+        var y1 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        idx = idy + 1;
+        idy += 2;
+        var x2 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
+        var y2 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        idx = idy + 1;
+        idy += 2;
+        var x3 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
+        var y3 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+
+        return [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
     }
 
-    public function stopPartialUpdates() as Void {
-        _doPartialUpdates = false;
+    // TODO: move the shadow shapes by a percentage instead of a number of pixels
+    private function shadowCoords(coords as Array< Array<Number> >, len as Number) as Array< Array<Number> > {
+        var size = coords.size();
+        var result = new Array< Array<Number> >[size];
+        // Direction to move points, clockwise from 12 o'clock
+        var angle = 3 * Math.PI / 4;
+        var dx = (Math.sin(angle) * len + 0.5).toNumber();
+        var dy = (-Math.cos(angle) * len + 0.5).toNumber();
+        for (var i = 0; i < size; i++) {
+            result[i] = [coords[i][0] + dx, coords[i][1] + dy];
+        }
+        return result;
     }
 
     // Draw the battery indicator according to the settings, return true if it was actually drawn, else false
@@ -639,127 +759,6 @@ class ClockView extends WatchUi.WatchFace {
             ret = true;
         }
         return ret;
-    }
-
-    // Draw the second hand for the given second, including a shadow, if required, and set the clipping region.
-    // This function is performance critical (when !isAwake) and has been optimized.
-    private function drawSecondHand(dc as Dc, second as Number) as Void {
-        // Clear the clip of the layer to delete the second hand
-        dc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
-        dc.clear();
-
-        // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
-        var angle = second * 0.104719758; // TWO_PI / 60.0
-        var sin = Math.sin(angle);
-        var cos = Math.cos(angle);
-        var offsetX = _screenCenter[0] + 0.5;
-		var offsetY = _screenCenter[1] + 0.5;
-
-        // Rotate the center of the second hand circle
-        var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + offsetX).toNumber();
-        var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + offsetY).toNumber();
-
-        // Rotate the rectangular portion of the second hand, using inlined code from rotateCoords() to improve performance
-        // Optimized: idx = S_SECONDHAND * 8; idy = idx + 1; and etc.
-        var x0 = (_coords[32] * cos - _coords[33] * sin + offsetX).toNumber();
-        var y0 = (_coords[32] * sin + _coords[33] * cos + offsetY).toNumber();
-        var x1 = (_coords[34] * cos - _coords[35] * sin + offsetX).toNumber();
-        var y1 = (_coords[34] * sin + _coords[35] * cos + offsetY).toNumber();
-        var x2 = (_coords[36] * cos - _coords[37] * sin + offsetX).toNumber();
-        var y2 = (_coords[36] * sin + _coords[37] * cos + offsetY).toNumber();
-        var x3 = (_coords[38] * cos - _coords[39] * sin + offsetX).toNumber();
-        var y3 = (_coords[38] * sin + _coords[39] * cos + offsetY).toNumber();
-        var coords = [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
-
-        // Draw the shadow, if required
-        if (_isAwake and _show3dEffects) {
-            _secondShadowDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
-            _secondShadowDc.clear();
-            _secondShadowDc.setFill(_shadowColor);
-            _secondShadowDc.fillPolygon(shadowCoords(coords, 10));
-            var shadowCenter = shadowCoords([[x, y]] as Array< Array<Number> >, 10);
-            _secondShadowDc.fillCircle(shadowCenter[0][0], shadowCenter[0][1], _secondCircleRadius);
-        }
-
-        // Set the clipping region
-        var xx1 = x - _secondCircleRadius;
-        var yy1 = y - _secondCircleRadius;
-        var xx2 = x + _secondCircleRadius;
-        var yy2 = y + _secondCircleRadius;
-        var minX = 65536;
-        var minY = 65536;
-        var maxX = 0;
-        var maxY = 0;
-        // coords[1], coords[2] optimized out: only consider the tail and circle coords, loop unrolled for performance,
-        // use only points [x0, y0], [x3, y3], [xx1, yy1], [xx2, yy1], [xx2, yy2], [xx1, yy2], minus duplicate comparisons
-        if (x0 < minX) { minX = x0; }
-        if (y0 < minY) { minY = y0; }
-        if (x0 > maxX) { maxX = x0; }
-        if (y0 > maxY) { maxY = y0; }
-        if (x3 < minX) { minX = x3; }
-        if (y3 < minY) { minY = y3; }
-        if (x3 > maxX) { maxX = x3; }
-        if (y3 > maxY) { maxY = y3; }
-        if (xx1 < minX) { minX = xx1; }
-        if (yy1 < minY) { minY = yy1; }
-        if (xx1 > maxX) { maxX = xx1; }
-        if (yy1 > maxY) { maxY = yy1; }
-        if (xx2 < minX) { minX = xx2; }
-        if (yy2 < minY) { minY = yy2; }
-        if (xx2 > maxX) { maxX = xx2; }
-        if (yy2 > maxY) { maxY = yy2; }
-        // Add two pixels on each side for good measure
-        dc.setClip(minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4);
-
-        // Finally, draw the second hand
-        dc.setColor(_colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_RED /* colors[colorMode][C_SECONDS] */, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon(coords);
-        dc.fillCircle(x, y, _secondCircleRadius);
-    }
-
-    //! Rotate the four corner coordinates of a polygon used to draw a watch hand or a tick mark.
-    //! 0 degrees is at the 12 o'clock position, and increases in the clockwise direction.
-    //! @param shape Index of the shape
-    //! @param angle Rotation angle in radians
-    //! @return The rotated coordinates of the polygon (watch hand or tick mark)
-    private function rotateCoords(shape as Shape, angle as Float) as Array< Array<Number> > {
-        var sin = Math.sin(angle);
-        var cos = Math.cos(angle);
-        // Optimized: Expanded the loop and avoid repeating the same operations (Thanks Inigo Tolosa for the tip!)
-        var offsetX = _screenCenter[0] + 0.5;
-		var offsetY = _screenCenter[1] + 0.5;
-        var idx = shape * 8;
-        var idy = idx + 1;
-        var x0 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y0 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
-        idx = idy + 1;
-        idy += 2;
-        var x1 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y1 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
-        idx = idy + 1;
-        idy += 2;
-        var x2 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y2 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
-        idx = idy + 1;
-        idy += 2;
-        var x3 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y3 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
-
-        return [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
-    }
-
-    // TODO: move the shadow shapes by a percentage instead of a number of pixels
-    private function shadowCoords(coords as Array< Array<Number> >, len as Number) as Array< Array<Number> > {
-        var size = coords.size();
-        var result = new Array< Array<Number> >[size];
-        // Direction to move points, clockwise from 12 o'clock
-        var angle = 3 * Math.PI / 4;
-        var dx = (Math.sin(angle) * len + 0.5).toNumber();
-        var dy = (-Math.cos(angle) * len + 0.5).toNumber();
-        for (var i = 0; i < size; i++) {
-            result[i] = [coords[i][0] + dx, coords[i][1] + dy];
-        }
-        return result;
     }
 } // class ClockView
 
