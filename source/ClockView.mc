@@ -77,6 +77,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _backgroundDc as Dc;
     private var _hourMinuteDc as Dc;
     private var _secondDc as Dc;
+    private var _secondShadowDc as Dc;
 
     //! Constructor. Initialize the variables for this view.
     public function initialize() {
@@ -99,27 +100,41 @@ class ClockView extends WatchUi.WatchFace {
         _drawHeartRate = false;
         _dateDisplay = 0;
         _shadowColor = 0;
-        if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x77, 0x77, 0x77); }
+        if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
 
-        // Instead of a buffered bitmap, this version uses layers (since API Level 3.1.0).
+        // Instead of a buffered bitmap, this version uses layers (since API Level 3.1.0) and depend
+        // on the graphics pool so the layers don't occupy application heap memory.
+        //
         // 1) A background layer with the tick marks and any indicators.
-        // 2) A full screen layer for the hour and minute hands.
-        // 3) A dedicated layer for the second hand. Still using a clip to limit the area
+        // 2) A full screen layer just for the shadow of the second hand (when 3d effects are on)
+        // 3) Another full screen layer for the hour and minute hands.
+        // 4) A dedicated layer for the second hand. Still using a clip to limit the area
         //    affected by draw operations.
         //
-        // Using layers is elegant and makes it possible to update some indicators even in low-power mode,
-        // but requires more memory and is only feasible on CIQ 4 devices, which have a Graphics Pool.
+        // Using layers is elegant and makes it possible to draw some indicators even in low-power
+        // mode, e.g., the heart rate is updated every second in high-power mode and every 5 seconds
+        // in low power mode. On the other hand, this architecture requires more memory and is only
+        // feasible on CIQ 4 devices, i.e., on devices which have a graphics pool.
 
         // Initialize layers and add them to the view
         var backgroundLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
         var hourMinuteLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
         var secondLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
+        var secondShadowLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
         addLayer(backgroundLayer);
+        addLayer(secondShadowLayer);
         addLayer(hourMinuteLayer);
         addLayer(secondLayer);
         _backgroundDc = backgroundLayer.getDc() as Dc;
         _hourMinuteDc = hourMinuteLayer.getDc() as Dc;
         _secondDc = secondLayer.getDc() as Dc;
+        _secondShadowDc = secondShadowLayer.getDc() as Dc;
+        if (_hasAntiAlias) { 
+            _backgroundDc.setAntiAlias(true);
+            _hourMinuteDc.setAntiAlias(true);
+            _secondDc.setAntiAlias(true);
+            _secondShadowDc.setAntiAlias(true);
+        }
 
         // Geometry of the hands and tick marks of the clock, as percentages of the diameter of the
         // clock face. Each of these shapes is a polygon (trapezoid), defined by
@@ -281,7 +296,6 @@ class ClockView extends WatchUi.WatchFace {
 
             // Clear the background layer with the background color
             _backgroundDc.clearClip();
-            if (_hasAntiAlias) { _backgroundDc.setAntiAlias(true); }
             // Draw the background
             if (System.SCREEN_SHAPE_ROUND == _screenShape) {
                 // Fill the entire background with the background color
@@ -344,8 +358,11 @@ class ClockView extends WatchUi.WatchFace {
             // Get the heart rate setting
             _drawHeartRate = $.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE);
 
+            // Clear the second hand shadow layer
+            _secondShadowDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
+            _secondShadowDc.clear();
+
             // Clear the layer used for the hour and minute hands
-            if (_hasAntiAlias) { _hourMinuteDc.setAntiAlias(true); }
             _hourMinuteDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
             _hourMinuteDc.clear();
 
@@ -381,8 +398,7 @@ class ClockView extends WatchUi.WatchFace {
                 drawHeartRate(_backgroundDc, xpos.toNumber(), ypos.toNumber());
             }
 
-            // Clear the second hand layer and draw the second hand and shadow.
-            _secondDc.clearClip();
+            // Draw the second hand and shadow
             drawSecondHand(_secondDc, clockTime.sec);
         }
     }
@@ -629,7 +645,6 @@ class ClockView extends WatchUi.WatchFace {
     // This function is performance critical (when !isAwake) and has been optimized.
     private function drawSecondHand(dc as Dc, second as Number) as Void {
         // Clear the clip of the layer to delete the second hand
-        if (_hasAntiAlias) { dc.setAntiAlias(true); }
         dc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
         dc.clear();
 
@@ -658,10 +673,12 @@ class ClockView extends WatchUi.WatchFace {
 
         // Draw the shadow, if required
         if (_isAwake and _show3dEffects) {
-            dc.setFill(_shadowColor);
-            dc.fillPolygon(shadowCoords(coords, 10));
+            _secondShadowDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
+            _secondShadowDc.clear();
+            _secondShadowDc.setFill(_shadowColor);
+            _secondShadowDc.fillPolygon(shadowCoords(coords, 10));
             var shadowCenter = shadowCoords([[x, y]] as Array< Array<Number> >, 10);
-            dc.fillCircle(shadowCenter[0][0], shadowCenter[0][1], _secondCircleRadius);
+            _secondShadowDc.fillCircle(shadowCenter[0][0], shadowCenter[0][1], _secondCircleRadius);
         }
 
         // Set the clipping region
