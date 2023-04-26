@@ -233,7 +233,7 @@ class ClockView extends WatchUi.WatchFace {
     //!
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
-        dc.clearClip();
+        dc.clearClip(); // Still needed as the settings menu messes with the clip
 
         var clockTime = System.getClockTime();
 
