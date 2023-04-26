@@ -63,7 +63,6 @@ class ClockView extends WatchUi.WatchFace {
 
     private var _lastDrawnMin as Number;
     private var _doPartialUpdates as Boolean;
-    private var _hasAntiAlias as Boolean;
     private var _screenShape as Number;
     private var _width as Number;
     private var _height as Number;
@@ -87,7 +86,6 @@ class ClockView extends WatchUi.WatchFace {
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
         _lastDrawnMin = -1; // Minute when the watch face was last completely re-drawn
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
-        _hasAntiAlias = (Toybox.Graphics.Dc has :setAntiAlias);
         var deviceSettings = System.getDeviceSettings();
         _screenShape = deviceSettings.screenShape;
         _width = deviceSettings.screenWidth;
@@ -129,12 +127,10 @@ class ClockView extends WatchUi.WatchFace {
         _hourMinuteDc = hourMinuteLayer.getDc() as Dc;
         _secondDc = secondLayer.getDc() as Dc;
         _secondShadowDc = secondShadowLayer.getDc() as Dc;
-        if (_hasAntiAlias) { 
-            _backgroundDc.setAntiAlias(true);
-            _hourMinuteDc.setAntiAlias(true);
-            _secondDc.setAntiAlias(true);
-            _secondShadowDc.setAntiAlias(true);
-        }
+        _backgroundDc.setAntiAlias(true); // Graphics.Dc has :setAntiAlias since API Level 3.2.0
+        _hourMinuteDc.setAntiAlias(true);
+        _secondDc.setAntiAlias(true);
+        _secondShadowDc.setAntiAlias(true);
 
         // Geometry of the hands and tick marks of the clock, as percentages of the diameter of the
         // clock face. Each of these shapes is a polygon (trapezoid), defined by
