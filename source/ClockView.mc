@@ -61,7 +61,7 @@ class ClockView extends WatchUi.WatchFace {
     // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
-    private var _lastDrawn as Array<Number>;
+    private var _lastDrawnMin as Number;
     private var _doPartialUpdates as Boolean;
     private var _hasAntiAlias as Boolean;
     private var _screenShape as Number;
@@ -78,7 +78,7 @@ class ClockView extends WatchUi.WatchFace {
 
         _colorMode = M_LIGHT;
         _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
-        _lastDrawn = [-1, -1, -1] as Array<Number>; // Timestamp when the watch face was last completely re-drawn
+        _lastDrawnMin = -1; // Minute when the watch face was last completely re-drawn
         _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
         _hasAntiAlias = (Toybox.Graphics.Dc has :setAntiAlias);
         var deviceSettings = System.getDeviceSettings();
@@ -163,10 +163,28 @@ class ClockView extends WatchUi.WatchFace {
     //! Called when this View is brought to the foreground. Restore the state of this view and
     //! prepare it to be shown. This includes loading resources into memory.
     public function onShow() as Void {
-        // Assuming onShow() is triggered after any device settings change, force the watch face
-        // to be re-drawn in the next call to onUpdate(). This is to immediately react to a
-        // possible change of the DND setting.
-        _lastDrawn[1] = -1;
+        // Assuming onShow() is triggered after any settings change, force the watch face
+        // to be re-drawn in the next call to onUpdate(). This is to immediately react to
+        // changes of the watch settings or a possible change of the DND setting.
+        _lastDrawnMin = -1;
+    }
+
+    //! This method is called when the device re-enters sleep mode
+    public function onEnterSleep() as Void {
+        _isAwake = false;
+        _lastDrawnMin = -1; // Force the watch face to be re-drawn
+        WatchUi.requestUpdate();
+    }
+
+    //! This method is called when the device exits sleep mode
+    public function onExitSleep() as Void {
+        _isAwake = true;
+        _lastDrawnMin = -1; // Force the watch face to be re-drawn
+        WatchUi.requestUpdate();
+    }
+
+    public function stopPartialUpdates() as Void {
+        _doPartialUpdates = false;
     }
 
     //! Handle the update event. This function is called
@@ -204,24 +222,10 @@ class ClockView extends WatchUi.WatchFace {
 
         var clockTime = System.getClockTime();
 
-        // Only re-draw the entire watch face from scratch when required, else use the offscreen buffer
-        var redraw = true;
-        // Don't re-draw if the minute hasn't changed since the last time..
-        if (_isAwake and _lastDrawn[1] == clockTime.min and _lastDrawn[0] == clockTime.hour) { 
-            redraw = false;
-            // ..unless the settings menu has been accessed in the meantime
-            var lastAccessed = $.config.lastAccessed();
-            if (  lastAccessed[2] + lastAccessed[1]*60 + lastAccessed[0]*3600 
-                > _lastDrawn[2] + _lastDrawn[1]*60 + _lastDrawn[0]*3600) { redraw = true; }
-        }
-        /* DEBUG
-        var lastAccessed = $.config.lastAccessed();
-        System.println("_lastDrawn = " + _lastDrawn[0].format("%02d") + ":" + _lastDrawn[1].format("%02d") + ":" + _lastDrawn[2].format("%02d") + " " +
-                       "lastAccessed = " + lastAccessed[0].format("%02d") + ":" + lastAccessed[1].format("%02d") + ":" + lastAccessed[2].format("%02d") + " " +
-                       "redraw = " + redraw);
-        //*/
-        if (redraw) {
-            _lastDrawn = [clockTime.hour, clockTime.min, clockTime.sec] as Array<Number>;
+        // Only re-draw the watch face if the minute changed since the last time
+        if (_lastDrawnMin != clockTime.min) { 
+            _lastDrawnMin = clockTime.min;
+
             var deviceSettings = System.getDeviceSettings();
             _doNotDisturb = deviceSettings.doNotDisturb;
             _alarmCount = deviceSettings.alarmCount;
@@ -349,7 +353,7 @@ class ClockView extends WatchUi.WatchFace {
             targetDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
             targetDc.fillPolygon(rotateCoords(S_HOURHAND, hourHandAngle));
             targetDc.fillPolygon(rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI));
-        } // if (redraw)
+        } // if (_lastDrawnMin != clockTime.min)
 
         // Output the offscreen buffer to the main display
         dc.drawBitmap(0, 0, _offscreenBuffer);
@@ -384,23 +388,6 @@ class ClockView extends WatchUi.WatchFace {
             dc.drawBitmap(0, 0, _offscreenBuffer);
             drawSecondHand(dc, clockTime.sec);
         }
-    }
-
-    //! This method is called when the device re-enters sleep mode
-    public function onEnterSleep() as Void {
-        _isAwake = false;
-        WatchUi.requestUpdate();
-    }
-
-    //! This method is called when the device exits sleep mode
-    public function onExitSleep() as Void {
-        _isAwake = true;
-        _lastDrawn[1] = -1; // A bit of a hack to force the watch face to be re-drawn
-        WatchUi.requestUpdate();
-    }
-
-    public function stopPartialUpdates() as Void {
-        _doPartialUpdates = false;
     }
 
     // Draw the battery indicator according to the settings, return true if it was actually drawn, else false
