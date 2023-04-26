@@ -119,14 +119,12 @@ class Config {
     private var _values as Dictionary<Item, Number>;  // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
-    private var _lastAccessed as Array<Number> = new Array<Number>[3];
 
     //! Constructor
     public function initialize() {
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasBatteryInDays = (System.Stats has :batteryInDays);
         _values = {} as Dictionary<Item, Number>;
-        _lastAccessed = [-1, -1, -1] as Array<Number>;
         // Read the configuration values from persistent storage 
         for (var id = 0; id < I_SIZE; id++) {
             var value = Storage.getValue(_itemLabels[id]) as Number;
@@ -264,17 +262,6 @@ class Config {
     public function hasBatteryInDays() as Boolean {
         return _hasBatteryInDays;
     }
-
-    // Set the timestamp when the menu was last accessed
-    public function setLastAccessed() as Void {
-        var clockTime = System.getClockTime();
-        _lastAccessed = [clockTime.hour, clockTime.min, clockTime.sec] as Array<Number>;
-    }
-
-    // Returns the timestamp when the settings menu was last accessed (shown)
-    public function lastAccessed() as Array<Number> {
-        return _lastAccessed;
-    }
 } // class Config
 
 //! The app settings menu
@@ -288,8 +275,6 @@ class SettingsMenu extends WatchUi.Menu2 {
     // Called when the menu is brought into the foreground
     public function onShow() as Void {
         Menu2.onShow();
-        // Update the last accessed timestamp
-        $.config.setLastAccessed();
         // Update sub labels in case the dark mode on or off time changed
         var idx = findItemById($.Config.I_DM_ON);
         if (-1 != idx) {
