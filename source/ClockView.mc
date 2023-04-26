@@ -227,6 +227,7 @@ class ClockView extends WatchUi.WatchFace {
     //!
     //! @param dc Device context
     public function onUpdate(dc as Dc) as Void {
+        dc.clearClip();
 
         var clockTime = System.getClockTime();
 
