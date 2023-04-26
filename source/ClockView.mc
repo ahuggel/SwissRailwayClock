@@ -41,7 +41,7 @@ class ClockView extends WatchUi.WatchFace {
         [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_DK_GRAY, Graphics.COLOR_DK_BLUE]
     ] as Array< Array<Number> >;
     private var _isAwake as Boolean;
-    private var _iconFont as FontReference?;
+    private var _iconFont as FontResource?;
     private var _clockRadius as Number;
 
     private var _doNotDisturb as Boolean = false; // deviceSettings.doNotDisturb
@@ -184,7 +184,12 @@ class ClockView extends WatchUi.WatchFace {
     //! Load resources and configure the layout of the watchface for this device
     //! @param dc Device context
     public function onLayout(dc as Dc) as Void {
-        _iconFont = WatchUi.loadResource(Rez.Fonts.Icons) as FontReference;
+        if (Graphics has :FontReference) {
+            var fontRef = WatchUi.loadResource(Rez.Fonts.Icons) as FontReference;
+            _iconFont = fontRef.get() as FontResource;
+        } else {
+            _iconFont = WatchUi.loadResource(Rez.Fonts.Icons) as FontResource;
+        }
     }
 
     //! Called when this View is brought to the foreground. Restore the state of this view and
@@ -361,7 +366,7 @@ class ClockView extends WatchUi.WatchFace {
             // Draw the phone connection indicator on the 6 o'clock tick mark
             if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) {
                 var xpos = _width/2;
-                var ypos = _height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(_iconFont as FontReference))/3;
+                var ypos = _height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(_iconFont as FontResource))/3;
                 drawPhoneConnected(_backgroundDc, xpos.toNumber(), ypos.toNumber());
             }
 
@@ -700,7 +705,7 @@ class ClockView extends WatchUi.WatchFace {
         var ret = false;
         if (!(icons as String).equals("")) { // Why does the typechecker not know that icons is a String??
             dc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(xpos, ypos, _iconFont as FontReference, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
+            dc.drawText(xpos, ypos, _iconFont as FontResource, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
             ret = true;
         }
         return ret;
@@ -711,7 +716,7 @@ class ClockView extends WatchUi.WatchFace {
         var ret = false;
         if (_phoneConnected) {
             dc.setColor(_colors[_colorMode][C_BLUETOOTH], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(xpos, ypos, _iconFont as FontReference, "B" as String, Graphics.TEXT_JUSTIFY_CENTER);
+            dc.drawText(xpos, ypos, _iconFont as FontResource, "B" as String, Graphics.TEXT_JUSTIFY_CENTER);
             ret = true;
         }
         return ret;
@@ -745,7 +750,7 @@ class ClockView extends WatchUi.WatchFace {
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
             dc.drawText(
                 heartRate > 99 ? xpos - width*2/16 - 1 : xpos, ypos, 
-                _iconFont as FontReference, 
+                _iconFont as FontResource, 
                 _isAwake ? "H" : "I" as String, 
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
             );
