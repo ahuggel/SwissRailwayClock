@@ -31,9 +31,6 @@ class ClockView extends WatchUi.WatchFace {
 
     // Things we want to access from the outside. By convention, write-access is only from within ClockView.
     static public var iconFont as FontResource?;
-    static public var alarmCount as Number = 0; // deviceSettings.alarmCount
-    static public var notificationCount as Number = 0; // deviceSettings.notificationCount
-    static public var phoneConnected as Boolean = false; // deviceSettings.phoneConnected
 
     // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the colors Array.
     enum { M_LIGHT, M_DARK } // Color modes
@@ -245,9 +242,6 @@ class ClockView extends WatchUi.WatchFace {
             _lastDrawnMin = clockTime.min;
 
             var deviceSettings = System.getDeviceSettings();
-            alarmCount = deviceSettings.alarmCount;
-            notificationCount = deviceSettings.notificationCount;
-            phoneConnected = deviceSettings.phoneConnected;
 
             // Set the color mode
             _colorMode = setColorMode(deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
@@ -304,14 +298,27 @@ class ClockView extends WatchUi.WatchFace {
                 or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
                 var xpos = _width/2;
                 var ypos = _height * 0.18;
-                symbolsDrawn = drawSymbols(_backgroundDc, xpos.toNumber(), ypos.toNumber(), _colors[_colorMode][C_TEXT]);
+                symbolsDrawn = drawSymbols(
+                    _backgroundDc, 
+                    xpos.toNumber(), 
+                    ypos.toNumber(), 
+                    _colors[_colorMode][C_TEXT],
+                    deviceSettings.alarmCount,
+                    deviceSettings.notificationCount
+                );
             }
 
             // Draw the phone connection indicator on the 6 o'clock tick mark
             if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) {
                 var xpos = _width/2;
                 var ypos = _height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(iconFont as FontResource))/3;
-                drawPhoneConnected(_backgroundDc, xpos.toNumber(), ypos.toNumber(), _colors[_colorMode][C_BLUETOOTH]);
+                drawPhoneConnected(
+                    _backgroundDc, 
+                    xpos.toNumber(), 
+                    ypos.toNumber(), 
+                    _colors[_colorMode][C_BLUETOOTH], 
+                    deviceSettings.phoneConnected
+                );
             }
 
             // Draw the battery level indicator

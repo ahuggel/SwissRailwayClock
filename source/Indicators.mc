@@ -26,12 +26,19 @@ import Toybox.System;
 import Toybox.WatchUi;
 
 // Draw alarm and notification symbols, return true if something was drawn, else false
-function drawSymbols(dc as Dc, xpos as Number, ypos as Number, textColor as Number) as Boolean {
+function drawSymbols(
+    dc as Dc, 
+    xpos as Number, 
+    ypos as Number, 
+    textColor as Number,
+    alarmCount as Number,
+    notificationCount as Number
+) as Boolean {
     var icons = "";
     var space = "";
     var indicators = [
-        $.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS) and ClockView.alarmCount > 0, 
-        $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS) and ClockView.notificationCount > 0
+        $.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS) and alarmCount > 0, 
+        $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS) and notificationCount > 0
     ];
     for (var i = 0; i < indicators.size(); i++) {
         if (indicators[i]) {
@@ -49,9 +56,15 @@ function drawSymbols(dc as Dc, xpos as Number, ypos as Number, textColor as Numb
 }
 
 // Draw the Bluetooth symbol when the watch is connected to a phone, return true if something was drawn
-function drawPhoneConnected(dc as Dc, xpos as Number, ypos as Number, symbolColor as Number) as Boolean {
+function drawPhoneConnected(
+    dc as Dc, 
+    xpos as Number, 
+    ypos as Number, 
+    symbolColor as Number, 
+    phoneConnected as Boolean
+) as Boolean {
     var ret = false;
-    if (ClockView.phoneConnected) {
+    if (phoneConnected) {
         dc.setColor(symbolColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(xpos, ypos, ClockView.iconFont as FontResource, "B" as String, Graphics.TEXT_JUSTIFY_CENTER);
         ret = true;
