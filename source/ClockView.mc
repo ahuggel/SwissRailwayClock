@@ -31,7 +31,6 @@ class ClockView extends WatchUi.WatchFace {
 
     // Things we want to access from the outside. By convention, write-access is only from within ClockView.
     static public var iconFont as FontResource?;
-    static public var doNotDisturb as Boolean = false; // deviceSettings.doNotDisturb
     static public var alarmCount as Number = 0; // deviceSettings.alarmCount
     static public var notificationCount as Number = 0; // deviceSettings.notificationCount
     static public var phoneConnected as Boolean = false; // deviceSettings.phoneConnected
@@ -228,50 +227,12 @@ class ClockView extends WatchUi.WatchFace {
             _lastDrawnMin = clockTime.min;
 
             var deviceSettings = System.getDeviceSettings();
-            doNotDisturb = deviceSettings.doNotDisturb;
             alarmCount = deviceSettings.alarmCount;
             notificationCount = deviceSettings.notificationCount;
             phoneConnected = deviceSettings.phoneConnected;
 
             // Set the color mode
-            switch ($.config.getValue($.Config.I_DARK_MODE)) {
-                case $.Config.O_DARK_MODE_SCHEDULED:
-                    _colorMode = M_LIGHT;
-                    var time = clockTime.hour * 60 + clockTime.min;
-                    if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
-                        _colorMode = M_DARK;
-                    }
-                    break;
-                case $.Config.O_DARK_MODE_OFF:
-                    _colorMode = M_LIGHT;
-                    break;
-                case $.Config.O_DARK_MODE_ON:
-                    _colorMode = M_DARK;
-                    break;
-                case $.Config.O_DARK_MODE_IN_DND:
-                    _colorMode = doNotDisturb ? M_DARK : M_LIGHT;
-                    break;
-            }
-
-            // In dark mode, adjust colors based on the contrast setting
-            if (M_DARK == _colorMode) {
-                var foregroundColor = $.config.getValue($.Config.I_DM_CONTRAST);
-                _colors[M_DARK][C_FOREGROUND] = foregroundColor;
-                switch (foregroundColor) {
-                    case Graphics.COLOR_WHITE:
-                        _colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
-                        _colors[M_DARK][C_BLUETOOTH] = Graphics.COLOR_DK_BLUE;
-                        break;
-                    case Graphics.COLOR_LT_GRAY:
-                        _colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
-                        _colors[M_DARK][C_BLUETOOTH] = Graphics.COLOR_DK_BLUE;
-                        break;
-                    case Graphics.COLOR_DK_GRAY:
-                        _colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
-                        _colors[M_DARK][C_BLUETOOTH] = Graphics.COLOR_BLUE;
-                        break;
-                }
-            }
+            _colorMode = setColorMode(deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
 
             // Handle the setting to disable the second hand in sleep mode after some time
             var secondsOption = $.config.getValue($.Config.I_HIDE_SECONDS);
