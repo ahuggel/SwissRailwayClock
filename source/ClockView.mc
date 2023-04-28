@@ -461,6 +461,49 @@ class ClockView extends WatchUi.WatchFace {
 
         return [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
     }
+
+    private function setColorMode(doNotDisturb as Boolean, hour as Number, min as Number) as Number {
+        var colorMode = M_LIGHT;
+        switch ($.config.getValue($.Config.I_DARK_MODE)) {
+            case $.Config.O_DARK_MODE_SCHEDULED:
+                colorMode = M_LIGHT;
+                var time = hour * 60 + min;
+                if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
+                    colorMode = M_DARK;
+                }
+                break;
+            case $.Config.O_DARK_MODE_OFF:
+                colorMode = M_LIGHT;
+                break;
+            case $.Config.O_DARK_MODE_ON:
+                colorMode = M_DARK;
+                break;
+            case $.Config.O_DARK_MODE_IN_DND:
+                colorMode = doNotDisturb ? M_DARK : M_LIGHT;
+                break;
+        }
+
+        // In dark mode, adjust colors based on the contrast setting
+        if (M_DARK == colorMode) {
+            var foregroundColor = $.config.getValue($.Config.I_DM_CONTRAST);
+            _colors[M_DARK][C_FOREGROUND] = foregroundColor;
+            switch (foregroundColor) {
+                case Graphics.COLOR_WHITE:
+                    _colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
+                    _colors[M_DARK][C_BLUETOOTH] = Graphics.COLOR_DK_BLUE;
+                    break;
+                case Graphics.COLOR_LT_GRAY:
+                    _colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
+                    _colors[M_DARK][C_BLUETOOTH] = Graphics.COLOR_DK_BLUE;
+                    break;
+                case Graphics.COLOR_DK_GRAY:
+                    _colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
+                    _colors[M_DARK][C_BLUETOOTH] = Graphics.COLOR_BLUE;
+                    break;
+            }
+        }
+        return colorMode;
+    }
 } // class ClockView
 
 //! Receives watch face events
