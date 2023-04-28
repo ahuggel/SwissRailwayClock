@@ -228,14 +228,14 @@ class ClockView extends WatchUi.WatchFace {
     public function onUpdate(dc as Dc) as Void {
         dc.clearClip(); // Still needed as the settings menu messes with the clip
 
-        var clockTime = System.getClockTime();
-
         // Update the low-power mode timer
         if (_isAwake) { 
             _sleepTimer = SECOND_HAND_TIMER; // Reset the timer
         } else if (_sleepTimer > 0) {
             _sleepTimer--;
         }
+
+        var clockTime = System.getClockTime();
 
         // Only re-draw the watch face if the minute changed since the last time
         if (_lastDrawnMin != clockTime.min) { 
