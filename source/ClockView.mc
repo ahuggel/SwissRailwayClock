@@ -313,6 +313,18 @@ class ClockView extends WatchUi.WatchFace {
                 );
             }
 
+            // Draw the recovery time indicator at the 9 o'clock position
+            if ($.Config.O_RECOVERY_TIME_ON == $.config.getValue($.Config.I_RECOVERY_TIME)) {
+                var xpos = _width * 0.23;
+                var ypos = _height/2 - 1;
+                drawRecoveryTime(
+                    targetDc, 
+                    xpos.toNumber(), 
+                    ypos.toNumber(), 
+                    _colors[_colorMode][C_TEXT]
+                );
+            }
+
             // Draw the heart rate indicator at the spot which is not occupied by the date display,
             // by default on the right side
             if ($.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {

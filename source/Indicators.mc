@@ -72,6 +72,46 @@ function drawPhoneConnected(
     return ret;
 }
 
+// Draw the recovery time, return true if it was drawn
+// TODO: Combine this into an ActivityIndicators class, with drawHeartRate for synergies?
+function drawRecoveryTime(
+    dc as Dc, 
+    xpos as Number, 
+    ypos as Number,
+    textColor as Number
+) as Boolean {
+    var ret = false;
+    var timeToRecovery = null;
+    var info = ActivityMonitor.getInfo();
+    if (ActivityMonitor.Info has :timeToRecovery) {
+        timeToRecovery = info.timeToRecovery;
+    }
+    if (timeToRecovery != null) {
+        //timeToRecovery = 85;
+        //timeToRecovery = 123;
+        var font = Graphics.FONT_TINY;
+        var fontHeight = Graphics.getFontHeight(font);
+        var width = (fontHeight * 2.1).toNumber(); // Indicator width
+        var rt = timeToRecovery.format("%d");
+        dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(
+            timeToRecovery > 99 ? xpos + width*1/32 : xpos + width*1/16, ypos, 
+            ClockView.iconFont as FontResource, 
+            "R" as String, 
+            Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
+        );
+        dc.drawText(
+            timeToRecovery > 99 ? xpos + width*21/32 : timeToRecovery > 9 ? xpos + width/2 : xpos + width*5/16, 
+            ypos, 
+            font, 
+            rt,
+            Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
+        );
+        ret = true;
+    }
+    return ret;
+}
+
 // Draw the heart rate if it is available, return true if it was drawn
 function drawHeartRate(
     dc as Dc, 
