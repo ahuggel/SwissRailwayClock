@@ -2,27 +2,30 @@
 
 # Swiss Railway Clock - An analog watchface for Garmin smartwatches
 
-- This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a second hand in both high and low-power mode;
+- This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a [second hand] in both high and low-power mode;
 - The operation differs from the original Swiss railway clock in that the second hand updates only every second and it does not pause at 12 o'clock. There is also an option to make the second hand disappear in low-power mode, after about 30s;
-- On-device settings allow the configuration of battery level indicator, date display, dark mode and some other options. The menu implements three different types of menu items as well as a basic time picker;
-- Symbols for active alarms, phone connection and notifications done with very few lines of code and a custom icon font;
+- On-device settings allow the configuration of battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects and some other options. The menu implements three different types of menu items as well as a basic time picker;
+- Symbols for active alarms, phone connection and notifications, as well as the heart rate and recovery time indicators use icons from a [custom font];
 - A global settings class synchronises the selected options to persistent storage and makes them available across the app;
-- The program compiles without warnings with the compiler type checking level set to "Strict";
-- All modern Garmin watches should be able to run this watchface (```minApiLevel``` is set to 3.2.0, mostly to keep the code simple). It fails miserably in the always-on mode of watches with an AMOLED display though.
+- The program compiles with only a single warning with the compiler type checking level set to "Strict";
+- The ```main``` branch now uses [layers] and currently only works on devices with a graphics pool, i.e., devices which run [Connect IQ 4.0] and later. While I'm figuring out how to best combine everything into one app, older devices (```minApiLevel``` is set to 3.2.0) can use the ```legacy``` branch for the time being. Devices with [AMOLED] displays are not supported.
 
-This program is the result of my recent journey to learn basic Monkey C and the Garmin Connect IQ ecosystem. I tried to keep the source code simple and straightforward, with a generous amount of comments, and implement an easy to understand yet robust logic. I am making it available for others to hopefully be able to learn the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
+This program reflects the progress of my ongoing journey to learn Monkey C and the Garmin Connect IQ ecosystem to create an analog watchface. I am making it available for others to hopefully be able to learn the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
 
 ## Credits
 
-I've used several samples that come with the Garmin SDK, in particular: Analog, Menu2Sample and Picker.
-I also looked at the code at https://github.com/markwmuller/SwissWatchFace/, which is for a similar watchface, and
-read lots of very helpful posts in the Garmin Developer forum.
+I've used several samples that come with the Garmin SDK, in particular: Analog, Menu2Sample and Picker, looked at the code of some other watchface apps that are available on Github, and read lots of very helpful posts in the [Garmin Developer forum].
 
-The [Swiss railway clock] design was created by Hans Hilfiker in the 1940s and 1950s and it continues to be used at
-every railway station in Switzerland until today.
+The [Swiss railway clock] design was created by Hans Hilfiker in the 1940s and 1950s and it continues to be used at every railway station in Switzerland until today.
 
 Alarm, Bluetooth, Heart and SMS icons created by Google - [Flaticon]. License [CC 3.0 BY].
 
+[second hand]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-get-my-watch-face-to-update-every-second/
+[custom font]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-use-custom-fonts/
+[layers]: https://developer.garmin.com/connect-iq/core-topics/user-interface/
+[Connect IQ 4.0]: https://forums.garmin.com/developer/connect-iq/b/news-announcements/posts/a-whole-new-world-of-graphics-with-connect-iq-4
+[AMOLED]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-make-a-watch-face-for-amoled-products/#howdoimakeawatchfaceforamoledproducts
+[Garmin Developer forum]: https://forums.garmin.com/developer/connect-iq/f/discussion
 [Swiss railway clock]: https://en.wikipedia.org/wiki/Swiss_railway_clock
 [Flaticon]: https://www.flaticon.com/packs/material-design/
 [CC 3.0 BY]: https://creativecommons.org/licenses/by/3.0/
