@@ -86,7 +86,7 @@ function drawRecoveryTime(
     if (ActivityMonitor.Info has :timeToRecovery) {
         timeToRecovery = info.timeToRecovery;
     }
-    if (timeToRecovery != null) {
+    if (timeToRecovery != null and timeToRecovery > 0) {
         //timeToRecovery = 85;
         //timeToRecovery = 123;
         var font = Graphics.FONT_TINY;
