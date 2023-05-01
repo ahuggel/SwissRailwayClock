@@ -68,6 +68,8 @@ class ClockView extends WatchUi.WatchFace {
     private var _drawHeartRate as Boolean;
     private var _dateDisplay as Number;
     private var _shadowColor as Number;
+    private var _secondLayer as Layer;
+    private var _secondShadowLayer as Layer;
     private var _backgroundDc as Dc;
     private var _hourMinuteDc as Dc;
     private var _secondDc as Dc;
@@ -97,8 +99,8 @@ class ClockView extends WatchUi.WatchFace {
         if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
         _batteryLevel = new BatteryLevel(_clockRadius);
 
-        // Instead of a buffered bitmap, this version uses layers (since API Level 3.1.0) and depend
-        // on the graphics pool so the layers don't occupy application heap memory.
+        // Instead of a buffered bitmap, this version uses layers (since API Level 3.1.0) and depends
+        // on the graphics pool, so the layers don't occupy application heap memory.
         //
         // 1) A background layer with the tick marks and any indicators.
         // 2) A full screen layer just for the shadow of the second hand (when 3d effects are on)
@@ -114,16 +116,16 @@ class ClockView extends WatchUi.WatchFace {
         // Initialize layers and add them to the view
         var backgroundLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
         var hourMinuteLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
-        var secondLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
-        var secondShadowLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
+        _secondLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
+        _secondShadowLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
         addLayer(backgroundLayer);
-        addLayer(secondShadowLayer);
+        addLayer(_secondShadowLayer);
         addLayer(hourMinuteLayer);
-        addLayer(secondLayer);
+        addLayer(_secondLayer);
         _backgroundDc = backgroundLayer.getDc() as Dc;
         _hourMinuteDc = hourMinuteLayer.getDc() as Dc;
-        _secondDc = secondLayer.getDc() as Dc;
-        _secondShadowDc = secondShadowLayer.getDc() as Dc;
+        _secondDc = _secondLayer.getDc() as Dc;
+        _secondShadowDc = _secondShadowLayer.getDc() as Dc;
         _backgroundDc.setAntiAlias(true); // Graphics.Dc has :setAntiAlias since API Level 3.2.0
         _hourMinuteDc.setAntiAlias(true);
         _secondDc.setAntiAlias(true);
@@ -198,6 +200,7 @@ class ClockView extends WatchUi.WatchFace {
     public function onEnterSleep() as Void {
         _isAwake = false;
         _lastDrawnMin = -1; // Force the watch face to be re-drawn
+        if (_show3dEffects) { _secondShadowLayer.setVisible(false); }
         WatchUi.requestUpdate();
     }
 
@@ -205,6 +208,7 @@ class ClockView extends WatchUi.WatchFace {
     public function onExitSleep() as Void {
         _isAwake = true;
         _lastDrawnMin = -1; // Force the watch face to be re-drawn
+        _secondLayer.setVisible(true);
         WatchUi.requestUpdate();
     }
 
@@ -248,6 +252,7 @@ class ClockView extends WatchUi.WatchFace {
 
             // Note: Whether 3D effects are supported by the device is also ensured by getValue().
             _show3dEffects = $.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS) and M_LIGHT == _colorMode;
+            _secondShadowLayer.setVisible(_show3dEffects and _isAwake);
 
             // Handle the setting to disable the second hand in sleep mode after some time
             var secondsOption = $.config.getValue($.Config.I_HIDE_SECONDS);
@@ -350,10 +355,6 @@ class ClockView extends WatchUi.WatchFace {
                 );
             }
 
-            // Clear the second hand shadow layer
-            _secondShadowDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
-            _secondShadowDc.clear();
-
             // Clear the layer used for the hour and minute hands
             _hourMinuteDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
             _hourMinuteDc.clear();
@@ -414,6 +415,7 @@ class ClockView extends WatchUi.WatchFace {
                 // Delete the second hand for the last time
                 _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
                 _secondDc.clear();
+                _secondLayer.setVisible(false);
             }
         }
         if (_sleepTimer > 0 or !_hideSecondHand) {
