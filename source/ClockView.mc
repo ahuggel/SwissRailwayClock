@@ -256,7 +256,6 @@ class ClockView extends WatchUi.WatchFace {
 
             // Clear the background layer with the background color
             _backgroundDc.clearClip();
-            // Draw the background
             if (System.SCREEN_SHAPE_ROUND == _screenShape) {
                 // Fill the entire background with the background color
                 _backgroundDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
@@ -338,6 +337,18 @@ class ClockView extends WatchUi.WatchFace {
 
             // Get the heart rate setting
             _drawHeartRate = $.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE);
+
+            // Draw the recovery time indicator at the 9 o'clock position
+            if ($.Config.O_RECOVERY_TIME_ON == $.config.getValue($.Config.I_RECOVERY_TIME)) {
+                var xpos = _width * 0.23;
+                var ypos = _height/2 - 1;
+                drawRecoveryTime(
+                    _backgroundDc, 
+                    xpos.toNumber(), 
+                    ypos.toNumber(), 
+                    _colors[_colorMode][C_TEXT]
+                );
+            }
 
             // Clear the second hand shadow layer
             _secondShadowDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
