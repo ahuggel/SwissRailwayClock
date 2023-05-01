@@ -166,9 +166,11 @@ function drawHeartRate(
 
 class BatteryLevel {
     private var _clockRadius as Number;
+    private var _textColor as Number;
 
     public function initialize(clockRadius as Number) {
         _clockRadius = clockRadius;
+        _textColor = Graphics.COLOR_TRANSPARENT;
     }
 
     // Draw the battery indicator according to the settings, return true if it was actually drawn, else false
@@ -181,6 +183,7 @@ class BatteryLevel {
         textColor as Number,
         bgColor as Number
     ) as Boolean {
+        _textColor = textColor;
         var ret = false;
         var batterySetting = $.config.getValue($.Config.I_BATTERY);
         var systemStats = System.getSystemStats();
@@ -200,13 +203,13 @@ class BatteryLevel {
             switch (batterySetting) {
                 case $.Config.O_BATTERY_CLASSIC:
                 case $.Config.O_BATTERY_CLASSIC_WARN:
-                    drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, colorMode, color, textColor);
+                    drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, colorMode, color);
                     ret = true;
                     break;
                 case $.Config.O_BATTERY_MODERN:
                 case $.Config.O_BATTERY_MODERN_WARN:
                 case $.Config.O_BATTERY_HYBRID:
-                    drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, color, textColor);
+                    drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, color);
                     ret = true;
                     break;
             }
@@ -214,11 +217,11 @@ class BatteryLevel {
             switch (batterySetting) {
                 case $.Config.O_BATTERY_CLASSIC:
                 case $.Config.O_BATTERY_HYBRID:
-                    drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, colorMode, color, textColor);
+                    drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, colorMode, color);
                     ret = true;
                     break;
                 case $.Config.O_BATTERY_MODERN:
-                    drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, color, textColor);
+                    drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, color);
                     ret = true;
                     break;
             }
@@ -233,13 +236,12 @@ class BatteryLevel {
         ypos as Number, 
         level as Float, 
         levelInDays as Float, 
-        color as Number, 
-        textColor as Number
+        color as Number
     ) as Void {
         var radius = (3.2 * _clockRadius / 50.0 + 0.5).toNumber();
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(xpos, ypos, radius);
-        drawBatteryLabels(dc, xpos - radius, xpos + radius, ypos, level, levelInDays, textColor);
+        drawBatteryLabels(dc, xpos - radius, xpos + radius, ypos, level, levelInDays);
     }
 
     private function drawClassicBatteryIndicator(
@@ -249,8 +251,7 @@ class BatteryLevel {
         level as Float, 
         levelInDays as Float, 
         colorMode as Number,
-        color as Number, 
-        textColor as Number
+        color as Number
     ) as Void {
         // Dimensions of the battery level indicator, based on percentages of the clock diameter
         var pw = (1.2 * _clockRadius / 50.0 + 0.5).toNumber(); // pen size for the battery rectangle 
@@ -289,7 +290,7 @@ class BatteryLevel {
             dc.fillRectangle(xb + fb*(bw+ts), yb, bl, bh);
         }
 
-        drawBatteryLabels(dc, x - pw, x + width + (pw-1)/2 + cw, ypos, level, levelInDays, textColor);
+        drawBatteryLabels(dc, x - pw, x + width + (pw-1)/2 + cw, ypos, level, levelInDays);
     }
 
     // Draw battery labels for percentage and days depending on the settings
@@ -299,11 +300,10 @@ class BatteryLevel {
         x2 as Number, 
         y as Number, 
         level as Float, 
-        levelInDays as Float, 
-        textColor as Number
+        levelInDays as Float
     ) as Void {
         var font = Graphics.FONT_XTINY;
-        dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_textColor, Graphics.COLOR_TRANSPARENT);
         if ($.Config.O_BATTERY_PCT_ON == $.config.getValue($.Config.I_BATTERY_PCT)) {
             var str = (level + 0.5).toNumber() + "% ";
             dc.drawText(x1, y - Graphics.getFontHeight(font)/2, font, str, Graphics.TEXT_JUSTIFY_RIGHT);
