@@ -348,9 +348,10 @@ class ClockView extends WatchUi.WatchFace {
                 var xpos = _width * 0.23;
                 var ypos = _height/2 - 1;
                 drawRecoveryTime(
-                    _backgroundDc, 
-                    xpos.toNumber(), 
-                    ypos.toNumber(), 
+                    _backgroundDc,
+                    xpos.toNumber(),
+                    ypos.toNumber(),
+                    _colorMode,
                     _colors[_colorMode][C_TEXT]
                 );
             }

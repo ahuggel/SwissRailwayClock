@@ -19,6 +19,7 @@ I've used several samples that come with the Garmin SDK, in particular: Analog, 
 The [Swiss railway clock] design was created by Hans Hilfiker in the 1940s and 1950s and it continues to be used at every railway station in Switzerland until today.
 
 Alarm, Bluetooth, Heart and SMS icons created by Google - [Flaticon]. License [CC 3.0 BY].
+Hourglass icon by Afdalul Zikri. [Flaticon license].
 
 [second hand]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-get-my-watch-face-to-update-every-second/
 [custom font]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-use-custom-fonts/
@@ -29,7 +30,8 @@ Alarm, Bluetooth, Heart and SMS icons created by Google - [Flaticon]. License [C
 [Swiss railway clock]: https://en.wikipedia.org/wiki/Swiss_railway_clock
 [Flaticon]: https://www.flaticon.com/packs/material-design/
 [CC 3.0 BY]: https://creativecommons.org/licenses/by/3.0/
-
+[Flaticon license]: https://www.freepikcompany.com/legal?&_ga=2.78543444.1954543656.1683086561-616594141.1683086561&_gl=1*4sgkt0*test_ga*NjE2NTk0MTQxLjE2ODMwODY1NjE.*test_ga_523JXC6VL7*MTY4MzEyNDUwMi4yLjEuMTY4MzEyNDg0OS41NC4wLjA.*fp_ga*NjE2NTk0MTQxLjE2ODMwODY1NjE.*fp_ga_1ZY8468CQB*MTY4MzEyNDUzMi4yLjEuMTY4MzEyNDg0OS41NC4wLjA.#nav-flaticon
+ 
 ## License
 
 Copyright (C) Andreas Huggel <ahuggel@gmx.net>

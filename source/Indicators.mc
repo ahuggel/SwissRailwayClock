@@ -78,6 +78,7 @@ function drawRecoveryTime(
     dc as Dc, 
     xpos as Number, 
     ypos as Number,
+    colorMode as Number,
     textColor as Number
 ) as Boolean {
     var ret = false;
@@ -93,13 +94,14 @@ function drawRecoveryTime(
         var fontHeight = Graphics.getFontHeight(font);
         var width = (fontHeight * 2.1).toNumber(); // Indicator width
         var rt = timeToRecovery.format("%d");
-        dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
             timeToRecovery > 99 ? xpos + width*1/32 : xpos + width*1/16, ypos, 
             ClockView.iconFont as FontResource, 
             "R" as String, 
             Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
         );
+        dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
             timeToRecovery > 99 ? xpos + width*21/32 : timeToRecovery > 9 ? xpos + width/2 : xpos + width*5/16, 
             ypos, 
