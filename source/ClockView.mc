@@ -34,12 +34,12 @@ class ClockView extends WatchUi.WatchFace {
 
     // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the colors Array.
     enum { M_LIGHT, M_DARK } // Color modes
-    enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT, C_BLUETOOTH } // Indexes into the color arrays
+    enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
 
     private var _colorMode as Number;
     private var _colors as Array< Array<Number> > = [
-        [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED, Graphics.COLOR_DK_GRAY, Graphics.COLOR_BLUE],
-        [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_DK_GRAY, Graphics.COLOR_DK_BLUE]
+        [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED, Graphics.COLOR_DK_GRAY],
+        [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_DK_GRAY]
     ] as Array< Array<Number> >;
 
     private const TWO_PI as Float = 2 * Math.PI;
@@ -320,7 +320,7 @@ class ClockView extends WatchUi.WatchFace {
                     _backgroundDc, 
                     xpos.toNumber(), 
                     ypos.toNumber(), 
-                    _colors[_colorMode][C_BLUETOOTH], 
+                    _colors[_colorMode][C_FOREGROUND],
                     deviceSettings.phoneConnected
                 );
             }
@@ -593,15 +593,10 @@ class ClockView extends WatchUi.WatchFace {
             switch (foregroundColor) {
                 case Graphics.COLOR_WHITE:
                     _colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
-                    _colors[M_DARK][C_BLUETOOTH] = Graphics.COLOR_DK_BLUE;
                     break;
                 case Graphics.COLOR_LT_GRAY:
-                    _colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
-                    _colors[M_DARK][C_BLUETOOTH] = Graphics.COLOR_DK_BLUE;
-                    break;
                 case Graphics.COLOR_DK_GRAY:
                     _colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
-                    _colors[M_DARK][C_BLUETOOTH] = Graphics.COLOR_BLUE;
                     break;
             }
         }
