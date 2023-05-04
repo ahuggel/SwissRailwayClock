@@ -60,10 +60,14 @@ function drawPhoneConnected(
     dc as Dc, 
     xpos as Number, 
     ypos as Number, 
-    symbolColor as Number, 
+    bgColor as Number, 
     phoneConnected as Boolean
 ) as Boolean {
     var ret = false;
+    var symbolColor = Graphics.COLOR_BLUE;
+    if (Graphics.COLOR_LT_GRAY == bgColor or Graphics.COLOR_WHITE == bgColor) {
+        symbolColor = Graphics.COLOR_DK_BLUE;
+    }
     if (phoneConnected) {
         dc.setColor(symbolColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(xpos, ypos, ClockView.iconFont as FontResource, "B" as String, Graphics.TEXT_JUSTIFY_CENTER);
