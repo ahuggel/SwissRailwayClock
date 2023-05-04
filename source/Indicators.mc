@@ -98,19 +98,20 @@ function drawRecoveryTime(
         var fontHeight = Graphics.getFontHeight(font);
         var width = (fontHeight * 2.1).toNumber(); // Indicator width
         var rt = timeToRecovery.format("%d");
-        dc.setColor(colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(
-            timeToRecovery > 99 ? xpos + width*1/32 : xpos + width*1/16, ypos, 
-            ClockView.iconFont as FontResource, 
-            "R" as String, 
-            Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
-        );
         dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            timeToRecovery > 99 ? xpos + width*21/32 : timeToRecovery > 9 ? xpos + width/2 : xpos + width*5/16, 
-            ypos, 
+//            timeToRecovery > 99 ? xpos + width*8/32 : xpos + width*5/32, 
+            timeToRecovery > 99 ? xpos + width*8/32 : xpos + width*2/32, 
+            ypos - 1, 
             font, 
             rt,
+            Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
+        );
+        dc.setColor(colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(
+            timeToRecovery > 99 ? xpos + width*20/32 : xpos + width*14/32, ypos, 
+            ClockView.iconFont as FontResource, 
+            "R" as String, 
             Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
         );
         ret = true;
@@ -160,7 +161,7 @@ function drawHeartRate(
         dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
             xpos + width/2, 
-            ypos, 
+            ypos - 1, 
             font, 
             hr, 
             Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
