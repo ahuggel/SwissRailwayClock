@@ -100,16 +100,15 @@ function drawRecoveryTime(
         var rt = timeToRecovery.format("%d");
         dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-//            timeToRecovery > 99 ? xpos + width*8/32 : xpos + width*5/32, 
-            timeToRecovery > 99 ? xpos + width*8/32 : xpos + width*2/32, 
-            ypos - 1, 
+            timeToRecovery > 99 ? xpos + width*10/32 : xpos + width*4/32, 
+            ypos, 
             font, 
             rt,
             Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
         );
         dc.setColor(colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            timeToRecovery > 99 ? xpos + width*20/32 : xpos + width*14/32, ypos, 
+            timeToRecovery > 99 ? xpos + width*21/32 : xpos + width*15/32, ypos, 
             ClockView.iconFont as FontResource, 
             "R" as String, 
             Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
@@ -161,7 +160,7 @@ function drawHeartRate(
         dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
             xpos + width/2, 
-            ypos - 1, 
+            ypos,
             font, 
             hr, 
             Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
