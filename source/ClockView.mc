@@ -200,7 +200,6 @@ class ClockView extends WatchUi.WatchFace {
     public function onEnterSleep() as Void {
         _isAwake = false;
         _lastDrawnMin = -1; // Force the watch face to be re-drawn
-        if (_show3dEffects) { _secondShadowLayer.setVisible(false); }
         WatchUi.requestUpdate();
     }
 
