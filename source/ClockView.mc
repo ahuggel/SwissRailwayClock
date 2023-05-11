@@ -54,6 +54,9 @@ class ClockView extends WatchUi.WatchFace {
     // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
+    // Positions (x,y) of the indicators
+    private var _pos as Array< Array<Number> >;
+
     private var _isAwake as Boolean;
     private var _lastDrawnMin as Number;
     private var _doPartialUpdates as Boolean;
@@ -65,7 +68,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _sleepTimer as Number;
     private var _show3dEffects as Boolean;
     private var _hideSecondHand as Boolean;
-    private var _drawHeartRate as Boolean;
+    private var _drawHeartRate as Number;
     private var _dateDisplay as Number;
     private var _shadowColor as Number;
     private var _secondLayer as Layer;
@@ -93,7 +96,7 @@ class ClockView extends WatchUi.WatchFace {
         _sleepTimer = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
         _show3dEffects = false;
         _hideSecondHand = false;
-        _drawHeartRate = false;
+        _drawHeartRate = -1;
         _dateDisplay = 0;
         _shadowColor = 0;
         if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
@@ -174,6 +177,16 @@ class ClockView extends WatchUi.WatchFace {
         // Shorten the second hand from the circle center to the edge of the circle to avoid a dark shadow
         _coords[S_SECONDHAND * 8 + 3] += _secondCircleRadius - 1;
         _coords[S_SECONDHAND * 8 + 5] += _secondCircleRadius - 1;
+
+        // Positions of the various indicators (only heart rate for now)
+        _pos = [
+            [(_width * 0.73).toNumber(), (_height * 0.50).toNumber()], // 0: Heart rate indicator at 3 o'clock
+            [(_width * 0.48).toNumber(), (_height * 0.75).toNumber()], // 1: Heart rate indicator at 6 o'clock
+            [(_width * 0.23).toNumber(), (_height * 0.50).toNumber()], // 2: Recovery time indicator at 9 o'clock
+            [(_width * 0.50).toNumber(), (_clockRadius * 0.64).toNumber()], // 3: Battery level indicator at 12 o'clock with notifications
+            [(_width * 0.50).toNumber(), (_clockRadius * 0.50).toNumber()]  // 4: Battery level indicator at 12 o'clock w/o notifications
+
+        ] as Array< Array<Number> >;
     }
 
     //! Load resources and configure the layout of the watchface for this device
@@ -327,12 +340,11 @@ class ClockView extends WatchUi.WatchFace {
 
             // Draw the battery level indicator
             if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
-                var xpos = _width/2;
-                var ypos = symbolsDrawn ? _clockRadius * 0.64 : _clockRadius * 0.5;
+                var idx = symbolsDrawn ? 3 : 4;
                 _batteryLevel.draw(
                     _backgroundDc, 
-                    xpos.toNumber(), 
-                    ypos.toNumber(),
+                    _pos[idx][0], 
+                    _pos[idx][1],
                     _isAwake,
                     _colorMode,
                     _colors[_colorMode][C_TEXT],
@@ -340,17 +352,18 @@ class ClockView extends WatchUi.WatchFace {
                 );
             }
 
-            // Get the heart rate setting
-            _drawHeartRate = $.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE);
+            // Determine if the heart rate should be drawn, in a format that is useful as an index into _pos
+            _drawHeartRate = -1;
+            if ($.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
+                _drawHeartRate = $.Config.O_DATE_DISPLAY_DAY_ONLY == _dateDisplay ? 1 : 0;
+            }
 
             // Draw the recovery time indicator at the 9 o'clock position
             if ($.Config.O_RECOVERY_TIME_ON == $.config.getValue($.Config.I_RECOVERY_TIME)) {
-                var xpos = _width * 0.23;
-                var ypos = _height/2;
                 drawRecoveryTime(
                     _backgroundDc,
-                    xpos.toNumber(),
-                    ypos.toNumber(),
+                    _pos[2][0],
+                    _pos[2][1],
                     _colorMode,
                     _colors[_colorMode][C_TEXT]
                 );
@@ -382,17 +395,11 @@ class ClockView extends WatchUi.WatchFace {
         if (doIt) {
             // Draw the heart rate indicator at the spot which is not occupied by the date display,
             // by default on the right side
-            if (_drawHeartRate) {
-                var xpos = _width * 0.73;
-                var ypos = _height/2;
-                if ($.Config.O_DATE_DISPLAY_DAY_ONLY == _dateDisplay) {
-                    xpos = _width * 0.48;
-                    ypos = _height * 0.75;
-                }
+            if (_drawHeartRate != -1) {
                 drawHeartRate(
                     _backgroundDc, 
-                    xpos.toNumber(), 
-                    ypos.toNumber(), 
+                    _pos[_drawHeartRate][0], 
+                    _pos[_drawHeartRate][1], 
                     _isAwake, 
                     _colors[_colorMode][C_TEXT], 
                     _colors[_colorMode][C_BACKGROUND]
@@ -423,17 +430,11 @@ class ClockView extends WatchUi.WatchFace {
             var second = System.getClockTime().sec;
 
             // Continue to draw the heart rate indicator every 5 seconds
-            if (_drawHeartRate and 0 == second % 5) {
-                var xpos = _width * 0.73;
-                var ypos = _height/2 - 1;
-                if ($.Config.O_DATE_DISPLAY_DAY_ONLY == _dateDisplay) {
-                    xpos = _width * 0.48;
-                    ypos = _height * 0.75;
-                }
+            if (_drawHeartRate != -1 and 0 == second % 5) {
                 drawHeartRate(
                     _backgroundDc, 
-                    xpos.toNumber(), 
-                    ypos.toNumber(), 
+                    _pos[_drawHeartRate][0], 
+                    _pos[_drawHeartRate][1], 
                     _isAwake, 
                     _colors[_colorMode][C_TEXT], 
                     _colors[_colorMode][C_BACKGROUND]
