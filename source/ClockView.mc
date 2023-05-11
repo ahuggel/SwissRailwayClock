@@ -213,6 +213,7 @@ class ClockView extends WatchUi.WatchFace {
 
     public function stopPartialUpdates() as Void {
         _doPartialUpdates = false;
+        _colors[M_LIGHT][C_BACKGROUND] = Graphics.COLOR_LT_GRAY; // Make the issue visible
     }
 
     //! Handle the update event. This function is called
