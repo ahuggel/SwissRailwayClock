@@ -54,7 +54,12 @@ class ClockView extends WatchUi.WatchFace {
     // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
-    // Positions (x,y) of the indicators
+    // Cache for all numbers required to draw the second hand. These are pre-calculated in onLayout().
+    var _secondCenter as Array< Array<Number> > = new Array< Array<Number> >[60];
+    var _secondCoords as Array< Array< Array<Number> > > = new Array< Array< Array<Number> > >[60];
+    var _secondClip as Array< Array<Number> > = new Array< Array<Number> >[60];
+
+    // Positions (x,y) of the indicators, set in onLayout().
     private var _pos as Array< Array<Number> > = new Array< Array<Number> >[0]; // just to have an initialization
 
     private var _isAwake as Boolean;
@@ -190,6 +195,8 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         // TODO: introduce globals for the fonts used and their heights
+
+        calcSecondHand();
 
         // Positions of the various indicators
         _pos = [
@@ -448,79 +455,94 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     // Draw the second hand for the given second, including a shadow, if required, and set the clipping region.
-    // This function is performance critical (when !isAwake) and has been optimized.
+    // This function is performance critical (when !isAwake) and has been optimized to use only pre-calculated numbers.
     private function drawSecondHand(dc as Dc, second as Number) as Void {
         // Clear the clip of the layer to delete the second hand
         dc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
         dc.clear();
 
-        // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
-        var angle = second * 0.104719758; // TWO_PI / 60.0
-        var sin = Math.sin(angle);
-        var cos = Math.cos(angle);
-        var offsetX = _screenCenter[0] + 0.5;
-		var offsetY = _screenCenter[1] + 0.5;
-
-        // Rotate the center of the second hand circle
-        var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + offsetX).toNumber();
-        var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + offsetY).toNumber();
-
-        // Rotate the rectangular portion of the second hand, using inlined code from rotateCoords() to improve performance
-        // Optimized: idx = S_SECONDHAND * 8; idy = idx + 1; and etc.
-        var x0 = (_coords[32] * cos - _coords[33] * sin + offsetX).toNumber();
-        var y0 = (_coords[32] * sin + _coords[33] * cos + offsetY).toNumber();
-        var x1 = (_coords[34] * cos - _coords[35] * sin + offsetX).toNumber();
-        var y1 = (_coords[34] * sin + _coords[35] * cos + offsetY).toNumber();
-        var x2 = (_coords[36] * cos - _coords[37] * sin + offsetX).toNumber();
-        var y2 = (_coords[36] * sin + _coords[37] * cos + offsetY).toNumber();
-        var x3 = (_coords[38] * cos - _coords[39] * sin + offsetX).toNumber();
-        var y3 = (_coords[38] * sin + _coords[39] * cos + offsetY).toNumber();
-        var coords = [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
+        // Set the clipping region
+        dc.setClip(_secondClip[second][0], _secondClip[second][1], _secondClip[second][2], _secondClip[second][3]);
 
         if (_isAwake and _show3dEffects) {
-            // Clear the second hand shadow layer and draw the shadow
+            // Clear the clip of the second hand shadow layer
             _secondShadowDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
             _secondShadowDc.clear();
+
+            // Set clipping region of the shadow by moving the clipping region of the second hand
+            var sc = shadowCoords([_secondCenter[second], [_secondClip[second][0], _secondClip[second][1]]] as Array< Array<Number> >, 10);
+            _secondShadowDc.setClip(sc[1][0], sc[1][1], _secondClip[second][2], _secondClip[second][3]);
+
+            // Draw the shadow of the second hand
             _secondShadowDc.setFill(_shadowColor);
-            _secondShadowDc.fillPolygon(shadowCoords(coords, 10));
-            var shadowCenter = shadowCoords([[x, y]] as Array< Array<Number> >, 10);
-            _secondShadowDc.fillCircle(shadowCenter[0][0], shadowCenter[0][1], _secondCircleRadius);
+            _secondShadowDc.fillPolygon(shadowCoords(_secondCoords[second], 10));
+            _secondShadowDc.fillCircle(sc[0][0], sc[0][1], _secondCircleRadius);
         }
 
-        // Set the clipping region
-        var xx1 = x - _secondCircleRadius;
-        var yy1 = y - _secondCircleRadius;
-        var xx2 = x + _secondCircleRadius;
-        var yy2 = y + _secondCircleRadius;
-        var minX = 65536;
-        var minY = 65536;
-        var maxX = 0;
-        var maxY = 0;
-        // coords[1], coords[2] optimized out: only consider the tail and circle coords, loop unrolled for performance,
-        // use only points [x0, y0], [x3, y3], [xx1, yy1], [xx2, yy1], [xx2, yy2], [xx1, yy2], minus duplicate comparisons
-        if (x0 < minX) { minX = x0; }
-        if (y0 < minY) { minY = y0; }
-        if (x0 > maxX) { maxX = x0; }
-        if (y0 > maxY) { maxY = y0; }
-        if (x3 < minX) { minX = x3; }
-        if (y3 < minY) { minY = y3; }
-        if (x3 > maxX) { maxX = x3; }
-        if (y3 > maxY) { maxY = y3; }
-        if (xx1 < minX) { minX = xx1; }
-        if (yy1 < minY) { minY = yy1; }
-        if (xx1 > maxX) { maxX = xx1; }
-        if (yy1 > maxY) { maxY = yy1; }
-        if (xx2 < minX) { minX = xx2; }
-        if (yy2 < minY) { minY = yy2; }
-        if (xx2 > maxX) { maxX = xx2; }
-        if (yy2 > maxY) { maxY = yy2; }
-        // Add two pixels on each side for good measure
-        dc.setClip(minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4);
-
-        // Finally, draw the second hand
+        // Draw the second hand
         dc.setColor(_colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_RED /* colors[colorMode][C_SECONDS] */, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon(coords);
-        dc.fillCircle(x, y, _secondCircleRadius);
+        dc.fillPolygon(_secondCoords[second]);
+        dc.fillCircle(_secondCenter[second][0], _secondCenter[second][1], _secondCircleRadius);
+    }
+
+    // Calculate all numbers required to draw the second hand for every second.
+    private function calcSecondHand() as Void {
+        for (var second = 0; second < 60; second++) {
+
+            // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
+            var angle = second * 0.104719758; // TWO_PI / 60.0
+            var sin = Math.sin(angle);
+            var cos = Math.cos(angle);
+            var offsetX = _screenCenter[0] + 0.5;
+            var offsetY = _screenCenter[1] + 0.5;
+
+            // Rotate the center of the second hand circle
+            var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + offsetX).toNumber();
+            var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + offsetY).toNumber();
+            _secondCenter[second] = [x, y];
+
+            // Rotate the rectangular portion of the second hand, using inlined code from rotateCoords() to improve performance
+            // Optimized: idx = S_SECONDHAND * 8; idy = idx + 1; and etc.
+            var x0 = (_coords[32] * cos - _coords[33] * sin + offsetX).toNumber();
+            var y0 = (_coords[32] * sin + _coords[33] * cos + offsetY).toNumber();
+            var x1 = (_coords[34] * cos - _coords[35] * sin + offsetX).toNumber();
+            var y1 = (_coords[34] * sin + _coords[35] * cos + offsetY).toNumber();
+            var x2 = (_coords[36] * cos - _coords[37] * sin + offsetX).toNumber();
+            var y2 = (_coords[36] * sin + _coords[37] * cos + offsetY).toNumber();
+            var x3 = (_coords[38] * cos - _coords[39] * sin + offsetX).toNumber();
+            var y3 = (_coords[38] * sin + _coords[39] * cos + offsetY).toNumber();
+            _secondCoords[second] = [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
+
+            // Set the clipping region
+            var xx1 = x - _secondCircleRadius;
+            var yy1 = y - _secondCircleRadius;
+            var xx2 = x + _secondCircleRadius;
+            var yy2 = y + _secondCircleRadius;
+            var minX = 65536;
+            var minY = 65536;
+            var maxX = 0;
+            var maxY = 0;
+            // coords[1], coords[2] optimized out: only consider the tail and circle coords, loop unrolled for performance,
+            // use only points [x0, y0], [x3, y3], [xx1, yy1], [xx2, yy1], [xx2, yy2], [xx1, yy2], minus duplicate comparisons
+            if (x0 < minX) { minX = x0; }
+            if (y0 < minY) { minY = y0; }
+            if (x0 > maxX) { maxX = x0; }
+            if (y0 > maxY) { maxY = y0; }
+            if (x3 < minX) { minX = x3; }
+            if (y3 < minY) { minY = y3; }
+            if (x3 > maxX) { maxX = x3; }
+            if (y3 > maxY) { maxY = y3; }
+            if (xx1 < minX) { minX = xx1; }
+            if (yy1 < minY) { minY = yy1; }
+            if (xx1 > maxX) { maxX = xx1; }
+            if (yy1 > maxY) { maxY = yy1; }
+            if (xx2 < minX) { minX = xx2; }
+            if (yy2 < minY) { minY = yy2; }
+            if (xx2 > maxX) { maxX = xx2; }
+            if (yy2 > maxY) { maxY = yy2; }
+            // Add two pixels on each side for good measure
+            _secondClip[second] = [minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4];
+        }
     }
 
     //! Rotate the four corner coordinates of a polygon used to draw a watch hand or a tick mark.
