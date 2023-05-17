@@ -55,9 +55,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
     // Cache for all numbers required to draw the second hand. These are pre-calculated in onLayout().
-    var _secondCenter as Array< Array<Number> > = new Array< Array<Number> >[60];
-    var _secondCoords as Array< Array< Array<Number> > > = new Array< Array< Array<Number> > >[60];
-    var _secondClip as Array< Array<Number> > = new Array< Array<Number> >[60];
+    var _secondData as Array< Array<Number> > = new Array< Array<Number> >[60];
 
     // Positions (x,y) of the indicators, set in onLayout().
     private var _pos as Array< Array<Number> > = new Array< Array<Number> >[0]; // just to have an initialization
@@ -461,8 +459,11 @@ class ClockView extends WatchUi.WatchFace {
         dc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
         dc.clear();
 
+        var sd = _secondData[second];
+        var coords = [[sd[2], sd[3]], [sd[4], sd[5]], [sd[6], sd[7]], [sd[8], sd[9]]] as Array< Array<Number> >;
+
         // Set the clipping region
-        dc.setClip(_secondClip[second][0], _secondClip[second][1], _secondClip[second][2], _secondClip[second][3]);
+        dc.setClip(sd[10], sd[11], sd[12], sd[13]);
 
         if (_isAwake and _show3dEffects) {
             // Clear the clip of the second hand shadow layer
@@ -470,19 +471,19 @@ class ClockView extends WatchUi.WatchFace {
             _secondShadowDc.clear();
 
             // Set clipping region of the shadow by moving the clipping region of the second hand
-            var sc = shadowCoords([_secondCenter[second], [_secondClip[second][0], _secondClip[second][1]]] as Array< Array<Number> >, 10);
-            _secondShadowDc.setClip(sc[1][0], sc[1][1], _secondClip[second][2], _secondClip[second][3]);
+            var sc = shadowCoords([[sd[0], sd[1]], [sd[10], sd[11]]] as Array< Array<Number> >, 10);
+            _secondShadowDc.setClip(sc[1][0], sc[1][1], sd[12], sd[13]);
 
             // Draw the shadow of the second hand
             _secondShadowDc.setFill(_shadowColor);
-            _secondShadowDc.fillPolygon(shadowCoords(_secondCoords[second], 10));
+            _secondShadowDc.fillPolygon(shadowCoords(coords, 10));
             _secondShadowDc.fillCircle(sc[0][0], sc[0][1], _secondCircleRadius);
         }
 
         // Draw the second hand
         dc.setColor(_colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_RED /* colors[colorMode][C_SECONDS] */, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon(_secondCoords[second]);
-        dc.fillCircle(_secondCenter[second][0], _secondCenter[second][1], _secondCircleRadius);
+        dc.fillPolygon(coords);
+        dc.fillCircle(sd[0], sd[1], _secondCircleRadius);
     }
 
     // Calculate all numbers required to draw the second hand for every second.
@@ -499,7 +500,6 @@ class ClockView extends WatchUi.WatchFace {
             // Rotate the center of the second hand circle
             var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + offsetX).toNumber();
             var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + offsetY).toNumber();
-            _secondCenter[second] = [x, y];
 
             // Rotate the rectangular portion of the second hand, using inlined code from rotateCoords() to improve performance
             // Optimized: idx = S_SECONDHAND * 8; idy = idx + 1; and etc.
@@ -511,7 +511,6 @@ class ClockView extends WatchUi.WatchFace {
             var y2 = (_coords[36] * sin + _coords[37] * cos + offsetY).toNumber();
             var x3 = (_coords[38] * cos - _coords[39] * sin + offsetX).toNumber();
             var y3 = (_coords[38] * sin + _coords[39] * cos + offsetY).toNumber();
-            _secondCoords[second] = [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
 
             // Set the clipping region
             var xx1 = x - _secondCircleRadius;
@@ -540,8 +539,10 @@ class ClockView extends WatchUi.WatchFace {
             if (yy2 < minY) { minY = yy2; }
             if (xx2 > maxX) { maxX = xx2; }
             if (yy2 > maxY) { maxY = yy2; }
-            // Add two pixels on each side for good measure
-            _secondClip[second] = [minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4];
+
+            // Save the calculated numbers, add two pixels on each side of the clipping region for good measure
+            //              Index: 0  1   2   3   4   5   6   7   8   9        10        11               12               13
+            _secondData[second] = [x, y, x0, y0, x1, y1, x2, y2, x3, y3, minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4];
         }
     }
 
