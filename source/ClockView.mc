@@ -55,7 +55,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
     // Positions (x,y) of the indicators
-    private var _pos as Array< Array<Number> >;
+    private var _pos as Array< Array<Number> > = new Array< Array<Number> >[0]; // just to have an initialization
 
     private var _isAwake as Boolean;
     private var _lastDrawnMin as Number;
@@ -177,16 +177,6 @@ class ClockView extends WatchUi.WatchFace {
         // Shorten the second hand from the circle center to the edge of the circle to avoid a dark shadow
         _coords[S_SECONDHAND * 8 + 3] += _secondCircleRadius - 1;
         _coords[S_SECONDHAND * 8 + 5] += _secondCircleRadius - 1;
-
-        // Positions of the various indicators (only heart rate for now)
-        _pos = [
-            [(_width * 0.73).toNumber(), (_height * 0.50).toNumber()], // 0: Heart rate indicator at 3 o'clock
-            [(_width * 0.48).toNumber(), (_height * 0.75).toNumber()], // 1: Heart rate indicator at 6 o'clock
-            [(_width * 0.23).toNumber(), (_height * 0.50).toNumber()], // 2: Recovery time indicator at 9 o'clock
-            [(_width * 0.50).toNumber(), (_clockRadius * 0.64).toNumber()], // 3: Battery level indicator at 12 o'clock with notifications
-            [(_width * 0.50).toNumber(), (_clockRadius * 0.50).toNumber()]  // 4: Battery level indicator at 12 o'clock w/o notifications
-
-        ] as Array< Array<Number> >;
     }
 
     //! Load resources and configure the layout of the watchface for this device
@@ -198,6 +188,22 @@ class ClockView extends WatchUi.WatchFace {
         } else {
             iconFont = WatchUi.loadResource(Rez.Fonts.Icons) as FontResource;
         }
+
+        // TODO: introduce globals for the fonts used and their heights
+
+        // Positions of the various indicators
+        _pos = [
+            [(_width * 0.73).toNumber(), (_height * 0.50).toNumber()],      // 0: Heart rate indicator at 3 o'clock
+            [(_width * 0.48).toNumber(), (_height * 0.75).toNumber()],      // 1: Heart rate indicator at 6 o'clock
+            [(_width * 0.23).toNumber(), (_height * 0.50).toNumber()],      // 2: Recovery time indicator at 9 o'clock
+            [(_width * 0.50).toNumber(), (_clockRadius * 0.64).toNumber()], // 3: Battery level indicator at 12 o'clock with notifications
+            [(_width * 0.50).toNumber(), (_clockRadius * 0.50).toNumber()], // 4: Battery level indicator at 12 o'clock w/o notifications
+            [(_width * 0.50).toNumber(), (_height * 0.18).toNumber()],      // 5: Alarms and notifications at 12 o'clock
+            [(_width * 0.50).toNumber(), (_height * 0.50 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(iconFont as FontResource))/3).toNumber()], // 6: Phone connection indicator on the 6 o'clock tick mark
+            [(_width * 0.75).toNumber(), (_height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
+            [(_width * 0.50).toNumber(), (_height * 0.65).toNumber()]       // 8: Date (weekday and day format) at 6 o'clock
+        ] as Array< Array<Number> >;
+
     }
 
     //! Called when this View is brought to the foreground. Restore the state of this view and
@@ -301,11 +307,11 @@ class ClockView extends WatchUi.WatchFace {
             switch (_dateDisplay) {
                 case $.Config.O_DATE_DISPLAY_DAY_ONLY: 
                     var dateStr = info.day.format("%02d");
-                    _backgroundDc.drawText(_width*0.75, _height/2 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
+                    _backgroundDc.drawText(_pos[7][0], _pos[7][1], Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                     break;
                 case $.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY:
                     dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
-                    _backgroundDc.drawText(_width/2, _height*0.65, Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
+                    _backgroundDc.drawText(_pos[8][0], _pos[8][1], Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
                     break;
             }
 
@@ -313,12 +319,10 @@ class ClockView extends WatchUi.WatchFace {
             var symbolsDrawn = false;
             if ($.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS)
                 or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
-                var xpos = _width/2;
-                var ypos = _height * 0.18;
                 symbolsDrawn = drawSymbols(
                     _backgroundDc, 
-                    xpos.toNumber(), 
-                    ypos.toNumber(), 
+                    _pos[5][0], 
+                    _pos[5][1], 
                     _colors[_colorMode][C_TEXT],
                     deviceSettings.alarmCount,
                     deviceSettings.notificationCount
@@ -327,12 +331,10 @@ class ClockView extends WatchUi.WatchFace {
 
             // Draw the phone connection indicator on the 6 o'clock tick mark
             if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) {
-                var xpos = _width/2;
-                var ypos = _height/2 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(iconFont as FontResource))/3;
                 drawPhoneConnected(
                     _backgroundDc, 
-                    xpos.toNumber(), 
-                    ypos.toNumber(), 
+                    _pos[6][0], 
+                    _pos[6][1], 
                     _colors[_colorMode][C_FOREGROUND],
                     deviceSettings.phoneConnected
                 );
