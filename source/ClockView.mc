@@ -36,7 +36,7 @@ class ClockView extends WatchUi.WatchFace {
     enum { M_LIGHT, M_DARK } // Color modes
     enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
 
-    private var _colorMode as Number;
+    private var _colorMode as Number = M_LIGHT;
     private var _colors as Array< Array<Number> > = [
         [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED, Graphics.COLOR_DK_GRAY],
         [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_DK_GRAY]
@@ -49,8 +49,8 @@ class ClockView extends WatchUi.WatchFace {
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
     // A 2 dimensional array for the geometry of the watchface shapes - because the initialisation is more intuitive that way
     private var _shapes as Array< Array<Float> > = new Array< Array<Float> >[S_SIZE];
-    private var _secondCircleRadius as Number; // Radius of the second hand circle
-    private var _secondCircleCenter as Array<Number>; // Center of the second hand circle
+    private var _secondCircleRadius as Number = 0; // Radius of the second hand circle
+    private var _secondCircleCenter as Array<Number> = new Array<Number>[2]; // Center of the second hand circle
     // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
@@ -60,48 +60,40 @@ class ClockView extends WatchUi.WatchFace {
     // Positions (x,y) of the indicators, set in onLayout().
     private var _pos as Array< Array<Number> > = new Array< Array<Number> >[0]; // just to have an initialization
 
-    private var _isAwake as Boolean;
-    private var _lastDrawnMin as Number;
-    private var _doPartialUpdates as Boolean;
+    private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
+    private var _lastDrawnMin as Number = -1; // Minute when the watch face was last completely re-drawn
+    private var _doPartialUpdates as Boolean = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
+    private var _sleepTimer as Number = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
+    private var _show3dEffects as Boolean = false;
+    private var _hideSecondHand as Boolean = false;
+    private var _drawHeartRate as Number = -1;
+    private var _dateDisplay as Number = 0;
+    private var _shadowColor as Number = 0;
+
     private var _screenShape as Number;
     private var _width as Number;
     private var _height as Number;
     private var _screenCenter as Array<Number>;
     private var _clockRadius as Number;
-    private var _sleepTimer as Number;
-    private var _show3dEffects as Boolean;
-    private var _hideSecondHand as Boolean;
-    private var _drawHeartRate as Number;
-    private var _dateDisplay as Number;
-    private var _shadowColor as Number;
+    private var _batteryLevel as BatteryLevel;
+
     private var _secondLayer as Layer;
     private var _secondShadowLayer as Layer;
     private var _backgroundDc as Dc;
     private var _hourMinuteDc as Dc;
     private var _secondDc as Dc;
     private var _secondShadowDc as Dc;
-    private var _batteryLevel as BatteryLevel;
 
     //! Constructor. Initialize the variables for this view.
     public function initialize() {
         WatchFace.initialize();
 
-        _colorMode = M_LIGHT;
-        _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
-        _lastDrawnMin = -1; // Minute when the watch face was last completely re-drawn
-        _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
         var deviceSettings = System.getDeviceSettings();
         _screenShape = deviceSettings.screenShape;
         _width = deviceSettings.screenWidth;
         _height = deviceSettings.screenHeight;
         _screenCenter = [_width/2, _height/2] as Array<Number>;
         _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
-        _sleepTimer = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
-        _show3dEffects = false;
-        _hideSecondHand = false;
-        _drawHeartRate = -1;
-        _dateDisplay = 0;
-        _shadowColor = 0;
         if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
         _batteryLevel = new BatteryLevel(_clockRadius);
 
@@ -136,6 +128,18 @@ class ClockView extends WatchUi.WatchFace {
         _hourMinuteDc.setAntiAlias(true);
         _secondDc.setAntiAlias(true);
         _secondShadowDc.setAntiAlias(true);
+    }
+
+    //! Load resources and configure the layout of the watchface for this device
+    //! @param dc Device context
+    public function onLayout(dc as Dc) as Void {
+        // Load the custom font with the symbols
+        if (Graphics has :FontReference) {
+            var fontRef = WatchUi.loadResource(Rez.Fonts.Icons) as FontReference;
+            iconFont = fontRef.get() as FontResource;
+        } else {
+            iconFont = WatchUi.loadResource(Rez.Fonts.Icons) as FontResource;
+        }
 
         // Geometry of the hands and tick marks of the clock, as percentages of the diameter of the
         // clock face. Each of these shapes is a polygon (trapezoid), defined by
@@ -180,20 +184,8 @@ class ClockView extends WatchUi.WatchFace {
         // Shorten the second hand from the circle center to the edge of the circle to avoid a dark shadow
         _coords[S_SECONDHAND * 8 + 3] += _secondCircleRadius - 1;
         _coords[S_SECONDHAND * 8 + 5] += _secondCircleRadius - 1;
-    }
 
-    //! Load resources and configure the layout of the watchface for this device
-    //! @param dc Device context
-    public function onLayout(dc as Dc) as Void {
-        if (Graphics has :FontReference) {
-            var fontRef = WatchUi.loadResource(Rez.Fonts.Icons) as FontReference;
-            iconFont = fontRef.get() as FontResource;
-        } else {
-            iconFont = WatchUi.loadResource(Rez.Fonts.Icons) as FontResource;
-        }
-
-        // TODO: introduce globals for the fonts used and their heights
-
+        // Calculate all numbers required to draw the second hand for every second
         calcSecondHand();
 
         // Positions of the various indicators
