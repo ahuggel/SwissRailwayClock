@@ -1,1 +1,24 @@
 project.manifest = manifest.xml
+
+# Reset the base source path to include only the common source files in the source folder.
+base.sourcePath = source
+
+# Watches without layer support or insufficient memory use a buffered bitmap.
+# TODO: fenix5*, fenix6s*, fr945* still run out of memory
+fenix5plus.sourcePath = $(fenix5plus.sourcePath);source-legacy
+fenix5splus.sourcePath = $(fenix5splus.sourcePath);source-legacy
+fenix5xplus.sourcePath = $(fenix5xplus.sourcePath);source-legacy
+fenix6.sourcePath = $(fenix6.sourcePath);source-legacy
+fenix6pro.sourcePath = $(fenix6pro.sourcePath);source-legacy
+fenix6s.sourcePath = $(fenix6s.sourcePath);source-legacy
+fenix6spro.sourcePath = $(fenix6spro.sourcePath);source-legacy
+fenix6xpro.sourcePath = $(fenix6xpro.sourcePath);source-legacy
+fr945.sourcePath = $(fr945.sourcePath);source-legacy
+fr945lte.sourcePath = $(fr945lte.sourcePath);source-legacy
+
+# Watches with layer support and a graphics pool or sufficient memory use layers.
+fenix7.sourcePath = $(fenix7.sourcePath);source-modern
+fenix7system6preview.sourcePath = $(fenix7system6preview.sourcePath);source-modern
+fenix7s.sourcePath = $(fenix7s.sourcePath);source-modern
+fenix7x.sourcePath = $(fenix7x.sourcePath);source-modern
+fr955.sourcePath = $(fr955.sourcePath);source-modern
