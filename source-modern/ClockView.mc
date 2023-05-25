@@ -64,8 +64,8 @@ class ClockView extends WatchUi.WatchFace {
     private var _lastDrawnMin as Number = -1; // Minute when the watch face was last completely re-drawn
     private var _doPartialUpdates as Boolean = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
     private var _sleepTimer as Number = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
-    private var _show3dEffects as Boolean = false;
     private var _hideSecondHand as Boolean = false;
+    private var _show3dEffects as Boolean = false;
     private var _drawHeartRate as Number = -1;
     private var _dateDisplay as Number = 0;
     private var _shadowColor as Number = 0;
@@ -88,13 +88,13 @@ class ClockView extends WatchUi.WatchFace {
     public function initialize() {
         WatchFace.initialize();
 
+        if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
         var deviceSettings = System.getDeviceSettings();
         _screenShape = deviceSettings.screenShape;
         _width = deviceSettings.screenWidth;
         _height = deviceSettings.screenHeight;
         _screenCenter = [_width/2, _height/2] as Array<Number>;
         _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
-        if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
         _batteryLevel = new BatteryLevel(_clockRadius);
 
         // Instead of a buffered bitmap, this version uses layers (since API Level 3.1.0) and depends

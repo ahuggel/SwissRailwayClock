@@ -36,7 +36,7 @@ class ClockView extends WatchUi.WatchFace {
     enum { M_LIGHT, M_DARK } // Color modes
     enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
 
-    private var _colorMode as Number;
+    private var _colorMode as Number = M_LIGHT;
     private var _colors as Array< Array<Number> > = [
         [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED, Graphics.COLOR_DK_GRAY],
         [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_DK_GRAY]
@@ -49,22 +49,23 @@ class ClockView extends WatchUi.WatchFace {
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
     // A 2 dimensional array for the geometry of the watchface shapes - because the initialisation is more intuitive that way
     private var _shapes as Array< Array<Float> > = new Array< Array<Float> >[S_SIZE];
-    private var _secondCircleRadius as Number; // Radius of the second hand circle
-    private var _secondCircleCenter as Array<Number>; // Center of the second hand circle
+    private var _secondCircleRadius as Number = 0; // Radius of the second hand circle
+    private var _secondCircleCenter as Array<Number> = new Array<Number>[2]; // Center of the second hand circle
     // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
-    private var _isAwake as Boolean;
-    private var _lastDrawnMin as Number;
-    private var _doPartialUpdates as Boolean;
+    private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
+    private var _lastDrawnMin as Number = -1; // Minute when the watch face was last completely re-drawn
+    private var _doPartialUpdates as Boolean = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
+    private var _sleepTimer as Number = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
+    private var _hideSecondHand as Boolean = false;
     private var _hasAntiAlias as Boolean;
+
     private var _screenShape as Number;
     private var _width as Number;
     private var _height as Number;
     private var _screenCenter as Array<Number>;
     private var _clockRadius as Number;
-    private var _sleepTimer as Number;
-    private var _hideSecondHand as Boolean;
     private var _batteryLevel as BatteryLevel;
     private var _offscreenBuffer as BufferedBitmap;
 
@@ -72,10 +73,6 @@ class ClockView extends WatchUi.WatchFace {
     public function initialize() {
         WatchFace.initialize();
 
-        _colorMode = M_LIGHT;
-        _isAwake = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
-        _lastDrawnMin = -1; // Minute when the watch face was last completely re-drawn
-        _doPartialUpdates = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
         _hasAntiAlias = (Toybox.Graphics.Dc has :setAntiAlias);
         var deviceSettings = System.getDeviceSettings();
         _screenShape = deviceSettings.screenShape;
@@ -83,8 +80,6 @@ class ClockView extends WatchUi.WatchFace {
         _height = deviceSettings.screenHeight;
         _screenCenter = [_width/2, _height/2] as Array<Number>;
         _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
-        _sleepTimer = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
-        _hideSecondHand = false;
         _batteryLevel = new BatteryLevel(_clockRadius);
 
         // Allocate the buffer we use for drawing the watchface, using BufferedBitmap (API Level 2.3.0).
