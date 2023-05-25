@@ -16,7 +16,6 @@
         <iq:products>
             <iq:product id="descentmk2"/>
             <iq:product id="descentmk2s"/>
-            <iq:product id="enduro"/>
             <iq:product id="fenix5plus"/>
             <iq:product id="fenix5splus"/>
             <iq:product id="fenix5xplus"/>
@@ -45,6 +44,16 @@
             <iq:product id="legacyherofirstavenger"/>
             <iq:product id="legacysagadarthvader"/>
             <iq:product id="legacysagarey"/>
+            <iq:product id="marqadventurer"/>
+            <iq:product id="marqathlete"/>
+            <iq:product id="marqaviator"/>
+            <iq:product id="marqcaptain"/>
+            <iq:product id="marqcommander"/>
+            <iq:product id="marqdriver"/>
+            <iq:product id="marqexpedition"/>
+            <iq:product id="marqgolfer"/>
+            <iq:product id="venu"/>
+            <iq:product id="venu2"/>
             <iq:product id="vivoactive3m"/>
             <iq:product id="vivoactive4"/>
             <iq:product id="vivoactive4s"/>
