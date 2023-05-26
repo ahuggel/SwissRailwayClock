@@ -95,6 +95,18 @@ class ClockView extends WatchUi.WatchFace {
     	} else {
     		_offscreenBuffer = new Graphics.BufferedBitmap(bbmo);
 		}
+    }
+
+    //! Load resources and configure the layout of the watchface for this device
+    //! @param dc Device context
+    public function onLayout(dc as Dc) as Void {
+        // Load the custom font with the symbols
+        if (Graphics has :FontReference) {
+            var fontRef = WatchUi.loadResource(Rez.Fonts.Icons) as FontReference;
+            iconFont = fontRef.get() as FontResource;
+        } else {
+            iconFont = WatchUi.loadResource(Rez.Fonts.Icons) as FontResource;
+        }
 
         // Geometry of the hands and tick marks of the clock, as percentages of the diameter of the
         // clock face. Each of these shapes is a polygon (trapezoid), defined by
@@ -141,17 +153,6 @@ class ClockView extends WatchUi.WatchFace {
         _coords[S_SECONDHAND * 8 + 5] += _secondCircleRadius - 1;
     }
 
-    //! Load resources and configure the layout of the watchface for this device
-    //! @param dc Device context
-    public function onLayout(dc as Dc) as Void {
-        if (Graphics has :FontReference) {
-            var fontRef = WatchUi.loadResource(Rez.Fonts.Icons) as FontReference;
-            iconFont = fontRef.get() as FontResource;
-        } else {
-            iconFont = WatchUi.loadResource(Rez.Fonts.Icons) as FontResource;
-        }
-    }
-
     //! Called when this View is brought to the foreground. Restore the state of this view and
     //! prepare it to be shown. This includes loading resources into memory.
     public function onShow() as Void {
@@ -177,6 +178,7 @@ class ClockView extends WatchUi.WatchFace {
 
     public function stopPartialUpdates() as Void {
         _doPartialUpdates = false;
+        _colors[M_LIGHT][C_BACKGROUND] = Graphics.COLOR_BLUE; // Make the issue visible
     }
 
     //! Handle the update event. This function is called
