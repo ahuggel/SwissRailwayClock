@@ -405,7 +405,15 @@ class ClockView extends WatchUi.WatchFace {
                 );
             }
 
-            // Draw the second hand and shadow
+            // Clear the clip of the second layer to delete the second hand
+            _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
+            _secondDc.clear();
+            if (_isAwake and _show3dEffects) {
+                // Clear the clip of the second hand shadow layer to delete the shadow
+                _secondShadowDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
+                _secondShadowDc.clear();
+            }
+            // Draw the second hand and its shadow
             drawSecondHand(_secondDc, clockTime.sec);
         }
     }
@@ -440,6 +448,9 @@ class ClockView extends WatchUi.WatchFace {
                 );
             }
 
+            // Clear the clip of the second layer to delete the second hand, then re-draw it
+            _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
+            _secondDc.clear();
             drawSecondHand(_secondDc, second);
         }
     }
@@ -447,10 +458,7 @@ class ClockView extends WatchUi.WatchFace {
     // Draw the second hand for the given second, including a shadow, if required, and set the clipping region.
     // This function is performance critical (when !isAwake) and has been optimized to use only pre-calculated numbers.
     private function drawSecondHand(dc as Dc, second as Number) as Void {
-        // Clear the clip of the layer to delete the second hand
-        dc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
-        dc.clear();
-
+        // Use the pre-calculated numbers for the current second
         var sd = _secondData[second];
         var coords = [[sd[2], sd[3]], [sd[4], sd[5]], [sd[6], sd[7]], [sd[8], sd[9]]] as Array< Array<Number> >;
 
@@ -458,11 +466,7 @@ class ClockView extends WatchUi.WatchFace {
         dc.setClip(sd[10], sd[11], sd[12], sd[13]);
 
         if (_isAwake and _show3dEffects) {
-            // Clear the clip of the second hand shadow layer
-            _secondShadowDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
-            _secondShadowDc.clear();
-
-            // Set clipping region of the shadow by moving the clipping region of the second hand
+            // Set the clipping region of the shadow by moving the clipping region of the second hand
             var sc = shadowCoords([[sd[0], sd[1]], [sd[10], sd[11]]] as Array< Array<Number> >, 10);
             _secondShadowDc.setClip(sc[1][0], sc[1][1], sd[12], sd[13]);
 
