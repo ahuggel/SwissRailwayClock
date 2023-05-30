@@ -67,7 +67,6 @@ class Config {
         :RecoveryTime,
         :DarkMode, 
         :HideSeconds, 
-        :Shadows, 
         :BatteryPct, 
         :BatteryDays, 
         :DmOn, 
