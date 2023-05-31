@@ -4,32 +4,58 @@ project.manifest = manifest.xml
 base.sourcePath = source
 
 # Watches without layer support or insufficient memory use a buffered bitmap.
-# TODO: descentmk2s, fenix5*, fenix6s*, fr245*, fr645m, fr745, fr945*, marq*, vivoactive3m still run out of memory
-descentmk2.sourcePath = $(descentmk2.sourcePath);source-legacy
+# Models with very limited memory do not pre-calculate the numbers for the display of the second hand.
 descentmk2s.sourcePath = $(descentmk2s.sourcePath);source-legacy
+descentmk2s.excludeAnnotations = performance
 fenix5plus.sourcePath = $(fenix5plus.sourcePath);source-legacy
+fenix5plus.excludeAnnotations = performance
 fenix5splus.sourcePath = $(fenix5splus.sourcePath);source-legacy
+fenix5splus.excludeAnnotations = performance
 fenix5xplus.sourcePath = $(fenix5xplus.sourcePath);source-legacy
-fenix6.sourcePath = $(fenix6.sourcePath);source-legacy
-fenix6pro.sourcePath = $(fenix6pro.sourcePath);source-legacy
+fenix5xplus.excludeAnnotations = performance
 fenix6s.sourcePath = $(fenix6s.sourcePath);source-legacy
+fenix6s.excludeAnnotations = performance
 fenix6spro.sourcePath = $(fenix6spro.sourcePath);source-legacy
-fenix6xpro.sourcePath = $(fenix6xpro.sourcePath);source-legacy
+fenix6spro.excludeAnnotations = performance
 fr245.sourcePath = $(fr245.sourcePath);source-legacy
+fr245.excludeAnnotations = performance
 fr245m.sourcePath = $(fr245m.sourcePath);source-legacy
+fr245m.excludeAnnotations = performance
 fr645m.sourcePath = $(fr645m.sourcePath);source-legacy
+fr645m.excludeAnnotations = performance
 fr745.sourcePath = $(fr745.sourcePath);source-legacy
+fr745.excludeAnnotations = performance
 fr945.sourcePath = $(fr945.sourcePath);source-legacy
+fr945.excludeAnnotations = performance
 fr945lte.sourcePath = $(fr945lte.sourcePath);source-legacy
+fr945lte.excludeAnnotations = performance
 marqadventurer.sourcePath = $(marqadventurer.sourcePath);source-legacy
+marqadventurer.excludeAnnotations = performance
 marqathlete.sourcePath = $(marqathlete.sourcePath);source-legacy
+marqathlete.excludeAnnotations = performance
 marqaviator.sourcePath = $(marqaviator.sourcePath);source-legacy
+marqaviator.excludeAnnotations = performance
 marqcaptain.sourcePath = $(marqcaptain.sourcePath);source-legacy
+marqcaptain.excludeAnnotations = performance
 marqcommander.sourcePath = $(marqcommander.sourcePath);source-legacy
+marqcommander.excludeAnnotations = performance
 marqdriver.sourcePath = $(marqdriver.sourcePath);source-legacy
+marqdriver.excludeAnnotations = performance
 marqexpedition.sourcePath = $(marqexpedition.sourcePath);source-legacy
+marqexpedition.excludeAnnotations = performance
 marqgolfer.sourcePath = $(marqgolfer.sourcePath);source-legacy
+marqgolfer.excludeAnnotations = performance
 vivoactive3m.sourcePath = $(vivoactive3m.sourcePath);source-legacy
+vivoactive3m.excludeAnnotations = performance
+# Models with a bit more memory pre-calculate the numbers for the display of the second hand.
+descentmk2.sourcePath = $(descentmk2.sourcePath);source-legacy
+descentmk2.excludeAnnotations = memory
+fenix6.sourcePath = $(fenix6.sourcePath);source-legacy
+fenix6.excludeAnnotations = memory
+fenix6pro.sourcePath = $(fenix6pro.sourcePath);source-legacy
+fenix6pro.excludeAnnotations = memory
+fenix6xpro.sourcePath = $(fenix6xpro.sourcePath);source-legacy
+fenix6xpro.excludeAnnotations = memory
 
 # Watches with layer support and sufficient memory or a graphics pool use layers.
 legacyherocaptainmarvel.sourcePath = $(legacyherocaptainmarvel.sourcePath);source-modern

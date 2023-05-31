@@ -54,6 +54,10 @@ class ClockView extends WatchUi.WatchFace {
     // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
+    // Cache for all numbers required to draw the second hand. These are pre-calculated in onLayout().
+    (:performance)
+    private var _secondData as Array< Array<Number> > = new Array< Array<Number> >[60];
+
     private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
     private var _lastDrawnMin as Number = -1; // Minute when the watch face was last completely re-drawn
     private var _doPartialUpdates as Boolean = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
@@ -151,6 +155,9 @@ class ClockView extends WatchUi.WatchFace {
         // Shorten the second hand from the circle center to the edge of the circle to avoid a dark shadow
         _coords[S_SECONDHAND * 8 + 3] += _secondCircleRadius - 1;
         _coords[S_SECONDHAND * 8 + 5] += _secondCircleRadius - 1;
+
+        // Calculate all numbers required to draw the second hand
+        calcSecondData();
     }
 
     //! Called when this View is brought to the foreground. Restore the state of this view and
@@ -387,7 +394,86 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     // Draw the second hand for the given second, and set the clipping region.
-    // This function is performance critical and has been optimized.
+    // This function is performance critical and has been optimized to use only pre-calculated numbers.
+    (:performance)
+    private function drawSecondHand(dc as Dc, second as Number) as Void {
+        // Use the pre-calculated numbers for the current second
+        var sd = _secondData[second];
+        var coords = [[sd[2], sd[3]], [sd[4], sd[5]], [sd[6], sd[7]], [sd[8], sd[9]]] as Array< Array<Number> >;
+
+        // Set the clipping region
+        dc.setClip(sd[10], sd[11], sd[12], sd[13]);
+
+        // Draw the second hand
+        dc.setColor(_colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_RED /* colors[colorMode][C_SECONDS] */, Graphics.COLOR_TRANSPARENT);
+        dc.fillPolygon(coords);
+        dc.fillCircle(sd[0], sd[1], _secondCircleRadius);
+    }
+
+    // Calculate all numbers required to draw the second hand for every second.
+    (:performance)
+    private function calcSecondData() as Void {
+        for (var second = 0; second < 60; second++) {
+
+            // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
+            var angle = second * 0.104719758; // TWO_PI / 60.0
+            var sin = Math.sin(angle);
+            var cos = Math.cos(angle);
+            var offsetX = _screenCenter[0] + 0.5;
+            var offsetY = _screenCenter[1] + 0.5;
+
+            // Rotate the center of the second hand circle
+            var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + offsetX).toNumber();
+            var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + offsetY).toNumber();
+
+            // Rotate the rectangular portion of the second hand, using inlined code from rotateCoords() to improve performance
+            // Optimized: idx = S_SECONDHAND * 8; idy = idx + 1; and etc.
+            var x0 = (_coords[32] * cos - _coords[33] * sin + offsetX).toNumber();
+            var y0 = (_coords[32] * sin + _coords[33] * cos + offsetY).toNumber();
+            var x1 = (_coords[34] * cos - _coords[35] * sin + offsetX).toNumber();
+            var y1 = (_coords[34] * sin + _coords[35] * cos + offsetY).toNumber();
+            var x2 = (_coords[36] * cos - _coords[37] * sin + offsetX).toNumber();
+            var y2 = (_coords[36] * sin + _coords[37] * cos + offsetY).toNumber();
+            var x3 = (_coords[38] * cos - _coords[39] * sin + offsetX).toNumber();
+            var y3 = (_coords[38] * sin + _coords[39] * cos + offsetY).toNumber();
+
+            // Set the clipping region
+            var xx1 = x - _secondCircleRadius;
+            var yy1 = y - _secondCircleRadius;
+            var xx2 = x + _secondCircleRadius;
+            var yy2 = y + _secondCircleRadius;
+            var minX = 65536;
+            var minY = 65536;
+            var maxX = 0;
+            var maxY = 0;
+            // coords[1], coords[2] optimized out: only consider the tail and circle coords, loop unrolled for performance,
+            // use only points [x0, y0], [x3, y3], [xx1, yy1], [xx2, yy1], [xx2, yy2], [xx1, yy2], minus duplicate comparisons
+            if (x0 < minX) { minX = x0; }
+            if (y0 < minY) { minY = y0; }
+            if (x0 > maxX) { maxX = x0; }
+            if (y0 > maxY) { maxY = y0; }
+            if (x3 < minX) { minX = x3; }
+            if (y3 < minY) { minY = y3; }
+            if (x3 > maxX) { maxX = x3; }
+            if (y3 > maxY) { maxY = y3; }
+            if (xx1 < minX) { minX = xx1; }
+            if (yy1 < minY) { minY = yy1; }
+            if (xx1 > maxX) { maxX = xx1; }
+            if (yy1 > maxY) { maxY = yy1; }
+            if (xx2 < minX) { minX = xx2; }
+            if (yy2 < minY) { minY = yy2; }
+            if (xx2 > maxX) { maxX = xx2; }
+            if (yy2 > maxY) { maxY = yy2; }
+
+            // Save the calculated numbers, add two pixels on each side of the clipping region for good measure
+            //              Index: 0  1   2   3   4   5   6   7   8   9        10        11               12               13
+            _secondData[second] = [x, y, x0, y0, x1, y1, x2, y2, x3, y3, minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4];
+        }
+    }
+
+    // Draw the second hand for the given second, and set the clipping region.
+    // This function has been optimized and is used for watches with insufficient memory to store pre-calculated coordinates.
+    (:memory)
     private function drawSecondHand(dc as Dc, second as Number) as Void {
         // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
         var angle = second * 0.104719758; // TWO_PI / 60.0
@@ -446,6 +532,11 @@ class ClockView extends WatchUi.WatchFace {
         dc.setColor(_colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_RED /* colors[colorMode][C_SECONDS] */, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(coords);
         dc.fillCircle(x, y, _secondCircleRadius);
+    }
+
+    // Dummy function for watch models with insufficient memory to store pre-calculated numbers
+    (:memory)
+    private function calcSecondData() as Void {
     }
 
     //! Rotate the four corner coordinates of a polygon used to draw a watch hand or a tick mark.
