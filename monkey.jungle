@@ -3,8 +3,9 @@ project.manifest = manifest.xml
 # Reset the base source path to include only the common source files in the source folder.
 base.sourcePath = source
 
-# Watches without layer support or insufficient memory use a buffered bitmap.
-# Models with very limited memory do not pre-calculate the numbers for the display of the second hand.
+# "Legacy" watches without layer support or insufficient memory use a buffered bitmap.
+# Models with very limited memory do not pre-calculate the numbers for the display of the
+# second hand, i.e., they exclude that performance optimisation.
 descentmk2s.sourcePath = $(descentmk2s.sourcePath);source-legacy
 descentmk2s.excludeAnnotations = performance
 fenix5plus.sourcePath = $(fenix5plus.sourcePath);source-legacy
@@ -47,7 +48,8 @@ marqgolfer.sourcePath = $(marqgolfer.sourcePath);source-legacy
 marqgolfer.excludeAnnotations = performance
 vivoactive3m.sourcePath = $(vivoactive3m.sourcePath);source-legacy
 vivoactive3m.excludeAnnotations = performance
-# Models with a bit more memory pre-calculate the numbers for the display of the second hand.
+# Models with a bit more memory pre-calculate the numbers for the display of the second
+# hand and exclude the memory saving code which calculates the numbers every second.
 descentmk2.sourcePath = $(descentmk2.sourcePath);source-legacy
 descentmk2.excludeAnnotations = memory
 fenix6.sourcePath = $(fenix6.sourcePath);source-legacy
@@ -58,6 +60,7 @@ fenix6xpro.sourcePath = $(fenix6xpro.sourcePath);source-legacy
 fenix6xpro.excludeAnnotations = memory
 
 # Watches with layer support and sufficient memory or a graphics pool use layers.
+# They also pre-calculate the numbers for the second hand.
 legacyherocaptainmarvel.sourcePath = $(legacyherocaptainmarvel.sourcePath);source-modern
 legacyherofirstavenger.sourcePath = $(legacyherofirstavenger.sourcePath);source-modern
 legacysagadarthvader.sourcePath = $(legacysagadarthvader.sourcePath);source-modern
