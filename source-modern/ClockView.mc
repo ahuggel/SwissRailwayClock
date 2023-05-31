@@ -55,7 +55,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
     // Cache for all numbers required to draw the second hand. These are pre-calculated in onLayout().
-    var _secondData as Array< Array<Number> > = new Array< Array<Number> >[60];
+    private var _secondData as Array< Array<Number> > = new Array< Array<Number> >[60];
 
     // Positions (x,y) of the indicators, set in onLayout().
     private var _pos as Array< Array<Number> > = new Array< Array<Number> >[0]; // just to have an initialization
@@ -186,7 +186,7 @@ class ClockView extends WatchUi.WatchFace {
         _coords[S_SECONDHAND * 8 + 5] += _secondCircleRadius - 1;
 
         // Calculate all numbers required to draw the second hand for every second
-        calcSecondHand();
+        calcSecondData();
 
         // Positions of the various indicators
         _pos = [
@@ -483,7 +483,7 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     // Calculate all numbers required to draw the second hand for every second.
-    private function calcSecondHand() as Void {
+    private function calcSecondData() as Void {
         for (var second = 0; second < 60; second++) {
 
             // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
