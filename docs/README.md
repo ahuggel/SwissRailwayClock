@@ -8,7 +8,7 @@
 - Symbols for active alarms, phone connection and notifications, as well as the heart rate and recovery time indicators use icons from a [custom font];
 - A global settings class synchronises the selected options to persistent storage and makes them available across the app;
 - The program compiles with only a single warning with the compiler type checking level set to "Strict";
-- Watches with support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. Older devices without layer support or insufficient memory use a buffered bitmap. (Some of these currently still run out of memory, I have yet to deal with that.) ```minApiLevel``` is set to 3.2.0 as that's the minimum level required for on-device settings. Devices with [AMOLED] displays are not supported.
+- Watches with support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. Older devices without layer support or insufficient memory use a buffered bitmap. ```minApiLevel``` is set to 3.2.0 as that's the minimum level required for on-device settings. Devices with [AMOLED] displays are not supported.
 
 This program reflects the progress of my ongoing journey to learn [Monkey C] and the Garmin [Connect IQ ecosystem] to create an analog watchface. I am making it available for others to hopefully be able to learn the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
 
