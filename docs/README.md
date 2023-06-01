@@ -1,7 +1,9 @@
 ![image](https://user-images.githubusercontent.com/972802/211146459-4acc8a60-0c2f-4bf3-acf8-0270906968ab.png)
+
 <p align="center" width="100%">
 All the Configurable Clutter
 </p>
+
 ![image](https://github.com/ahuggel/SwissRailwayClock/assets/972802/069e56b6-4141-470b-8264-2ad1c560f40b)
 
 # Swiss Railway Clock - An analog watchface for Garmin smartwatches
