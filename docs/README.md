@@ -15,9 +15,9 @@ This program reflects the progress of my ongoing journey to learn [Monkey C] and
 
 ## Credits
 
-I've used several samples that come with the Garmin SDK, in particular: Analog, Menu2Sample and Picker, looked at the code of some other watchface apps that are available on Github, and read lots of very helpful posts in the [Garmin Developer forum].
+The [Swiss railway clock] design was created by Hans Hilfiker in the 1940s and 1950s, who was employed by the Swiss Federal Railways (SBB) at that time. It continues to be used at every railway station in Switzerland until today.
 
-The [Swiss railway clock] design was created by Hans Hilfiker in the 1940s and 1950s and it continues to be used at every railway station in Switzerland until today.
+I've used several samples that come with the Garmin SDK, in particular: Analog, Menu2Sample and Picker, looked at the code of some other watchface apps that are available on Github, and read lots of very helpful posts in the [Garmin Developer forum].
 
 Alarm, Bluetooth, Heart and SMS icons created by Google - [Flaticon]. License [CC 3.0 BY].
 
