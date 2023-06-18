@@ -21,7 +21,7 @@ I've used several samples that come with the Garmin SDK, in particular: Analog, 
 
 Alarm, Bluetooth, Heart and SMS icons created by Google - [Flaticon]. License [CC 3.0 BY].
 
-Hourglass icon by Afdalul Zikri. [Flaticon license].
+Recovery time icon by Urs Huggel.
 
 [second hand]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-get-my-watch-face-to-update-every-second/
 [custom font]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-use-custom-fonts/
