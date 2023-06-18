@@ -108,7 +108,7 @@ function drawRecoveryTime(
         );
         dc.setColor(colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            timeToRecovery > 99 ? xpos + width*21/32 : xpos + width*15/32, ypos, 
+            timeToRecovery > 99 ? xpos + width*23/32 : xpos + width*17/32, ypos, 
             ClockView.iconFont as FontResource, 
             "R" as String, 
             Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER

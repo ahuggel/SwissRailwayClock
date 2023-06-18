@@ -7,6 +7,6 @@ char id=66   x=20    y=0     width=20    height=20    xoffset=0     yoffset=0   
 char id=72   x=40    y=0     width=20    height=20    xoffset=0     yoffset=0    xadvance=20    page=0  chnl=15
 char id=73   x=60    y=0     width=20    height=20    xoffset=0     yoffset=0    xadvance=20    page=0  chnl=15
 char id=77   x=80    y=0     width=20    height=20    xoffset=0     yoffset=0    xadvance=20    page=0  chnl=15
-char id=82   x=100   y=0     width=20    height=20    xoffset=0     yoffset=0    xadvance=20    page=0  chnl=15
+char id=82   x=100   y=0     width=23    height=20    xoffset=0     yoffset=0    xadvance=23    page=0  chnl=15
 char id=32   x=0     y=20    width=6     height=20    xoffset=0     yoffset=0    xadvance=6     page=0  chnl=15
 char id=95   x=0     y=20    width=20    height=20    xoffset=0     yoffset=0    xadvance=20    page=0  chnl=15
