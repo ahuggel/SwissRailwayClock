@@ -379,7 +379,7 @@ class ClockView extends WatchUi.WatchFace {
             if (_isAwake and _show3dEffects) {
                 _hourMinuteDc.setFill(_shadowColor);
                 _hourMinuteDc.fillPolygon(shadowCoords(hourHandCoords, 7));
-                _hourMinuteDc.fillPolygon(shadowCoords(minuteHandCoords, 9));
+                _hourMinuteDc.fillPolygon(shadowCoords(minuteHandCoords, 8));
             }
             _hourMinuteDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
             _hourMinuteDc.fillPolygon(hourHandCoords);
@@ -467,12 +467,12 @@ class ClockView extends WatchUi.WatchFace {
 
         if (_isAwake and _show3dEffects) {
             // Set the clipping region of the shadow by moving the clipping region of the second hand
-            var sc = shadowCoords([[sd[0], sd[1]], [sd[10], sd[11]]] as Array< Array<Number> >, 10);
+            var sc = shadowCoords([[sd[0], sd[1]], [sd[10], sd[11]]] as Array< Array<Number> >, 9);
             _secondShadowDc.setClip(sc[1][0], sc[1][1], sd[12], sd[13]);
 
             // Draw the shadow of the second hand
             _secondShadowDc.setFill(_shadowColor);
-            _secondShadowDc.fillPolygon(shadowCoords(coords, 10));
+            _secondShadowDc.fillPolygon(shadowCoords(coords, 9));
             _secondShadowDc.fillCircle(sc[0][0], sc[0][1], _secondCircleRadius);
         }
 
