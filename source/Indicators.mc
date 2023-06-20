@@ -108,7 +108,7 @@ function drawRecoveryTime(
         );
         dc.setColor(colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            timeToRecovery > 99 ? xpos + width*23/32 : xpos + width*17/32, ypos, 
+            timeToRecovery > 99 ? xpos + width*23/32 : xpos + width*17/32, ypos - 1, 
             ClockView.iconFont as FontResource, 
             "R" as String, 
             Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
@@ -152,7 +152,7 @@ function drawHeartRate(
         dc.clear();
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            heartRate > 99 ? xpos - width*2/16 - 1 : xpos, ypos, 
+            heartRate > 99 ? xpos - width*2/16 - 1 : xpos, ypos - 1, 
             ClockView.iconFont as FontResource, 
             isAwake ? "H" : "I" as String, 
             Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
@@ -309,6 +309,7 @@ class BatteryLevel {
         levelInDays as Float
     ) as Void {
         var font = Graphics.FONT_XTINY;
+        y += 1; // Looks better aligned on the actual device (fr955) like this
         dc.setColor(_textColor, Graphics.COLOR_TRANSPARENT);
         if ($.Config.O_BATTERY_PCT_ON == $.config.getValue($.Config.I_BATTERY_PCT)) {
             var str = (level + 0.5).toNumber() + "% ";
