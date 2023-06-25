@@ -223,7 +223,6 @@ class ClockView extends WatchUi.WatchFace {
     public function onExitSleep() as Void {
         _isAwake = true;
         _lastDrawnMin = -1; // Force the watch face to be re-drawn
-        _secondLayer.setVisible(true);
         WatchUi.requestUpdate();
     }
 
@@ -252,7 +251,7 @@ class ClockView extends WatchUi.WatchFace {
         if (_isAwake) { 
             _sleepTimer = SECOND_HAND_TIMER; // Reset the timer
         } else if (_sleepTimer > 0) {
-            _sleepTimer--;
+            _sleepTimer -= 1;
         }
 
         var clockTime = System.getClockTime();
@@ -274,6 +273,7 @@ class ClockView extends WatchUi.WatchFace {
             var secondsOption = $.config.getValue($.Config.I_HIDE_SECONDS);
             _hideSecondHand = $.Config.O_HIDE_SECONDS_ALWAYS == secondsOption 
                 or ($.Config.O_HIDE_SECONDS_IN_DM == secondsOption and M_DARK == _colorMode);
+            _secondLayer.setVisible(_isAwake or !_hideSecondHand or _sleepTimer > 0);
 
             // Clear the background layer with the background color
             _backgroundDc.clearClip();
@@ -425,7 +425,7 @@ class ClockView extends WatchUi.WatchFace {
         _isAwake = false; // To state the obvious. Workaround for an Enduro 2 firmware bug.
 
         if (_sleepTimer > 0) { 
-            _sleepTimer--; 
+            _sleepTimer -= 1;
             if (0 == _sleepTimer and _hideSecondHand) {
                 // Delete the second hand for the last time
                 _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
