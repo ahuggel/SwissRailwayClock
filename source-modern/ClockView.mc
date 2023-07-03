@@ -32,7 +32,7 @@ class ClockView extends WatchUi.WatchFace {
     // Things we want to access from the outside. By convention, write-access is only from within ClockView.
     static public var iconFont as FontResource?;
 
-    // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the colors Array.
+    // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the _colors Array.
     enum { M_LIGHT, M_DARK } // Color modes
     enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
 
@@ -45,7 +45,7 @@ class ClockView extends WatchUi.WatchFace {
     private const TWO_PI as Float = 2 * Math.PI;
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
 
-    // List of watchface shapes, used as indexes. Review optimizations in drawSecondHand() before changing the Shape enum.
+    // List of watchface shapes, used as indexes. Review optimizations in calcSecondData() et al. before changing the Shape enum.
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
     // A 2 dimensional array for the geometry of the watchface shapes - because the initialisation is more intuitive that way
     private var _shapes as Array< Array<Float> > = new Array< Array<Float> >[S_SIZE];
@@ -97,25 +97,31 @@ class ClockView extends WatchUi.WatchFace {
         _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
         _batteryLevel = new BatteryLevel(_clockRadius);
 
-        // Instead of a buffered bitmap, this version uses layers (since API Level 3.1.0) and depends
-        // on the graphics pool, so the layers don't occupy application heap memory.
+        // Instead of a buffered bitmap, this version uses multiple layers (since API Level 3.1.0):
         //
         // 1) A background layer with the tick marks and any indicators.
         // 2) A full screen layer just for the shadow of the second hand (when 3d effects are on)
         // 3) Another full screen layer for the hour and minute hands.
-        // 4) A dedicated layer for the second hand. Still using a clip to limit the area
-        //    affected by draw operations.
+        // 4) A dedicated layer for the second hand.
         //
         // Using layers is elegant and makes it possible to draw some indicators even in low-power
         // mode, e.g., the heart rate is updated every second in high-power mode and every 5 seconds
-        // in low power mode. On the other hand, this architecture requires more memory and is only
-        // feasible on CIQ 4 devices, i.e., on devices which have a graphics pool.
+        // in low power mode.
+        // On the other hand, this architecture requires more memory and is only feasible on CIQ 4
+        // devices, i.e., on devices with a graphics pool, and on a few older models which have
+        // more memory.
+        // For improved performance, we're still using a clipping region for both second hands to
+        // limit the area affected when clearing the layer.
+        // There's potential to reduce the memory footprint by minimizing the size of the second
+        // hand layers to about a quarter of the screen size and moving them every 15 seconds.
 
         // Initialize layers and add them to the view
-        var backgroundLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
-        var hourMinuteLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
-        _secondLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
-        _secondShadowLayer = new WatchUi.Layer({:locX => 0, :locY => 0, :width => _width, :height => _height});
+        var opts = {:locX => 0, :locY => 0, :width => _width, :height => _height};
+        var backgroundLayer = new WatchUi.Layer(opts);
+        var hourMinuteLayer = new WatchUi.Layer(opts);
+        _secondLayer = new WatchUi.Layer(opts);
+        _secondShadowLayer = new WatchUi.Layer(opts);
+
         addLayer(backgroundLayer);
         addLayer(_secondShadowLayer);
         addLayer(hourMinuteLayer);
@@ -200,7 +206,6 @@ class ClockView extends WatchUi.WatchFace {
             [(_width * 0.75).toNumber(), (_height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
             [(_width * 0.50).toNumber(), (_height * 0.65).toNumber()]       // 8: Date (weekday and day format) at 6 o'clock
         ] as Array< Array<Number> >;
-
     }
 
     //! Called when this View is brought to the foreground. Restore the state of this view and
@@ -273,7 +278,7 @@ class ClockView extends WatchUi.WatchFace {
             var secondsOption = $.config.getValue($.Config.I_HIDE_SECONDS);
             _hideSecondHand = $.Config.O_HIDE_SECONDS_ALWAYS == secondsOption 
                 or ($.Config.O_HIDE_SECONDS_IN_DM == secondsOption and M_DARK == _colorMode);
-            _secondLayer.setVisible(_isAwake or !_hideSecondHand or _sleepTimer > 0);
+            _secondLayer.setVisible(_sleepTimer > 0 or !_hideSecondHand);
 
             // Clear the background layer with the background color
             _backgroundDc.clearClip();

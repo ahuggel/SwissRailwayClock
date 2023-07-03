@@ -32,7 +32,7 @@ class ClockView extends WatchUi.WatchFace {
     // Things we want to access from the outside. By convention, write-access is only from within ClockView.
     static public var iconFont as FontResource?;
 
-    // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the colors Array.
+    // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the _colors Array.
     enum { M_LIGHT, M_DARK } // Color modes
     enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
 
@@ -45,7 +45,7 @@ class ClockView extends WatchUi.WatchFace {
     private const TWO_PI as Float = 2 * Math.PI;
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
 
-    // List of watchface shapes, used as indexes. Review optimizations in drawSecondHand() before changing the Shape enum.
+    // List of watchface shapes, used as indexes. Review optimizations in drawSecondHand() and calcSecondData() before changing the Shape enum.
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
     // A 2 dimensional array for the geometry of the watchface shapes - because the initialisation is more intuitive that way
     private var _shapes as Array< Array<Float> > = new Array< Array<Float> >[S_SIZE];
@@ -87,8 +87,8 @@ class ClockView extends WatchUi.WatchFace {
         _batteryLevel = new BatteryLevel(_clockRadius);
 
         // Allocate the buffer we use for drawing the watchface, using BufferedBitmap (API Level 2.3.0).
-        // This is a full-colored buffer (with no palette), as we have enough memory :) and it makes drawing 
-        // text with anti-aliased fonts much more straightforward.
+        // This is a full-colored buffer (with no palette), as that makes drawing text with
+        // anti-aliased fonts much more straightforward.
         // Doing this in initialize() rather than onLayout() so _offscreenBuffer does not need to be 
         // nullable, which makes the type checker complain less.
         var bbmo = {:width=>_width, :height=>_height};
