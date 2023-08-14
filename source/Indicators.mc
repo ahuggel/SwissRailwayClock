@@ -171,14 +171,37 @@ function drawHeartRate(
 }
 
 class BatteryLevel {
-    private var _clockRadius as Number;
     private var _textColor as Number;
     private var _mRadius as Number;
+    private var _cPw as Number;
+    private var _cBw as Number;
+    private var _cBh as Number;
+    private var _cTs as Number;
+    private var _cCw as Number;
+    private var _cCh as Number;
+    private var _cWidth as Number;
+    private var _cHeight as Number;
+    private var _cT1 as Number;
+    private var _cT2 as Number;
 
     public function initialize(clockRadius as Number) {
-        _clockRadius = clockRadius;
         _textColor = Graphics.COLOR_TRANSPARENT;
-        _mRadius = (3.2 * _clockRadius / 50.0 + 0.5).toNumber();
+        // Radius of the modern battery indicator circle in pixels
+        _mRadius = (3.2 * clockRadius / 50.0 + 0.5).toNumber();
+        // Dimensions of classic the battery level indicator, based on percentages of the clock diameter
+        _cPw = (1.2 * clockRadius / 50.0 + 0.5).toNumber(); // pen size for the battery rectangle 
+        if (0 == _cPw % 2) { _cPw += 1; }                    // make sure pen size is an odd number
+        _cBw = (1.9 * clockRadius / 50.0 + 0.5).toNumber(); // width of the battery level segments
+        _cBh = (4.2 * clockRadius / 50.0 + 0.5).toNumber(); // height of the battery level segments
+        _cTs = (0.4 * clockRadius / 50.0 + 0.5).toNumber(); // tiny space around everything
+        _cCw = _cPw;                                         // width of the little knob on the right side of the battery
+        _cCh = (2.3 * clockRadius / 50.0 + 0.5).toNumber(); // height of the little knob
+        _cWidth = 5*_cBw + 6*_cTs + _cPw+1;
+        _cHeight = _cBh + 2*_cTs + _cPw+1;
+        if (1 == _cHeight % 2 and 0 == _cCh % 2) { _cCh += 1; } // make sure both, the battery rectangle height and the knob 
+        if (0 == _cHeight % 2 and 1 == _cCh % 2) { _cCh += 1; } // height, are odd, or both are even
+        _cT1 = (_cPw-1)/2;
+        _cT2 = _cT1 + 1 + _cTs;
     }
 
     // Draw the battery indicator according to the settings, return true if it was actually drawn, else false
@@ -260,44 +283,31 @@ class BatteryLevel {
         colorMode as Number,
         color as Number
     ) as Void {
-        // Dimensions of the battery level indicator, based on percentages of the clock diameter
-        var pw = (1.2 * _clockRadius / 50.0 + 0.5).toNumber(); // pen size for the battery rectangle 
-        if (0 == pw % 2) { pw += 1; }                          // make sure pw is an odd number
-        var bw = (1.9 * _clockRadius / 50.0 + 0.5).toNumber(); // width of the battery level segments
-        var bh = (4.2 * _clockRadius / 50.0 + 0.5).toNumber(); // height of the battery level segments
-        var ts = (0.4 * _clockRadius / 50.0 + 0.5).toNumber(); // tiny space around everything
-        var cw = pw;                                           // width of the little knob on the right side of the battery
-        var ch = (2.3 * _clockRadius / 50.0 + 0.5).toNumber(); // height of the little knob
-
         // Draw the battery shape
-        var width = 5*bw + 6*ts + pw+1;
-        var height = bh + 2*ts + pw+1;
-        var x = xpos - width/2 + pw/2;
-        var y = ypos - height/2;
+        var x = xpos - _cWidth/2 + _cPw/2;
+        var y = ypos - _cHeight/2;
         var frameColor = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY] as Array<Number>;
         dc.setColor(frameColor[colorMode], Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(pw);
-        dc.drawRoundedRectangle(x, y, width, height, pw);
+        dc.setPenWidth(_cPw);
+        dc.drawRoundedRectangle(x, y, _cWidth, _cHeight, _cPw);
         dc.setPenWidth(1);
-        if (1 == height % 2 and 0 == ch % 2) { ch += 1; }      // make sure both, the battery rectangle height and the knob 
-        if (0 == height % 2 and 1 == ch % 2) { ch += 1; }      // height, are odd, or both are even
-        dc.fillRoundedRectangle(x + width + (pw-1)/2 + ts, y + height/2 - ch/2, cw, ch, (cw-1)/2);
+        dc.fillRoundedRectangle(x + _cWidth + _cT1 + _cTs, y + _cHeight/2 - _cCh/2, _cCw, _cCh, (_cCw-1)/2);
 
         // Draw battery level segments according to the battery level
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         var lv = (level + 0.5).toNumber();
-        var xb = x + (pw-1)/2 + 1 + ts;
-        var yb = y + (pw-1)/2 + 1 + ts;
-        var fb = (lv/20).toNumber();
+        var xb = x + _cT2;
+        var yb = y + _cT2;
+        var fb = (lv / 20).toNumber();
         for (var i=0; i < fb; i++) {
-            dc.fillRectangle(xb + i*(bw+ts), yb, bw, bh);
+            dc.fillRectangle(xb + i*(_cBw+_cTs), yb, _cBw, _cBh);
         }
-        var bl = lv % 20 * bw / 20;
+        var bl = lv % 20 * _cBw / 20;
         if (bl > 0) {
-            dc.fillRectangle(xb + fb*(bw+ts), yb, bl, bh);
+            dc.fillRectangle(xb + fb*(_cBw+_cTs), yb, bl, _cBh);
         }
 
-        drawBatteryLabels(dc, x - pw, x + width + (pw-1)/2 + cw, ypos, level, levelInDays);
+        drawBatteryLabels(dc, x - _cPw, x + _cWidth + _cT1 + _cCw, ypos, level, levelInDays);
     }
 
     // Draw battery labels for percentage and days depending on the settings
