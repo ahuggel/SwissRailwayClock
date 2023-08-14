@@ -173,10 +173,12 @@ function drawHeartRate(
 class BatteryLevel {
     private var _clockRadius as Number;
     private var _textColor as Number;
+    private var _mRadius as Number;
 
     public function initialize(clockRadius as Number) {
         _clockRadius = clockRadius;
         _textColor = Graphics.COLOR_TRANSPARENT;
+        _mRadius = (3.2 * _clockRadius / 50.0 + 0.5).toNumber();
     }
 
     // Draw the battery indicator according to the settings, return true if it was actually drawn, else false
@@ -244,10 +246,9 @@ class BatteryLevel {
         levelInDays as Float, 
         color as Number
     ) as Void {
-        var radius = (3.2 * _clockRadius / 50.0 + 0.5).toNumber();
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(xpos, ypos, radius);
-        drawBatteryLabels(dc, xpos - radius, xpos + radius, ypos, level, levelInDays);
+        dc.fillCircle(xpos, ypos, _mRadius);
+        drawBatteryLabels(dc, xpos - _mRadius, xpos + _mRadius, ypos, level, levelInDays);
     }
 
     private function drawClassicBatteryIndicator(
