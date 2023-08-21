@@ -189,7 +189,7 @@ class BatteryLevel {
         _textColor = Graphics.COLOR_TRANSPARENT;
         // Radius of the modern battery indicator circle in pixels
         _mRadius = (3.2 * clockRadius / 50.0 + 0.5).toNumber();
-        // Dimensions of classic the battery level indicator, based on percentages of the clock diameter
+        // Dimensions of the classic battery level indicator in pixels, calculated from percentages of the clock diameter
         _cPw = (1.2 * clockRadius / 50.0 + 0.5).toNumber(); // pen size for the battery rectangle 
         if (0 == _cPw % 2) { _cPw += 1; }                   // make sure pen size is an odd number
         _cBw = (1.9 * clockRadius / 50.0 + 0.5).toNumber(); // width of the battery level segments
