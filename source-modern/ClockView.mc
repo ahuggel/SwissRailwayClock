@@ -66,8 +66,8 @@ class ClockView extends WatchUi.WatchFace {
     private var _sleepTimer as Number = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
     private var _hideSecondHand as Boolean = false;
     private var _show3dEffects as Boolean = false;
+    private var _symbolsDrawn as Boolean = false;
     private var _drawHeartRate as Number = -1;
-    private var _dateDisplay as Number = 0;
     private var _shadowColor as Number = 0;
 
     private var _screenShape as Number;
@@ -183,6 +183,13 @@ class ClockView extends WatchUi.WatchFace {
             _coords[idx+6] =  (_shapes[s][1] / 2 + 0.5).toNumber();
             _coords[idx+7] = -(_shapes[s][3] + 0.5).toNumber();
         }
+        //System.println("("+_coords[S_SECONDHAND*8+2]+","+_coords[S_SECONDHAND*8+3]+") ("+_coords[S_SECONDHAND*8+4]+","+_coords[S_SECONDHAND*8+5]+")");
+        if (_clockRadius >= 130 and 0 == (_coords[S_SECONDHAND*8+4] - _coords[S_SECONDHAND*8+2]) % 2) {
+            // Check: Do we always get here because of the way the numbers are calculated?
+            _coords[S_SECONDHAND*8+6] += 1;
+            _coords[S_SECONDHAND*8+4] += 1;
+            //System.println("INFO: Increased the width of the second hand by 1 pixel to "+(_coords[S_SECONDHAND*8+4]-_coords[S_SECONDHAND*8+2]+1)+" pixels to make it even");
+        }
 
         // The radius of the second hand circle in pixels, calculated from the percentage of the clock face diameter
         _secondCircleRadius = ((5.1 * _clockRadius / 50.0) + 0.5).toNumber();
@@ -193,6 +200,10 @@ class ClockView extends WatchUi.WatchFace {
 
         // Calculate all numbers required to draw the second hand for every second
         calcSecondData();
+        //var s = _secondData[0];
+        //System.println("INFO: Clock radius = " + _clockRadius);
+        //System.println("INFO: Secondhand circle: ("+s[0]+","+s[1]+"), r = "+_secondCircleRadius);
+        //System.println("INFO: Secondhand coords: ("+s[2]+","+s[3]+") ("+s[4]+","+s[5]+") ("+s[6]+","+s[7]+") ("+s[8]+","+s[9]+")");
 
         // Positions of the various indicators
         _pos = [
@@ -204,7 +215,11 @@ class ClockView extends WatchUi.WatchFace {
             [(_width * 0.50).toNumber(), (_height * 0.18).toNumber()],      // 5: Alarms and notifications at 12 o'clock
             [(_width * 0.50).toNumber(), (_height * 0.50 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(iconFont as FontResource))/3).toNumber()], // 6: Phone connection indicator on the 6 o'clock tick mark
             [(_width * 0.75).toNumber(), (_height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
-            [(_width * 0.50).toNumber(), (_height * 0.65).toNumber()]       // 8: Date (weekday and day format) at 6 o'clock
+            [(_width * 0.50).toNumber(), (_height * 0.65).toNumber()],      // 8: Date (weekday and day format) at 6 o'clock, w/o steps
+            [(_width * 0.50).toNumber(), (_height * 0.69).toNumber()],      // 9: Date (weekday and day format) at 6 o'clock, with steps
+            [(_width * 0.49).toNumber(), (_height * 0.70).toNumber()],      //10: Steps at 6 o'clock, w/o date (weekday and day format)
+            [(_width * 0.49).toNumber(), (_height * 0.65).toNumber()],      //11: Steps at 6 o'clock, with date (weekday and day format)
+            [(_width * 0.49).toNumber(), (_height * 0.76).toNumber()]       //12: Heart rate indicator at 6 o'clock with steps
         ] as Array< Array<Number> >;
     }
 
@@ -304,27 +319,39 @@ class ClockView extends WatchUi.WatchFace {
 
             // Draw the date string
             var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
-            _dateDisplay = $.config.getValue($.Config.I_DATE_DISPLAY);
             _backgroundDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-            switch (_dateDisplay) {
-                case $.Config.O_DATE_DISPLAY_DAY_ONLY: 
-                    var dateStr = info.day.format("%02d");
-                    _backgroundDc.drawText(_pos[7][0], _pos[7][1], Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
-                    break;
-                case $.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY:
-                    dateStr = Lang.format("$1$ $2$", [info.day_of_week, info.day]);
-                    _backgroundDc.drawText(_pos[8][0], _pos[8][1], Graphics.FONT_MEDIUM, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
-                    break;
+            var idx = -1;
+            idx = getIndicatorPosition(:longDate);
+            if (-1 != idx) {
+                _backgroundDc.drawText(
+                    _pos[idx][0], 
+                    _pos[idx][1], 
+                    Graphics.FONT_MEDIUM, 
+                    Lang.format("$1$ $2$", [info.day_of_week, info.day]), 
+                    Graphics.TEXT_JUSTIFY_CENTER
+                );
+            }
+            else {
+                idx = getIndicatorPosition(:shortDate);
+                if (-1 != idx) {
+                    _backgroundDc.drawText(
+                        _pos[idx][0], 
+                        _pos[idx][1], 
+                        Graphics.FONT_MEDIUM, 
+                        info.day.format("%02d"), 
+                        Graphics.TEXT_JUSTIFY_CENTER
+                    );
+                }
             }
 
             // Draw alarm and notification indicators
-            var symbolsDrawn = false;
-            if ($.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS)
-                or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
-                symbolsDrawn = drawSymbols(
+            _symbolsDrawn = false;
+            idx = getIndicatorPosition(:symbols);
+            if (-1 != idx) {
+                _symbolsDrawn = drawSymbols(
                     _backgroundDc, 
-                    _pos[5][0], 
-                    _pos[5][1], 
+                    _pos[idx][0], 
+                    _pos[idx][1], 
                     _colors[_colorMode][C_TEXT],
                     deviceSettings.alarmCount,
                     deviceSettings.notificationCount
@@ -332,19 +359,20 @@ class ClockView extends WatchUi.WatchFace {
             }
 
             // Draw the phone connection indicator on the 6 o'clock tick mark
-            if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) {
+            idx = getIndicatorPosition(:phoneConnected);
+            if (-1 != idx) {
                 drawPhoneConnected(
-                    _backgroundDc, 
-                    _pos[6][0], 
-                    _pos[6][1], 
+                    _backgroundDc,
+                    _pos[idx][0],
+                    _pos[idx][1],
                     _colors[_colorMode][C_FOREGROUND],
                     deviceSettings.phoneConnected
                 );
             }
 
             // Draw the battery level indicator
-            if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
-                var idx = symbolsDrawn ? 3 : 4;
+            idx = getIndicatorPosition(:battery);
+            if (-1 != idx) {
                 _batteryLevel.draw(
                     _backgroundDc, 
                     _pos[idx][0], 
@@ -357,17 +385,28 @@ class ClockView extends WatchUi.WatchFace {
             }
 
             // Determine if the heart rate should be drawn, in a format that is useful as an index into _pos
-            _drawHeartRate = -1;
-            if ($.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
-                _drawHeartRate = $.Config.O_DATE_DISPLAY_DAY_ONLY == _dateDisplay ? 1 : 0;
-            }
+            _drawHeartRate = getIndicatorPosition(:heartRate);
 
             // Draw the recovery time indicator at the 9 o'clock position
-            if ($.Config.O_RECOVERY_TIME_ON == $.config.getValue($.Config.I_RECOVERY_TIME)) {
+            idx = getIndicatorPosition(:recoveryTime);
+            if (-1 != idx) {
                 drawRecoveryTime(
                     _backgroundDc,
-                    _pos[2][0],
-                    _pos[2][1],
+                    _pos[idx][0],
+                    _pos[idx][1],
+                    _colorMode,
+                    _colors[_colorMode][C_TEXT]
+                );
+            }
+
+            // Draw the steps indicator at the 6 o'clock position
+            idx = getIndicatorPosition(:steps);
+            //System.println("DEBUG: Steps idx = " + idx);
+            if (-1 != idx) {
+                drawSteps(
+                    _backgroundDc,
+                    _pos[idx][0],
+                    _pos[idx][1],
                     _colorMode,
                     _colors[_colorMode][C_TEXT]
                 );
@@ -629,6 +668,104 @@ class ClockView extends WatchUi.WatchFace {
         }
         return colorMode;
     }
+
+    // Determine if a given indicator should be shown and its position on the screen. 
+    // This function exists to have all decisions regarding indicator placing, some of which are 
+    // interdependent, in one place.
+    // The position returned is an index into _pos. -1 means the indicator should not be drawn.
+    private function getIndicatorPosition(indicator as Symbol) as Number {
+        var idx = -1;
+        switch (indicator) {
+            case :recoveryTime:
+                if ($.Config.O_RECOVERY_TIME_ON == $.config.getValue($.Config.I_RECOVERY_TIME)) { 
+                    idx = 2; 
+                }
+                break;
+            case :battery:
+                if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
+                   idx = _symbolsDrawn ? 3 : 4;
+                }
+                break;
+            case :symbols:
+                if (   $.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS)
+                    or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
+                    idx = 5;
+                }
+                break;
+            case :phoneConnected:
+                if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) { 
+                    idx = 6; 
+                }
+                break;
+            case :shortDate:
+                if ($.Config.O_DATE_DISPLAY_DAY_ONLY == $.config.getValue($.Config.I_DATE_DISPLAY)) { 
+                    idx = 7; 
+                }
+                break;
+            case :longDate:
+                if ($.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY == $.config.getValue($.Config.I_DATE_DISPLAY)) {
+                    idx = ($.Config.O_STEPS_ON == $.config.getValue($.Config.I_STEPS)) ? 9 : 8;
+                }
+                break;
+            case :heartRate:
+                if ($.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
+                    idx = 0;
+                    if ($.Config.O_DATE_DISPLAY_DAY_ONLY == $.config.getValue($.Config.I_DATE_DISPLAY)) {
+                        idx = ($.Config.O_STEPS_ON == $.config.getValue($.Config.I_STEPS)) ? 12 : 1;
+                    }
+                }
+                break;
+            case :steps:
+                /*
+                   Date display Heart rate Steps Positions
+                   ------------ ---------- ----- ---------
+                   Off          Off        Off    -  -  -
+                   Off          Off        On     -  - 10
+                   Off          On         Off    -  0  -
+                   Off          On         On     -  0 10
+                   Short        Off        Off    7  -  -
+                   Short        Off        On     7  - 10
+                   Short        On         Off    7  1  -
+                   Short        On         On     7 12 11
+                   Long         Off        Off    8  -  -
+                   Long         Off        On     9  - 11
+                   Long         On         Off    8  0  -
+                   Long         On         On     9  0 11
+
+                   Positions
+                   ---------
+                    0: Heart rate indicator at 3 o'clock
+                    1: Heart rate indicator at 6 o'clock
+                    2: Recovery time indicator at 9 o'clock
+                    3: Battery level indicator at 12 o'clock with notifications
+                    4: Battery level indicator at 12 o'clock w/o notifications
+                    5: Alarms and notifications at 12 o'clock
+                    6: Phone connection indicator on the 6 o'clock tick mark
+                    7: Date (day format) at 3 o'clock
+                    8: Date (weekday and day format) at 6 o'clock, w/o steps
+                    9: Date (weekday and day format) at 6 o'clock, with steps
+                   10: Steps at 6 o'clock, w/o date (weekday and day format)
+                   11: Steps at 6 o'clock, with date (weekday and day format)
+                   12: Heart rate indicator at 6 o'clock with steps
+                */
+                if ($.Config.O_STEPS_ON == $.config.getValue($.Config.I_STEPS)) {
+                    if ($.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY == $.config.getValue($.Config.I_DATE_DISPLAY)) {
+                        idx = 11;
+                    } else if (    $.Config.O_DATE_DISPLAY_DAY_ONLY == $.config.getValue($.Config.I_DATE_DISPLAY)
+                               and $.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
+                        idx = 11;
+                    } else {
+                        idx = 10;
+                    }
+                }
+                break;
+            default:
+                System.println("ERROR: ClockView.getIndicatorPos() is not implemented for indicator = " + indicator);
+                break;
+        }
+        return idx;
+    }
+
 } // class ClockView
 
 //! Receives watch face events

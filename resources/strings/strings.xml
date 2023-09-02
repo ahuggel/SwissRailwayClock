@@ -10,6 +10,7 @@
     <string id="Connected">Phone Connection</string>
     <string id="HeartRate">Heart Rate</string>
     <string id="RecoveryTime">Recovery Time</string>
+    <string id="Steps">Steps</string>
     <string id="DarkMode">Dark Mode</string>
     <string id="DmContrast">Contrast</string>
     <string id="HideSeconds">Seconds Disappear</string>

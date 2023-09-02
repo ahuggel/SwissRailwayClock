@@ -147,7 +147,7 @@ function drawHeartRate(
         var width = (fontHeight * 2.1).toNumber(); // Indicator width
         var hr = heartRate.format("%d");
 
-        dc.setClip(xpos - width/2, ypos - fontHeight/2, width, fontHeight);
+        dc.setClip(xpos - width*0.48, ypos - fontHeight*0.38, width, fontHeight*0.85);
         dc.setColor(Graphics.COLOR_TRANSPARENT, bgColor);
         dc.clear();
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
