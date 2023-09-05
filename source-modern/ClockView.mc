@@ -67,6 +67,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _hideSecondHand as Boolean = false;
     private var _show3dEffects as Boolean = false;
     private var _symbolsDrawn as Boolean = false;
+    private var _batteryDrawn as Boolean = false;
     private var _drawHeartRate as Number = -1;
     private var _shadowColor as Number = 0;
 
@@ -317,10 +318,39 @@ class ClockView extends WatchUi.WatchFace {
                 _backgroundDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
             }
 
+            // Draw alarm and notification indicators
+            _symbolsDrawn = false;
+            var idx = -1;
+            idx = getIndicatorPosition(:symbols);
+            if (-1 != idx) {
+                _symbolsDrawn = drawSymbols(
+                    _backgroundDc, 
+                    _pos[idx][0], 
+                    _pos[idx][1], 
+                    _colors[_colorMode][C_TEXT],
+                    deviceSettings.alarmCount,
+                    deviceSettings.notificationCount
+                );
+            }
+
+            // Draw the battery level indicator
+            _batteryDrawn = false;
+            idx = getIndicatorPosition(:battery);
+            if (-1 != idx) {
+                _batteryDrawn = _batteryLevel.draw(
+                    _backgroundDc, 
+                    _pos[idx][0], 
+                    _pos[idx][1],
+                    _isAwake,
+                    _colorMode,
+                    _colors[_colorMode][C_TEXT],
+                    _colors[_colorMode][C_BACKGROUND]
+                );
+            }
+
             // Draw the date string
             var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
             _backgroundDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-            var idx = -1;
             idx = getIndicatorPosition(:longDate);
             if (-1 != idx) {
                 _backgroundDc.drawText(
@@ -344,20 +374,6 @@ class ClockView extends WatchUi.WatchFace {
                 }
             }
 
-            // Draw alarm and notification indicators
-            _symbolsDrawn = false;
-            idx = getIndicatorPosition(:symbols);
-            if (-1 != idx) {
-                _symbolsDrawn = drawSymbols(
-                    _backgroundDc, 
-                    _pos[idx][0], 
-                    _pos[idx][1], 
-                    _colors[_colorMode][C_TEXT],
-                    deviceSettings.alarmCount,
-                    deviceSettings.notificationCount
-                );
-            }
-
             // Draw the phone connection indicator on the 6 o'clock tick mark
             idx = getIndicatorPosition(:phoneConnected);
             if (-1 != idx) {
@@ -367,20 +383,6 @@ class ClockView extends WatchUi.WatchFace {
                     _pos[idx][1],
                     _colors[_colorMode][C_FOREGROUND],
                     deviceSettings.phoneConnected
-                );
-            }
-
-            // Draw the battery level indicator
-            idx = getIndicatorPosition(:battery);
-            if (-1 != idx) {
-                _batteryLevel.draw(
-                    _backgroundDc, 
-                    _pos[idx][0], 
-                    _pos[idx][1],
-                    _isAwake,
-                    _colorMode,
-                    _colors[_colorMode][C_TEXT],
-                    _colors[_colorMode][C_BACKGROUND]
                 );
             }
 
@@ -401,7 +403,6 @@ class ClockView extends WatchUi.WatchFace {
 
             // Draw the steps indicator at the 6 o'clock position
             idx = getIndicatorPosition(:steps);
-            //System.println("DEBUG: Steps idx = " + idx);
             if (-1 != idx) {
                 drawSteps(
                     _backgroundDc,
@@ -704,7 +705,7 @@ class ClockView extends WatchUi.WatchFace {
                 break;
             case :longDate:
                 if ($.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY == $.config.getValue($.Config.I_DATE_DISPLAY)) {
-                    idx = ($.Config.O_STEPS_ON == $.config.getValue($.Config.I_STEPS)) ? 9 : 8;
+                    idx = ($.Config.O_STEPS_ON == $.config.getValue($.Config.I_STEPS) and _batteryDrawn) ? 9 : 8;
                 }
                 break;
             case :heartRate:
@@ -728,9 +729,9 @@ class ClockView extends WatchUi.WatchFace {
                    Short        On         Off    7  1  -
                    Short        On         On     7 12 11
                    Long         Off        Off    8  -  -
-                   Long         Off        On     9  - 11
+                   Long         Off        On     9  - 11 or 3
                    Long         On         Off    8  0  -
-                   Long         On         On     9  0 11
+                   Long         On         On     9  0 11 or 3
 
                    Positions
                    ---------
@@ -750,7 +751,7 @@ class ClockView extends WatchUi.WatchFace {
                 */
                 if ($.Config.O_STEPS_ON == $.config.getValue($.Config.I_STEPS)) {
                     if ($.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY == $.config.getValue($.Config.I_DATE_DISPLAY)) {
-                        idx = 11;
+                        idx = _batteryDrawn ? 11 : 3;
                     } else if (    $.Config.O_DATE_DISPLAY_DAY_ONLY == $.config.getValue($.Config.I_DATE_DISPLAY)
                                and $.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
                         idx = 11;
