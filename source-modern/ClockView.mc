@@ -22,25 +22,23 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
 import Toybox.System;
-import Toybox.Time;
-import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
 
 //! Implements the Swiss Railway Clock watch face
 class ClockView extends WatchUi.WatchFace {
 
-    // Things we want to access from the outside. By convention, write-access is only from within ClockView.
-    static public var iconFont as FontResource?;
-
-    // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the _colors Array.
+    // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the colors Array.
     enum { M_LIGHT, M_DARK } // Color modes
     enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
 
-    private var _colorMode as Number = M_LIGHT;
-    private var _colors as Array< Array<Number> > = [
+    // Things we want to access from the outside. By convention, write-access is only from within ClockView.
+    static public var iconFont as FontResource?;
+    static public var colorMode as Number = M_LIGHT;
+    static public var colors as Array< Array<Number> > = [
         [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED, Graphics.COLOR_DK_GRAY],
         [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_DK_GRAY]
     ] as Array< Array<Number> >;
+    static public var isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
 
     private const TWO_PI as Float = 2 * Math.PI;
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
@@ -57,26 +55,16 @@ class ClockView extends WatchUi.WatchFace {
     // Cache for all numbers required to draw the second hand. These are pre-calculated in onLayout().
     private var _secondData as Array< Array<Number> > = new Array< Array<Number> >[60];
 
-    // Positions (x,y) of the indicators, set in onLayout().
-    private var _pos as Array< Array<Number> > = new Array< Array<Number> >[0]; // just to have an initialization
-
-    private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
     private var _lastDrawnMin as Number = -1; // Minute when the watch face was last completely re-drawn
     private var _doPartialUpdates as Boolean = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
     private var _sleepTimer as Number = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
     private var _hideSecondHand as Boolean = false;
     private var _show3dEffects as Boolean = false;
-    private var _symbolsDrawn as Boolean = false;
-    private var _batteryDrawn as Boolean = false;
-    private var _drawHeartRate as Number = -1;
     private var _shadowColor as Number = 0;
 
     private var _screenShape as Number;
-    private var _width as Number;
-    private var _height as Number;
     private var _screenCenter as Array<Number>;
     private var _clockRadius as Number;
-    private var _batteryLevel as BatteryLevel;
 
     private var _secondLayer as Layer;
     private var _secondShadowLayer as Layer;
@@ -85,6 +73,8 @@ class ClockView extends WatchUi.WatchFace {
     private var _secondDc as Dc;
     private var _secondShadowDc as Dc;
 
+    private var _indicators as Indicators;
+
     //! Constructor. Initialize the variables for this view.
     public function initialize() {
         WatchFace.initialize();
@@ -92,11 +82,10 @@ class ClockView extends WatchUi.WatchFace {
         if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
         var deviceSettings = System.getDeviceSettings();
         _screenShape = deviceSettings.screenShape;
-        _width = deviceSettings.screenWidth;
-        _height = deviceSettings.screenHeight;
-        _screenCenter = [_width/2, _height/2] as Array<Number>;
+        var width = deviceSettings.screenWidth;
+        var height = deviceSettings.screenHeight;
+        _screenCenter = [width/2, height/2] as Array<Number>;
         _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
-        _batteryLevel = new BatteryLevel(_clockRadius);
 
         // Instead of a buffered bitmap, this version uses multiple layers (since API Level 3.1.0):
         //
@@ -117,7 +106,7 @@ class ClockView extends WatchUi.WatchFace {
         // hand layers to about a quarter of the screen size and moving them every 15 seconds.
 
         // Initialize layers and add them to the view
-        var opts = {:locX => 0, :locY => 0, :width => _width, :height => _height};
+        var opts = {:locX => 0, :locY => 0, :width => width, :height => height};
         var backgroundLayer = new WatchUi.Layer(opts);
         var hourMinuteLayer = new WatchUi.Layer(opts);
         _secondLayer = new WatchUi.Layer(opts);
@@ -135,6 +124,8 @@ class ClockView extends WatchUi.WatchFace {
         _hourMinuteDc.setAntiAlias(true);
         _secondDc.setAntiAlias(true);
         _secondShadowDc.setAntiAlias(true);
+
+        _indicators = new Indicators(width, height, _clockRadius);
     }
 
     //! Load resources and configure the layout of the watchface for this device
@@ -172,6 +163,9 @@ class ClockView extends WatchUi.WatchFace {
             }
         }
 
+        // Update any indicator positions, which depend on the watchface shapes
+        _indicators.updatePos(dc.getWidth(), dc.getHeight(), _shapes[S_BIGTICKMARK][0], _shapes[S_BIGTICKMARK][3]);
+
         // Map out the coordinates of all the shapes. Doing that only once reduces processing time.
         for (var s = 0; s < S_SIZE; s++) {
             var idx = s * 8;
@@ -186,7 +180,7 @@ class ClockView extends WatchUi.WatchFace {
         }
         //System.println("("+_coords[S_SECONDHAND*8+2]+","+_coords[S_SECONDHAND*8+3]+") ("+_coords[S_SECONDHAND*8+4]+","+_coords[S_SECONDHAND*8+5]+")");
         if (_clockRadius >= 130 and 0 == (_coords[S_SECONDHAND*8+4] - _coords[S_SECONDHAND*8+2]) % 2) {
-            // Check: Do we always get here because of the way the numbers are calculated?
+            // TODO: Check if we always get here because of the way the numbers are calculated
             _coords[S_SECONDHAND*8+6] += 1;
             _coords[S_SECONDHAND*8+4] += 1;
             //System.println("INFO: Increased the width of the second hand by 1 pixel to "+(_coords[S_SECONDHAND*8+4]-_coords[S_SECONDHAND*8+2]+1)+" pixels to make it even");
@@ -201,27 +195,11 @@ class ClockView extends WatchUi.WatchFace {
 
         // Calculate all numbers required to draw the second hand for every second
         calcSecondData();
+
         //var s = _secondData[0];
         //System.println("INFO: Clock radius = " + _clockRadius);
         //System.println("INFO: Secondhand circle: ("+s[0]+","+s[1]+"), r = "+_secondCircleRadius);
         //System.println("INFO: Secondhand coords: ("+s[2]+","+s[3]+") ("+s[4]+","+s[5]+") ("+s[6]+","+s[7]+") ("+s[8]+","+s[9]+")");
-
-        // Positions of the various indicators
-        _pos = [
-            [(_width * 0.73).toNumber(), (_height * 0.50).toNumber()],      // 0: Heart rate indicator at 3 o'clock
-            [(_width * 0.48).toNumber(), (_height * 0.75).toNumber()],      // 1: Heart rate indicator at 6 o'clock
-            [(_width * 0.23).toNumber(), (_height * 0.50).toNumber()],      // 2: Recovery time indicator at 9 o'clock
-            [(_width * 0.50).toNumber(), (_clockRadius * 0.64).toNumber()], // 3: Battery level indicator at 12 o'clock with notifications
-            [(_width * 0.50).toNumber(), (_clockRadius * 0.50).toNumber()], // 4: Battery level indicator at 12 o'clock w/o notifications
-            [(_width * 0.50).toNumber(), (_height * 0.18).toNumber()],      // 5: Alarms and notifications at 12 o'clock
-            [(_width * 0.50).toNumber(), (_height * 0.50 + _shapes[S_BIGTICKMARK][3] + (_shapes[S_BIGTICKMARK][0] - Graphics.getFontHeight(iconFont as FontResource))/3).toNumber()], // 6: Phone connection indicator on the 6 o'clock tick mark
-            [(_width * 0.75).toNumber(), (_height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
-            [(_width * 0.50).toNumber(), (_height * 0.65).toNumber()],      // 8: Date (weekday and day format) at 6 o'clock, w/o steps
-            [(_width * 0.50).toNumber(), (_height * 0.69).toNumber()],      // 9: Date (weekday and day format) at 6 o'clock, with steps
-            [(_width * 0.49).toNumber(), (_height * 0.70).toNumber()],      //10: Steps at 6 o'clock, w/o date (weekday and day format)
-            [(_width * 0.49).toNumber(), (_height * 0.65).toNumber()],      //11: Steps at 6 o'clock, with date (weekday and day format)
-            [(_width * 0.49).toNumber(), (_height * 0.76).toNumber()]       //12: Heart rate indicator at 6 o'clock with steps
-        ] as Array< Array<Number> >;
     }
 
     //! Called when this View is brought to the foreground. Restore the state of this view and
@@ -235,21 +213,21 @@ class ClockView extends WatchUi.WatchFace {
 
     //! This method is called when the device re-enters sleep mode
     public function onEnterSleep() as Void {
-        _isAwake = false;
+        isAwake = false;
         _lastDrawnMin = -1; // Force the watch face to be re-drawn
         WatchUi.requestUpdate();
     }
 
     //! This method is called when the device exits sleep mode
     public function onExitSleep() as Void {
-        _isAwake = true;
+        isAwake = true;
         _lastDrawnMin = -1; // Force the watch face to be re-drawn
         WatchUi.requestUpdate();
     }
 
     public function stopPartialUpdates() as Void {
         _doPartialUpdates = false;
-        _colors[M_LIGHT][C_BACKGROUND] = Graphics.COLOR_BLUE; // Make the issue visible
+        colors[M_LIGHT][C_BACKGROUND] = Graphics.COLOR_BLUE; // Make the issue visible
     }
 
     //! Handle the update event. This function is called
@@ -269,7 +247,7 @@ class ClockView extends WatchUi.WatchFace {
         dc.clearClip(); // Still needed as the settings menu messes with the clip
 
         // Update the low-power mode timer
-        if (_isAwake) { 
+        if (isAwake) { 
             _sleepTimer = SECOND_HAND_TIMER; // Reset the timer
         } else if (_sleepTimer > 0) {
             _sleepTimer -= 1;
@@ -281,137 +259,44 @@ class ClockView extends WatchUi.WatchFace {
         if (_lastDrawnMin != clockTime.min) { 
             _lastDrawnMin = clockTime.min;
 
-            var deviceSettings = System.getDeviceSettings();
-
             // Set the color mode
-            _colorMode = setColorMode(deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
+            var deviceSettings = System.getDeviceSettings();
+            colorMode = setColorMode(deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
 
             // Note: Whether 3D effects are supported by the device is also ensured by getValue().
-            _show3dEffects = $.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS) and M_LIGHT == _colorMode;
-            _secondShadowLayer.setVisible(_show3dEffects and _isAwake);
+            _show3dEffects = $.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS) and M_LIGHT == colorMode;
+            _secondShadowLayer.setVisible(_show3dEffects and isAwake);
 
             // Handle the setting to disable the second hand in sleep mode after some time
             var secondsOption = $.config.getValue($.Config.I_HIDE_SECONDS);
             _hideSecondHand = $.Config.O_HIDE_SECONDS_ALWAYS == secondsOption 
-                or ($.Config.O_HIDE_SECONDS_IN_DM == secondsOption and M_DARK == _colorMode);
+                or ($.Config.O_HIDE_SECONDS_IN_DM == secondsOption and M_DARK == colorMode);
             _secondLayer.setVisible(_sleepTimer > 0 or !_hideSecondHand);
 
             // Clear the background layer with the background color
             _backgroundDc.clearClip();
             if (System.SCREEN_SHAPE_ROUND == _screenShape) {
                 // Fill the entire background with the background color
-                _backgroundDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
+                _backgroundDc.setColor(colors[colorMode][C_BACKGROUND], colors[colorMode][C_BACKGROUND]);
                 _backgroundDc.clear();
             } else {
                 // Fill the entire background with black and draw a circle with the background color
                 _backgroundDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
                 _backgroundDc.clear();
-                if (_colors[_colorMode][C_BACKGROUND] != Graphics.COLOR_BLACK) {
-                    _backgroundDc.setColor(_colors[_colorMode][C_BACKGROUND], _colors[_colorMode][C_BACKGROUND]);
+                if (colors[colorMode][C_BACKGROUND] != Graphics.COLOR_BLACK) {
+                    _backgroundDc.setColor(colors[colorMode][C_BACKGROUND], colors[colorMode][C_BACKGROUND]);
                     _backgroundDc.fillCircle(_screenCenter[0], _screenCenter[1], _clockRadius);
                 }
             }
 
             // Draw tick marks around the edge of the screen on the background layer
-            _backgroundDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+            _backgroundDc.setColor(colors[colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
             for (var i = 0; i < 60; i++) {
                 _backgroundDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
             }
 
-            // Draw alarm and notification indicators
-            _symbolsDrawn = false;
-            var idx = -1;
-            idx = getIndicatorPosition(:symbols);
-            if (-1 != idx) {
-                _symbolsDrawn = drawSymbols(
-                    _backgroundDc, 
-                    _pos[idx][0], 
-                    _pos[idx][1], 
-                    _colors[_colorMode][C_TEXT],
-                    deviceSettings.alarmCount,
-                    deviceSettings.notificationCount
-                );
-            }
-
-            // Draw the battery level indicator
-            _batteryDrawn = false;
-            idx = getIndicatorPosition(:battery);
-            if (-1 != idx) {
-                _batteryDrawn = _batteryLevel.draw(
-                    _backgroundDc, 
-                    _pos[idx][0], 
-                    _pos[idx][1],
-                    _isAwake,
-                    _colorMode,
-                    _colors[_colorMode][C_TEXT],
-                    _colors[_colorMode][C_BACKGROUND]
-                );
-            }
-
-            // Draw the date string
-            var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
-            _backgroundDc.setColor(_colors[_colorMode][C_TEXT], Graphics.COLOR_TRANSPARENT);
-            idx = getIndicatorPosition(:longDate);
-            if (-1 != idx) {
-                _backgroundDc.drawText(
-                    _pos[idx][0], 
-                    _pos[idx][1], 
-                    Graphics.FONT_MEDIUM, 
-                    Lang.format("$1$ $2$", [info.day_of_week, info.day]), 
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-            }
-            else {
-                idx = getIndicatorPosition(:shortDate);
-                if (-1 != idx) {
-                    _backgroundDc.drawText(
-                        _pos[idx][0], 
-                        _pos[idx][1], 
-                        Graphics.FONT_MEDIUM, 
-                        info.day.format("%02d"), 
-                        Graphics.TEXT_JUSTIFY_CENTER
-                    );
-                }
-            }
-
-            // Draw the phone connection indicator on the 6 o'clock tick mark
-            idx = getIndicatorPosition(:phoneConnected);
-            if (-1 != idx) {
-                drawPhoneConnected(
-                    _backgroundDc,
-                    _pos[idx][0],
-                    _pos[idx][1],
-                    _colors[_colorMode][C_FOREGROUND],
-                    deviceSettings.phoneConnected
-                );
-            }
-
-            // Determine if the heart rate should be drawn, in a format that is useful as an index into _pos
-            _drawHeartRate = getIndicatorPosition(:heartRate);
-
-            // Draw the recovery time indicator at the 9 o'clock position
-            idx = getIndicatorPosition(:recoveryTime);
-            if (-1 != idx) {
-                drawRecoveryTime(
-                    _backgroundDc,
-                    _pos[idx][0],
-                    _pos[idx][1],
-                    _colorMode,
-                    _colors[_colorMode][C_TEXT]
-                );
-            }
-
-            // Draw the steps indicator at the 6 o'clock position
-            idx = getIndicatorPosition(:steps);
-            if (-1 != idx) {
-                drawSteps(
-                    _backgroundDc,
-                    _pos[idx][0],
-                    _pos[idx][1],
-                    _colorMode,
-                    _colors[_colorMode][C_TEXT]
-                );
-            }
+            // Draw the indicators (those which are updated every minute) on the background layer
+            _indicators.draw(_backgroundDc, deviceSettings);
 
             // Clear the layer used for the hour and minute hands
             _hourMinuteDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
@@ -421,39 +306,29 @@ class ClockView extends WatchUi.WatchFace {
             var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
             var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
             var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
-            if (_isAwake and _show3dEffects) {
+            if (isAwake and _show3dEffects) {
                 _hourMinuteDc.setFill(_shadowColor);
                 _hourMinuteDc.fillPolygon(shadowCoords(hourHandCoords, 7));
                 _hourMinuteDc.fillPolygon(shadowCoords(minuteHandCoords, 8));
             }
-            _hourMinuteDc.setColor(_colors[_colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+            _hourMinuteDc.setColor(colors[colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
             _hourMinuteDc.fillPolygon(hourHandCoords);
             _hourMinuteDc.fillPolygon(minuteHandCoords);
         } // if (_lastDrawnMin != clockTime.min)
 
         var doIt = true;
-        if (!_isAwake) {
+        if (!isAwake) {
             if (!_doPartialUpdates) { doIt = false; }
             else if (_hideSecondHand and 0 == _sleepTimer) { doIt = false; }
         }
         if (doIt) {
-            // Draw the heart rate indicator at the spot which is not occupied by the date display,
-            // by default on the right side
-            if (_drawHeartRate != -1) {
-                drawHeartRate(
-                    _backgroundDc, 
-                    _pos[_drawHeartRate][0], 
-                    _pos[_drawHeartRate][1], 
-                    _isAwake, 
-                    _colors[_colorMode][C_TEXT], 
-                    _colors[_colorMode][C_BACKGROUND]
-                );
-            }
+            // Draw the heart rate indicator, every time onUpdate() is called
+            _indicators.drawHeartRate(_backgroundDc);
 
             // Clear the clip of the second layer to delete the second hand
             _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
             _secondDc.clear();
-            if (_isAwake and _show3dEffects) {
+            if (isAwake and _show3dEffects) {
                 // Clear the clip of the second hand shadow layer to delete the shadow
                 _secondShadowDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
                 _secondShadowDc.clear();
@@ -467,7 +342,7 @@ class ClockView extends WatchUi.WatchFace {
     //! in low-power mode. See onUpdate() for the full story.
     //! @param dc Device context
     public function onPartialUpdate(dc as Dc) as Void {
-        _isAwake = false; // To state the obvious. Workaround for an Enduro 2 firmware bug.
+        isAwake = false; // To state the obvious. Workaround for an Enduro 2 firmware bug.
 
         if (_sleepTimer > 0) { 
             _sleepTimer -= 1;
@@ -481,16 +356,9 @@ class ClockView extends WatchUi.WatchFace {
         if (_sleepTimer > 0 or !_hideSecondHand) {
             var second = System.getClockTime().sec;
 
-            // Continue to draw the heart rate indicator every 5 seconds
-            if (_drawHeartRate != -1 and 0 == second % 5) {
-                drawHeartRate(
-                    _backgroundDc, 
-                    _pos[_drawHeartRate][0], 
-                    _pos[_drawHeartRate][1], 
-                    _isAwake, 
-                    _colors[_colorMode][C_TEXT], 
-                    _colors[_colorMode][C_BACKGROUND]
-                );
+            // Continue to draw the heart rate indicator every 5 seconds in onPartialUpdate()
+            if (0 == second % 5) {
+                _indicators.drawHeartRate(_backgroundDc);
             }
 
             // Clear the clip of the second layer to delete the second hand, then re-draw it
@@ -510,7 +378,7 @@ class ClockView extends WatchUi.WatchFace {
         // Set the clipping region
         dc.setClip(sd[10], sd[11], sd[12], sd[13]);
 
-        if (_isAwake and _show3dEffects) {
+        if (isAwake and _show3dEffects) {
             // Set the clipping region of the shadow by moving the clipping region of the second hand
             var sc = shadowCoords([[sd[0], sd[1]], [sd[10], sd[11]]] as Array< Array<Number> >, 9);
             _secondShadowDc.setClip(sc[1][0], sc[1][1], sd[12], sd[13]);
@@ -522,7 +390,7 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         // Draw the second hand
-        dc.setColor(_colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_RED /* colors[colorMode][C_SECONDS] */, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_RED /* colors[colorMode][C_SECONDS] */, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(coords);
         dc.fillCircle(sd[0], sd[1], _secondCircleRadius);
     }
@@ -656,115 +524,18 @@ class ClockView extends WatchUi.WatchFace {
         // In dark mode, adjust colors based on the contrast setting
         if (M_DARK == colorMode) {
             var foregroundColor = $.config.getValue($.Config.I_DM_CONTRAST);
-            _colors[M_DARK][C_FOREGROUND] = foregroundColor;
+            colors[M_DARK][C_FOREGROUND] = foregroundColor;
             switch (foregroundColor) {
                 case Graphics.COLOR_WHITE:
-                    _colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
+                    colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
                     break;
                 case Graphics.COLOR_LT_GRAY:
                 case Graphics.COLOR_DK_GRAY:
-                    _colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
+                    colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
                     break;
             }
         }
         return colorMode;
-    }
-
-    // Determine if a given indicator should be shown and its position on the screen. 
-    // This function exists to have all decisions regarding indicator placing, some of which are 
-    // interdependent, in one place.
-    // The position returned is an index into _pos. -1 means the indicator should not be drawn.
-    private function getIndicatorPosition(indicator as Symbol) as Number {
-        var idx = -1;
-        switch (indicator) {
-            case :recoveryTime:
-                if ($.Config.O_RECOVERY_TIME_ON == $.config.getValue($.Config.I_RECOVERY_TIME)) { 
-                    idx = 2; 
-                }
-                break;
-            case :battery:
-                if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
-                   idx = _symbolsDrawn ? 3 : 4;
-                }
-                break;
-            case :symbols:
-                if (   $.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS)
-                    or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
-                    idx = 5;
-                }
-                break;
-            case :phoneConnected:
-                if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) { 
-                    idx = 6; 
-                }
-                break;
-            case :shortDate:
-                if ($.Config.O_DATE_DISPLAY_DAY_ONLY == $.config.getValue($.Config.I_DATE_DISPLAY)) { 
-                    idx = 7; 
-                }
-                break;
-            case :longDate:
-                if ($.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY == $.config.getValue($.Config.I_DATE_DISPLAY)) {
-                    idx = ($.Config.O_STEPS_ON == $.config.getValue($.Config.I_STEPS) and _batteryDrawn) ? 9 : 8;
-                }
-                break;
-            case :heartRate:
-                if ($.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
-                    idx = 0;
-                    if ($.Config.O_DATE_DISPLAY_DAY_ONLY == $.config.getValue($.Config.I_DATE_DISPLAY)) {
-                        idx = ($.Config.O_STEPS_ON == $.config.getValue($.Config.I_STEPS)) ? 12 : 1;
-                    }
-                }
-                break;
-            case :steps:
-                /*
-                   Date display Heart rate Steps Positions
-                   ------------ ---------- ----- ---------
-                   Off          Off        Off    -  -  -
-                   Off          Off        On     -  - 10
-                   Off          On         Off    -  0  -
-                   Off          On         On     -  0 10
-                   Short        Off        Off    7  -  -
-                   Short        Off        On     7  - 10
-                   Short        On         Off    7  1  -
-                   Short        On         On     7 12 11
-                   Long         Off        Off    8  -  -
-                   Long         Off        On     9  - 11 or 3
-                   Long         On         Off    8  0  -
-                   Long         On         On     9  0 11 or 3
-
-                   Positions
-                   ---------
-                    0: Heart rate indicator at 3 o'clock
-                    1: Heart rate indicator at 6 o'clock
-                    2: Recovery time indicator at 9 o'clock
-                    3: Battery level indicator at 12 o'clock with notifications
-                    4: Battery level indicator at 12 o'clock w/o notifications
-                    5: Alarms and notifications at 12 o'clock
-                    6: Phone connection indicator on the 6 o'clock tick mark
-                    7: Date (day format) at 3 o'clock
-                    8: Date (weekday and day format) at 6 o'clock, w/o steps
-                    9: Date (weekday and day format) at 6 o'clock, with steps
-                   10: Steps at 6 o'clock, w/o date (weekday and day format)
-                   11: Steps at 6 o'clock, with date (weekday and day format)
-                   12: Heart rate indicator at 6 o'clock with steps
-                */
-                if ($.Config.O_STEPS_ON == $.config.getValue($.Config.I_STEPS)) {
-                    if ($.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY == $.config.getValue($.Config.I_DATE_DISPLAY)) {
-                        idx = _batteryDrawn ? 11 : 3;
-                    } else if (    $.Config.O_DATE_DISPLAY_DAY_ONLY == $.config.getValue($.Config.I_DATE_DISPLAY)
-                               and $.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
-                        idx = 11;
-                    } else {
-                        idx = 10;
-                    }
-                }
-                break;
-            default:
-                System.println("ERROR: ClockView.getIndicatorPos() is not implemented for indicator = " + indicator);
-                break;
-        }
-        return idx;
     }
 
 } // class ClockView
