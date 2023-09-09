@@ -34,10 +34,12 @@ class Indicators {
     private var _pos as Array< Array<Number> >; // Positions (x,y) of the indicators
 
     private var _symbolsDrawn as Boolean = false;
-    private var _batteryDrawn as Boolean = false;
     private var _drawHeartRate as Number = -1;
+    (:modern)
+    private var _batteryDrawn as Boolean = false;
 
     // Constructor
+    (:modern)
     public function initialize(width as Number, height as Number, clockRadius as Number) {
         _clockRadius = clockRadius;
         _batteryLevel = new BatteryLevel(clockRadius);
@@ -60,105 +62,208 @@ class Indicators {
         ] as Array< Array<Number> >;
     }
 
+    (:legacy)
+    public function initialize(width as Number, height as Number, clockRadius as Number) {
+        _clockRadius = clockRadius;
+        _batteryLevel = new BatteryLevel(clockRadius);
+
+        // Positions of the various indicators
+        _pos = [
+            [(width * 0.73).toNumber(), (height * 0.50).toNumber()],       //  0: Heart rate indicator at 3 o'clock
+            [(width * 0.48).toNumber(), (height * 0.75).toNumber()],       //  1: Heart rate indicator at 6 o'clock
+            [(width * 0.23).toNumber(), (height * 0.50).toNumber()],       //  2: Recovery time indicator at 9 o'clock
+            [(width * 0.50).toNumber(), (_clockRadius * 0.64).toNumber()], //  3: Battery level indicator at 12 o'clock with notifications
+            [(width * 0.50).toNumber(), (_clockRadius * 0.50).toNumber()], //  4: Battery level indicator at 12 o'clock w/o notifications
+            [(width * 0.50).toNumber(), (height * 0.18).toNumber()],       //  5: Alarms and notifications at 12 o'clock
+            [0.0, 0.0],                                                    //  6: Phone connection indicator on the 6 o'clock tick mark (see updatePos() )
+            [(width * 0.75).toNumber(), (height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
+            [(width * 0.50).toNumber(), (height * 0.65).toNumber()]        //  8: Date (weekday and day format) at 6 o'clock
+        ] as Array< Array<Number> >;
+    }
+
     // Update any indicator positions, which depend on numbers that are not available yet when the constructor is called
     public function updatePos(width as Number, height as Number, s0 as Float, s3 as Float) as Void {
         _pos[6] = [(width * 0.50).toNumber(), (height * 0.50 + s3 + (s0 - Graphics.getFontHeight(ClockView.iconFont as FontResource))/3).toNumber()];
     }
 
     // Draw all the indicators, which are updated once a minute (all except the heart rate)
+    (:modern)
     public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
-            var activityInfo = ActivityMonitor.getInfo();
+        var activityInfo = ActivityMonitor.getInfo();
 
-            // Draw alarm and notification indicators
-            _symbolsDrawn = false;
-            var idx = -1;
-            idx = getIndicatorPosition(:symbols);
-            if (-1 != idx) {
-                _symbolsDrawn = drawSymbols(
-                    dc,
-                    _pos[idx][0], 
-                    _pos[idx][1], 
-                    deviceSettings.alarmCount,
-                    deviceSettings.notificationCount
-                );
-            }
+        // Draw alarm and notification indicators
+        _symbolsDrawn = false;
+        var idx = -1;
+        idx = getIndicatorPosition(:symbols);
+        if (-1 != idx) {
+            _symbolsDrawn = drawSymbols(
+                dc,
+                _pos[idx][0], 
+                _pos[idx][1], 
+                deviceSettings.alarmCount,
+                deviceSettings.notificationCount
+            );
+        }
 
-            // Draw the battery level indicator
-            _batteryDrawn = false;
-            idx = getIndicatorPosition(:battery);
-            if (-1 != idx) {
-                _batteryDrawn = _batteryLevel.draw(
-                    dc,
-                    _pos[idx][0], 
-                    _pos[idx][1]
-                );
-            }
+        // Draw the battery level indicator
+        _batteryDrawn = false;
+        idx = getIndicatorPosition(:battery);
+        if (-1 != idx) {
+            _batteryDrawn = _batteryLevel.draw(
+                dc,
+                _pos[idx][0], 
+                _pos[idx][1]
+            );
+        }
 
-            // Draw the date string
-            var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
-            dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
-            idx = getIndicatorPosition(:longDate);
+        // Draw the date string
+        var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
+        dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+        idx = getIndicatorPosition(:longDate);
+        if (-1 != idx) {
+            dc.drawText(
+                _pos[idx][0], 
+                _pos[idx][1], 
+                Graphics.FONT_MEDIUM, 
+                Lang.format("$1$ $2$", [info.day_of_week, info.day]), 
+                Graphics.TEXT_JUSTIFY_CENTER
+            );
+        }
+        else {
+            idx = getIndicatorPosition(:shortDate);
             if (-1 != idx) {
                 dc.drawText(
                     _pos[idx][0], 
                     _pos[idx][1], 
                     Graphics.FONT_MEDIUM, 
-                    Lang.format("$1$ $2$", [info.day_of_week, info.day]), 
+                    info.day.format("%02d"), 
                     Graphics.TEXT_JUSTIFY_CENTER
                 );
             }
-            else {
-                idx = getIndicatorPosition(:shortDate);
-                if (-1 != idx) {
-                    dc.drawText(
-                        _pos[idx][0], 
-                        _pos[idx][1], 
-                        Graphics.FONT_MEDIUM, 
-                        info.day.format("%02d"), 
-                        Graphics.TEXT_JUSTIFY_CENTER
-                    );
-                }
-            }
+        }
 
-            // Draw the phone connection indicator on the 6 o'clock tick mark
-            idx = getIndicatorPosition(:phoneConnected);
-            if (-1 != idx) {
-                drawPhoneConnected(
+        // Draw the phone connection indicator on the 6 o'clock tick mark
+        idx = getIndicatorPosition(:phoneConnected);
+        if (-1 != idx) {
+            drawPhoneConnected(
+                dc,
+                _pos[idx][0],
+                _pos[idx][1],
+                deviceSettings.phoneConnected
+            );
+        }
+
+        // Determine if and where the heart rate should be drawn
+        _drawHeartRate = getIndicatorPosition(:heartRate);
+
+        // Draw the recovery time indicator
+        idx = getIndicatorPosition(:recoveryTime);
+        if (-1 != idx) {
+            if (ActivityMonitor.Info has :timeToRecovery) {
+                drawRecoveryTime(
                     dc,
                     _pos[idx][0],
                     _pos[idx][1],
-                    deviceSettings.phoneConnected
+                    activityInfo.timeToRecovery
                 );
             }
+        }
 
-            // Determine if and where the heart rate should be drawn
-            _drawHeartRate = getIndicatorPosition(:heartRate);
-
-            // Draw the recovery time indicator
-            idx = getIndicatorPosition(:recoveryTime);
-            if (-1 != idx) {
-                if (ActivityMonitor.Info has :timeToRecovery) {
-                    drawRecoveryTime(
-                        dc,
-                        _pos[idx][0],
-                        _pos[idx][1],
-                        activityInfo.timeToRecovery
-                    );
-                }
+        // Draw the steps indicator
+        idx = getIndicatorPosition(:footsteps);
+        if (-1 != idx) {
+            if (ActivityMonitor.Info has :steps) {
+                drawSteps(
+                    dc,
+                    _pos[idx][0],
+                    _pos[idx][1],
+                    activityInfo.steps
+                );
             }
+        }
+    }
 
-            // Draw the steps indicator
-            idx = getIndicatorPosition(:footsteps);
+    (:legacy)
+    public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
+        var activityInfo = ActivityMonitor.getInfo();
+
+        // Draw alarm and notification indicators
+        _symbolsDrawn = false;
+        var idx = -1;
+        idx = getIndicatorPosition(:symbols);
+        if (-1 != idx) {
+            _symbolsDrawn = drawSymbols(
+                dc,
+                _pos[idx][0], 
+                _pos[idx][1], 
+                deviceSettings.alarmCount,
+                deviceSettings.notificationCount
+            );
+        }
+
+        // Draw the battery level indicator
+        idx = getIndicatorPosition(:battery);
+        if (-1 != idx) {
+            _batteryLevel.draw(
+                dc,
+                _pos[idx][0], 
+                _pos[idx][1]
+            );
+        }
+
+        // Draw the date string
+        var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
+        dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+        idx = getIndicatorPosition(:longDate);
+        if (-1 != idx) {
+            dc.drawText(
+                _pos[idx][0], 
+                _pos[idx][1], 
+                Graphics.FONT_MEDIUM, 
+                Lang.format("$1$ $2$", [info.day_of_week, info.day]), 
+                Graphics.TEXT_JUSTIFY_CENTER
+            );
+        }
+        else {
+            idx = getIndicatorPosition(:shortDate);
             if (-1 != idx) {
-                if (ActivityMonitor.Info has :steps) {
-                    drawSteps(
-                        dc,
-                        _pos[idx][0],
-                        _pos[idx][1],
-                        activityInfo.steps
-                    );
-                }
+                dc.drawText(
+                    _pos[idx][0], 
+                    _pos[idx][1], 
+                    Graphics.FONT_MEDIUM, 
+                    info.day.format("%02d"), 
+                    Graphics.TEXT_JUSTIFY_CENTER
+                );
             }
+        }
+
+        // Draw the phone connection indicator on the 6 o'clock tick mark
+        idx = getIndicatorPosition(:phoneConnected);
+        if (-1 != idx) {
+            drawPhoneConnected(
+                dc,
+                _pos[idx][0],
+                _pos[idx][1],
+                deviceSettings.phoneConnected
+            );
+        }
+
+        // Draw the heart rate indicator
+        _drawHeartRate = getIndicatorPosition(:heartRate);
+        if (drawHeartRate(dc)) { dc.clearClip(); }
+
+        // Draw the recovery time indicator
+        idx = getIndicatorPosition(:recoveryTime);
+        if (-1 != idx) {
+            if (ActivityMonitor.Info has :timeToRecovery) {
+                drawRecoveryTime(
+                    dc,
+                    _pos[idx][0],
+                    _pos[idx][1],
+                    activityInfo.timeToRecovery
+                );
+            }
+        }
     }
 
     // Draw the heart rate if it is available, return true if it was drawn
@@ -216,6 +321,7 @@ class Indicators {
     // This function exists to have all decisions regarding indicator placing, some of which are 
     // interdependent, in one place.
     // The position returned is an index into _pos. -1 means the indicator should not be drawn.
+    (:modern)
     private function getIndicatorPosition(indicator as Symbol) as Number {
         var idx = -1;
         switch (indicator) {
@@ -300,6 +406,53 @@ class Indicators {
                     } else {
                         idx = 10;
                     }
+                }
+                break;
+            default:
+                System.println("ERROR: ClockView.getIndicatorPos() is not implemented for indicator = " + indicator);
+                break;
+        }
+        return idx;
+    }
+
+    (:legacy)
+    private function getIndicatorPosition(indicator as Symbol) as Number {
+        var idx = -1;
+        switch (indicator) {
+            case :heartRate:
+                if ($.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
+                    idx = $.Config.O_DATE_DISPLAY_DAY_ONLY == $.config.getValue($.Config.I_DATE_DISPLAY) ? 1 : 0;
+                }
+                break;
+            case :recoveryTime:
+                if ($.Config.O_RECOVERY_TIME_ON == $.config.getValue($.Config.I_RECOVERY_TIME)) { 
+                    idx = 2; 
+                }
+                break;
+            case :battery:
+                if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
+                   idx = _symbolsDrawn ? 3 : 4;
+                }
+                break;
+            case :symbols:
+                if (   $.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS)
+                    or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
+                    idx = 5;
+                }
+                break;
+            case :phoneConnected:
+                if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) { 
+                    idx = 6; 
+                }
+                break;
+            case :shortDate:
+                if ($.Config.O_DATE_DISPLAY_DAY_ONLY == $.config.getValue($.Config.I_DATE_DISPLAY)) { 
+                    idx = 7; 
+                }
+                break;
+            case :longDate:
+                if ($.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY == $.config.getValue($.Config.I_DATE_DISPLAY)) {
+                    idx = 8;
                 }
                 break;
             default:
@@ -396,6 +549,7 @@ class Indicators {
     }
 
     // Draw the steps, return true if it was drawn
+    (:modern)
     private function drawSteps(
         dc as Dc,
         xpos as Number, 
