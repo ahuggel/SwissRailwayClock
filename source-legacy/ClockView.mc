@@ -136,7 +136,7 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         // Update any indicator positions, which depend on the watchface shapes
-        _indicators.updatePos(dc.getWidth(), dc.getHeight(), _shapes[S_BIGTICKMARK][0], _shapes[S_BIGTICKMARK][3]);
+        _indicators.updatePos(_shapes[S_BIGTICKMARK][0], _shapes[S_BIGTICKMARK][3]);
 
         // Map out the coordinates of all the shapes. Doing that only once reduces processing time.
         for (var s = 0; s < S_SIZE; s++) {

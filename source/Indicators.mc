@@ -27,21 +27,31 @@ import Toybox.Time;
 import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
 
-// Class to draw all the indicators depending on the menu settings at the correct place on the watchface 
+// Class to draw all the indicators depending on the menu settings at the correct place on the watchface.
+// The distinction between modern and legacy devices is mostly because some of the latter are very memory
+// constrained. Consequently, not all indicators are available on legacy devices and the implementation
+// is optimized to limit the memory use.
 class Indicators {
-    private var _clockRadius as Number;
-    private var _batteryLevel as BatteryLevel;
-    private var _pos as Array< Array<Number> >; // Positions (x,y) of the indicators
+    (:legacy)
+    private var _width as Number;
+    (:legacy)
+    private var _height as Number;
+    (:legacy)
+    private var _phoneConnectedY as Number = 0;
 
+    private var _batteryLevel as BatteryLevel;
     private var _symbolsDrawn as Boolean = false;
-    private var _drawHeartRate as Number = -1;
+
     (:modern)
     private var _batteryDrawn as Boolean = false;
+    (:modern)
+    private var _drawHeartRate as Number = -1;
+    (:modern)
+    private var _pos as Array< Array<Number> >; // Positions (x,y) of the indicators
 
     // Constructor
     (:modern)
     public function initialize(width as Number, height as Number, clockRadius as Number) {
-        _clockRadius = clockRadius;
         _batteryLevel = new BatteryLevel(clockRadius);
 
         // Positions of the various indicators
@@ -49,8 +59,8 @@ class Indicators {
             [(width * 0.73).toNumber(), (height * 0.50).toNumber()],       //  0: Heart rate indicator at 3 o'clock
             [(width * 0.48).toNumber(), (height * 0.75).toNumber()],       //  1: Heart rate indicator at 6 o'clock
             [(width * 0.23).toNumber(), (height * 0.50).toNumber()],       //  2: Recovery time indicator at 9 o'clock
-            [(width * 0.50).toNumber(), (_clockRadius * 0.64).toNumber()], //  3: Battery level indicator at 12 o'clock with notifications
-            [(width * 0.50).toNumber(), (_clockRadius * 0.50).toNumber()], //  4: Battery level indicator at 12 o'clock w/o notifications
+            [(width * 0.50).toNumber(), (height * 0.32).toNumber()], //  3: Battery level indicator at 12 o'clock with notifications
+            [(width * 0.50).toNumber(), (height * 0.25).toNumber()], //  4: Battery level indicator at 12 o'clock w/o notifications
             [(width * 0.50).toNumber(), (height * 0.18).toNumber()],       //  5: Alarms and notifications at 12 o'clock
             [0.0, 0.0],                                                    //  6: Phone connection indicator on the 6 o'clock tick mark (see updatePos() )
             [(width * 0.75).toNumber(), (height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
@@ -64,29 +74,112 @@ class Indicators {
 
     (:legacy)
     public function initialize(width as Number, height as Number, clockRadius as Number) {
-        _clockRadius = clockRadius;
+        _width = width;
+        _height = height;
         _batteryLevel = new BatteryLevel(clockRadius);
-
-        // Positions of the various indicators
-        _pos = [
-            [(width * 0.73).toNumber(), (height * 0.50).toNumber()],       //  0: Heart rate indicator at 3 o'clock
-            [(width * 0.48).toNumber(), (height * 0.75).toNumber()],       //  1: Heart rate indicator at 6 o'clock
-            [(width * 0.23).toNumber(), (height * 0.50).toNumber()],       //  2: Recovery time indicator at 9 o'clock
-            [(width * 0.50).toNumber(), (_clockRadius * 0.64).toNumber()], //  3: Battery level indicator at 12 o'clock with notifications
-            [(width * 0.50).toNumber(), (_clockRadius * 0.50).toNumber()], //  4: Battery level indicator at 12 o'clock w/o notifications
-            [(width * 0.50).toNumber(), (height * 0.18).toNumber()],       //  5: Alarms and notifications at 12 o'clock
-            [0.0, 0.0],                                                    //  6: Phone connection indicator on the 6 o'clock tick mark (see updatePos() )
-            [(width * 0.75).toNumber(), (height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
-            [(width * 0.50).toNumber(), (height * 0.65).toNumber()]        //  8: Date (weekday and day format) at 6 o'clock
-        ] as Array< Array<Number> >;
     }
 
     // Update any indicator positions, which depend on numbers that are not available yet when the constructor is called
+    (:modern)
     public function updatePos(width as Number, height as Number, s0 as Float, s3 as Float) as Void {
         _pos[6] = [(width * 0.50).toNumber(), (height * 0.50 + s3 + (s0 - Graphics.getFontHeight(ClockView.iconFont as FontResource))/3).toNumber()];
     }
 
-    // Draw all the indicators, which are updated once a minute (all except the heart rate)
+    (:legacy)
+    public function updatePos(s0 as Float, s3 as Float) as Void {
+        _phoneConnectedY = (_height * 0.50 + s3 + (s0 - Graphics.getFontHeight(ClockView.iconFont as FontResource))/3).toNumber();
+    }
+
+    // Draw all the indicators, which are updated once a minute (all except the heart rate).
+    // The legacy version checks settings and determines positions within the draw() function itself.
+    (:legacy)
+    public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
+        var activityInfo = ActivityMonitor.getInfo();
+        var w2 = (_width * 0.50).toNumber();
+
+        // Draw alarm and notification indicators
+        _symbolsDrawn = false;
+        if (   $.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS)
+            or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
+            _symbolsDrawn = drawSymbols(
+                dc,
+                w2, 
+                (_height * 0.18).toNumber(), 
+                deviceSettings.alarmCount,
+                deviceSettings.notificationCount
+            );
+        }
+
+        // Draw the battery level indicator
+        if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
+            _batteryLevel.draw(
+                dc,
+                w2, 
+                _symbolsDrawn ? (_height * 0.32).toNumber() : (_height * 0.25).toNumber()
+            );
+        }
+
+        // Draw the date string
+        var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
+        dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+        switch ($.config.getValue($.Config.I_DATE_DISPLAY)) {
+            case $.Config.O_DATE_DISPLAY_DAY_ONLY: 
+                dc.drawText(
+                    (_width * 0.75).toNumber(), 
+                    (_height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber(), 
+                    Graphics.FONT_MEDIUM, 
+                    info.day.format("%02d"), 
+                    Graphics.TEXT_JUSTIFY_CENTER
+                );
+                break;
+            case $.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY:
+                dc.drawText(
+                    w2, 
+                    (_height * 0.65).toNumber(), 
+                    Graphics.FONT_MEDIUM, 
+                    Lang.format("$1$ $2$", [info.day_of_week, info.day]), 
+                    Graphics.TEXT_JUSTIFY_CENTER
+                );
+                break;
+        }
+
+        // Draw the phone connection indicator on the 6 o'clock tick mark
+        if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) { 
+            drawPhoneConnected(
+                dc,
+                w2,
+                _phoneConnectedY,
+                deviceSettings.phoneConnected
+            );
+        }
+
+        // Draw the heart rate indicator
+        if ($.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
+            var xpos = (_width * 0.73).toNumber();
+            var ypos = (_height * 0.50).toNumber();
+            if ($.Config.O_DATE_DISPLAY_DAY_ONLY == $.config.getValue($.Config.I_DATE_DISPLAY)) {
+                xpos = (_width * 0.48).toNumber();
+                ypos = (_height * 0.75).toNumber();
+            }
+            drawHeartRate2(dc, xpos, ypos);
+            dc.clearClip();
+        }
+
+        // Draw the recovery time indicator
+        if ($.Config.O_RECOVERY_TIME_ON == $.config.getValue($.Config.I_RECOVERY_TIME)) { 
+            if (ActivityMonitor.Info has :timeToRecovery) {
+                drawRecoveryTime(
+                    dc,
+                    (_width * 0.23).toNumber(),
+                    (_height * 0.50).toNumber(),
+                    activityInfo.timeToRecovery
+                );
+            }
+        }
+    }
+
+    // Draw all the indicators, which are updated once a minute (all except the heart rate).
+    // The modern version uses a helper function to determine if and where each indicator is drawn.
     (:modern)
     public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
         var activityInfo = ActivityMonitor.getInfo();
@@ -183,138 +276,11 @@ class Indicators {
         }
     }
 
-    (:legacy)
-    public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
-        var activityInfo = ActivityMonitor.getInfo();
-
-        // Draw alarm and notification indicators
-        _symbolsDrawn = false;
-        var idx = -1;
-        idx = getIndicatorPosition(:symbols);
-        if (-1 != idx) {
-            _symbolsDrawn = drawSymbols(
-                dc,
-                _pos[idx][0], 
-                _pos[idx][1], 
-                deviceSettings.alarmCount,
-                deviceSettings.notificationCount
-            );
-        }
-
-        // Draw the battery level indicator
-        idx = getIndicatorPosition(:battery);
-        if (-1 != idx) {
-            _batteryLevel.draw(
-                dc,
-                _pos[idx][0], 
-                _pos[idx][1]
-            );
-        }
-
-        // Draw the date string
-        var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
-        dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
-        idx = getIndicatorPosition(:longDate);
-        if (-1 != idx) {
-            dc.drawText(
-                _pos[idx][0], 
-                _pos[idx][1], 
-                Graphics.FONT_MEDIUM, 
-                Lang.format("$1$ $2$", [info.day_of_week, info.day]), 
-                Graphics.TEXT_JUSTIFY_CENTER
-            );
-        }
-        else {
-            idx = getIndicatorPosition(:shortDate);
-            if (-1 != idx) {
-                dc.drawText(
-                    _pos[idx][0], 
-                    _pos[idx][1], 
-                    Graphics.FONT_MEDIUM, 
-                    info.day.format("%02d"), 
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-            }
-        }
-
-        // Draw the phone connection indicator on the 6 o'clock tick mark
-        idx = getIndicatorPosition(:phoneConnected);
-        if (-1 != idx) {
-            drawPhoneConnected(
-                dc,
-                _pos[idx][0],
-                _pos[idx][1],
-                deviceSettings.phoneConnected
-            );
-        }
-
-        // Draw the heart rate indicator
-        _drawHeartRate = getIndicatorPosition(:heartRate);
-        if (drawHeartRate(dc)) { dc.clearClip(); }
-
-        // Draw the recovery time indicator
-        idx = getIndicatorPosition(:recoveryTime);
-        if (-1 != idx) {
-            if (ActivityMonitor.Info has :timeToRecovery) {
-                drawRecoveryTime(
-                    dc,
-                    _pos[idx][0],
-                    _pos[idx][1],
-                    activityInfo.timeToRecovery
-                );
-            }
-        }
-    }
-
-    // Draw the heart rate if it is available, return true if it was drawn
+    // Draw the heart rate if it is available, return true if it was drawn.
+    // Modern devices call this every few seconds, also when the watch is not awake.
+    (:modern)
     public function drawHeartRate(dc as Dc) as Boolean {
-        var ret = false;
-        if (-1 == _drawHeartRate) {
-            return ret;
-        }
-        var heartRate = null;
-        var activityInfo = Activity.getActivityInfo();
-        if (activityInfo != null) {
-            heartRate = activityInfo.currentHeartRate;
-        }
-        if (null == heartRate) {
-            var sample = ActivityMonitor.getHeartRateHistory(1, true).next();
-            if (sample != null and sample.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) { 
-                heartRate = sample.heartRate;
-            }
-        }
-        if (heartRate != null) {
-            //heartRate = 123;
-            //heartRate = System.getClockTime().sec + 60;
-            var font = Graphics.FONT_TINY;
-            var fontHeight = Graphics.getFontHeight(font);
-            var width = (fontHeight * 2.1).toNumber(); // Indicator width
-            var hr = heartRate.format("%d");
-            var xpos = _pos[_drawHeartRate][0];
-            var ypos = _pos[_drawHeartRate][1];
-
-            dc.setClip(xpos - width*0.48, ypos - fontHeight*0.38, width, fontHeight*0.85);
-            var bgColor = ClockView.colors[ClockView.colorMode][ClockView.C_BACKGROUND];
-            dc.setColor(Graphics.COLOR_TRANSPARENT, bgColor);
-            dc.clear();
-            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(
-                heartRate > 99 ? xpos - width*2/16 - 1 : xpos, ypos - 1, 
-                ClockView.iconFont as FontResource, 
-                ClockView.isAwake ? "H" : "I" as String, 
-                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
-            );
-            dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(
-                xpos + width/2, 
-                ypos,
-                font, 
-                hr, 
-                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
-            );
-            ret = true;
-        }
-        return ret;
+        return -1 == _drawHeartRate ? false : drawHeartRate2(dc, _pos[_drawHeartRate][0], _pos[_drawHeartRate][1]);
     }
 
     // Determine if a given indicator should be shown and its position on the screen. 
@@ -415,51 +381,51 @@ class Indicators {
         return idx;
     }
 
-    (:legacy)
-    private function getIndicatorPosition(indicator as Symbol) as Number {
-        var idx = -1;
-        switch (indicator) {
-            case :heartRate:
-                if ($.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
-                    idx = $.Config.O_DATE_DISPLAY_DAY_ONLY == $.config.getValue($.Config.I_DATE_DISPLAY) ? 1 : 0;
-                }
-                break;
-            case :recoveryTime:
-                if ($.Config.O_RECOVERY_TIME_ON == $.config.getValue($.Config.I_RECOVERY_TIME)) { 
-                    idx = 2; 
-                }
-                break;
-            case :battery:
-                if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
-                   idx = _symbolsDrawn ? 3 : 4;
-                }
-                break;
-            case :symbols:
-                if (   $.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS)
-                    or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
-                    idx = 5;
-                }
-                break;
-            case :phoneConnected:
-                if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) { 
-                    idx = 6; 
-                }
-                break;
-            case :shortDate:
-                if ($.Config.O_DATE_DISPLAY_DAY_ONLY == $.config.getValue($.Config.I_DATE_DISPLAY)) { 
-                    idx = 7; 
-                }
-                break;
-            case :longDate:
-                if ($.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY == $.config.getValue($.Config.I_DATE_DISPLAY)) {
-                    idx = 8;
-                }
-                break;
-            default:
-                System.println("ERROR: ClockView.getIndicatorPos() is not implemented for indicator = " + indicator);
-                break;
+    // Draw the heart rate if it is available, return true if it was drawn.
+    // This private function is used by both, the legacy and modern code.
+    private function drawHeartRate2(dc as Dc, xpos as Number, ypos as Number) as Boolean {
+        var ret = false;
+        var heartRate = null;
+        var activityInfo = Activity.getActivityInfo();
+        if (activityInfo != null) {
+            heartRate = activityInfo.currentHeartRate;
         }
-        return idx;
+        if (null == heartRate) {
+            var sample = ActivityMonitor.getHeartRateHistory(1, true).next();
+            if (sample != null and sample.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) { 
+                heartRate = sample.heartRate;
+            }
+        }
+        if (heartRate != null) {
+            //heartRate = 123;
+            //heartRate = System.getClockTime().sec + 60;
+            var font = Graphics.FONT_TINY;
+            var fontHeight = Graphics.getFontHeight(font);
+            var width = (fontHeight * 2.1).toNumber(); // Indicator width
+            var hr = heartRate.format("%d");
+
+            dc.setClip(xpos - width*0.48, ypos - fontHeight*0.38, width, fontHeight*0.85);
+            var bgColor = ClockView.colors[ClockView.colorMode][ClockView.C_BACKGROUND];
+            dc.setColor(Graphics.COLOR_TRANSPARENT, bgColor);
+            dc.clear();
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(
+                heartRate > 99 ? xpos - width*2/16 - 1 : xpos, ypos - 1, 
+                ClockView.iconFont as FontResource, 
+                ClockView.isAwake ? "H" : "I" as String, 
+                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
+            );
+            dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+            dc.drawText(
+                xpos + width/2, 
+                ypos,
+                font, 
+                hr, 
+                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
+            );
+            ret = true;
+        }
+        return ret;
     }
 
     // Draw alarm and notification symbols, return true if something was drawn, else false
@@ -513,7 +479,6 @@ class Indicators {
     }
 
     // Draw the recovery time, return true if it was drawn
-    // TODO: Combine this into an ActivityIndicators class, with drawHeartRate for synergies?
     private function drawRecoveryTime(
         dc as Dc,
         xpos as Number, 
@@ -585,7 +550,6 @@ class Indicators {
         }
         return ret;
     }
-
 } // class Indicators
 
 class BatteryLevel {
