@@ -28,9 +28,14 @@ import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
 
 // Class to draw all the indicators depending on the menu settings at the correct place on the watchface.
-// The distinction between modern and legacy devices is mostly because some of the latter are very memory
-// constrained. Consequently, not all indicators are available on legacy devices and the implementation
-// is optimized to limit the memory use.
+// All devices share the same implementations of the functions which draw the indicators. However, not 
+// all of the indicators are available on legacy devices, and there is different code for both, due to
+// memory constraints on the latter: Modern devices use a lookup-array of positions for different things
+// and a dedicated function in which the decision is made if and where to draw a given indicator - a
+// more maintainable design. Legacy devices have all of this jumbled up in a single function that
+// orchestrates the drawing. It's a bit less critical for these, as they support a limited number of
+// indicators, so there are fewer interdependencies for the positions and it's necessary to minimize
+// memory usage.
 class Indicators {
     (:legacy)
     private var _width as Number;
@@ -56,19 +61,19 @@ class Indicators {
 
         // Positions of the various indicators
         _pos = [
-            [(width * 0.73).toNumber(), (height * 0.50).toNumber()],       //  0: Heart rate indicator at 3 o'clock
-            [(width * 0.48).toNumber(), (height * 0.75).toNumber()],       //  1: Heart rate indicator at 6 o'clock
-            [(width * 0.23).toNumber(), (height * 0.50).toNumber()],       //  2: Recovery time indicator at 9 o'clock
+            [(width * 0.73).toNumber(), (height * 0.50).toNumber()], //  0: Heart rate indicator at 3 o'clock
+            [(width * 0.48).toNumber(), (height * 0.75).toNumber()], //  1: Heart rate indicator at 6 o'clock
+            [(width * 0.23).toNumber(), (height * 0.50).toNumber()], //  2: Recovery time indicator at 9 o'clock
             [(width * 0.50).toNumber(), (height * 0.32).toNumber()], //  3: Battery level indicator at 12 o'clock with notifications
             [(width * 0.50).toNumber(), (height * 0.25).toNumber()], //  4: Battery level indicator at 12 o'clock w/o notifications
-            [(width * 0.50).toNumber(), (height * 0.18).toNumber()],       //  5: Alarms and notifications at 12 o'clock
-            [0.0, 0.0],                                                    //  6: Phone connection indicator on the 6 o'clock tick mark (see updatePos() )
+            [(width * 0.50).toNumber(), (height * 0.18).toNumber()], //  5: Alarms and notifications at 12 o'clock
+            [0.0, 0.0],                                              //  6: Phone connection indicator on the 6 o'clock tick mark (see updatePos() )
             [(width * 0.75).toNumber(), (height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
-            [(width * 0.50).toNumber(), (height * 0.65).toNumber()],       //  8: Date (weekday and day format) at 6 o'clock, w/o steps
-            [(width * 0.50).toNumber(), (height * 0.69).toNumber()],       //  9: Date (weekday and day format) at 6 o'clock, with steps
-            [(width * 0.49).toNumber(), (height * 0.70).toNumber()],       // 10: Steps at 6 o'clock, w/o date (weekday and day format)
-            [(width * 0.49).toNumber(), (height * 0.65).toNumber()],       // 11: Steps at 6 o'clock, with date (weekday and day format)
-            [(width * 0.49).toNumber(), (height * 0.76).toNumber()]        // 12: Heart rate indicator at 6 o'clock with steps
+            [(width * 0.50).toNumber(), (height * 0.65).toNumber()], //  8: Date (weekday and day format) at 6 o'clock, w/o steps
+            [(width * 0.50).toNumber(), (height * 0.69).toNumber()], //  9: Date (weekday and day format) at 6 o'clock, with steps
+            [(width * 0.49).toNumber(), (height * 0.70).toNumber()], // 10: Steps at 6 o'clock, w/o date (weekday and day format)
+            [(width * 0.49).toNumber(), (height * 0.65).toNumber()], // 11: Steps at 6 o'clock, with date (weekday and day format)
+            [(width * 0.49).toNumber(), (height * 0.76).toNumber()]  // 12: Heart rate indicator at 6 o'clock with steps
         ] as Array< Array<Number> >;
     }
 
@@ -90,8 +95,7 @@ class Indicators {
         _phoneConnectedY = (_height * 0.50 + s3 + (s0 - Graphics.getFontHeight(ClockView.iconFont as FontResource))/3).toNumber();
     }
 
-    // Draw all the indicators, which are updated once a minute (all except the heart rate).
-    // The legacy version checks settings and determines positions within the draw() function itself.
+    // Draw all indicators. The legacy version checks settings and determines positions within this function as well.
     (:legacy)
     public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
         var activityInfo = ActivityMonitor.getInfo();
@@ -246,7 +250,12 @@ class Indicators {
             );
         }
 
-        // Determine if and where the heart rate should be drawn
+        // Determine if and where the heart rate should be drawn, but don't
+        // draw it here. The indicator is drawn in drawHeartRate(), which
+        // needs to be called after this function, once the position is set.
+        // This is done to minimize the work necessary in drawHeartRate(), 
+        // as that is also called in low-power mode, from onPartialUpdate(),
+        // when the position always remains the same.
         _drawHeartRate = getIndicatorPosition(:heartRate);
 
         // Draw the recovery time indicator
@@ -277,7 +286,7 @@ class Indicators {
     }
 
     // Draw the heart rate if it is available, return true if it was drawn.
-    // Modern devices call this every few seconds, also when the watch is not awake.
+    // Modern devices call this every few seconds, also in low-power mode.
     (:modern)
     public function drawHeartRate(dc as Dc) as Boolean {
         return -1 == _drawHeartRate ? false : drawHeartRate2(dc, _pos[_drawHeartRate][0], _pos[_drawHeartRate][1]);
