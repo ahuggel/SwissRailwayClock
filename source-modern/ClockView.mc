@@ -214,14 +214,14 @@ class ClockView extends WatchUi.WatchFace {
     //! This method is called when the device re-enters sleep mode
     public function onEnterSleep() as Void {
         isAwake = false;
-        _lastDrawnMin = -1; // Force the watch face to be re-drawn
+        _lastDrawnMin = -1; // Force the watchface to be re-drawn
         WatchUi.requestUpdate();
     }
 
     //! This method is called when the device exits sleep mode
     public function onExitSleep() as Void {
         isAwake = true;
-        _lastDrawnMin = -1; // Force the watch face to be re-drawn
+        _lastDrawnMin = -1; // Force the watchface to be re-drawn
         WatchUi.requestUpdate();
     }
 
@@ -259,8 +259,9 @@ class ClockView extends WatchUi.WatchFace {
         if (_lastDrawnMin != clockTime.min) { 
             _lastDrawnMin = clockTime.min;
 
-            // Set the color mode
             var deviceSettings = System.getDeviceSettings();
+
+            // Set the color mode
             colorMode = setColorMode(deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
 
             // Note: Whether 3D effects are supported by the device is also ensured by getValue().

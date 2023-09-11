@@ -174,14 +174,14 @@ class ClockView extends WatchUi.WatchFace {
     //! This method is called when the device re-enters sleep mode
     public function onEnterSleep() as Void {
         isAwake = false;
-        _lastDrawnMin = -1; // Force the watch face to be re-drawn
+        _lastDrawnMin = -1; // Force the watchface to be re-drawn
         WatchUi.requestUpdate();
     }
 
     //! This method is called when the device exits sleep mode
     public function onExitSleep() as Void {
         isAwake = true;
-        _lastDrawnMin = -1; // Force the watch face to be re-drawn
+        _lastDrawnMin = -1; // Force the watchface to be re-drawn
         WatchUi.requestUpdate();
     }
 
@@ -299,10 +299,11 @@ class ClockView extends WatchUi.WatchFace {
         }
         if (_sleepTimer > 0 or !_hideSecondHand) {
             if (_hasAntiAlias) { dc.setAntiAlias(true); }
-            var clockTime = System.getClockTime();
+            var second = System.getClockTime().sec;
+
             // Delete the second hand. Note that this will only affect the clipped region
             dc.drawBitmap(0, 0, _offscreenBuffer);
-            drawSecondHand(dc, clockTime.sec);
+            drawSecondHand(dc, second);
         }
     }
 
