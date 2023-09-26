@@ -476,8 +476,8 @@ class Indicators {
     ) as Boolean {
         var ret = false;
         var symbolColor = Graphics.COLOR_BLUE;
-        var bgColor = ClockView.colors[ClockView.colorMode][ClockView.C_BACKGROUND];
-        if (Graphics.COLOR_LT_GRAY == bgColor or Graphics.COLOR_WHITE == bgColor) {
+        var fgColor = ClockView.colors[ClockView.colorMode][ClockView.C_FOREGROUND];
+        if (Graphics.COLOR_LT_GRAY == fgColor or Graphics.COLOR_WHITE == fgColor) {
             symbolColor = Graphics.COLOR_DK_BLUE;
         }
         if (phoneConnected) {
