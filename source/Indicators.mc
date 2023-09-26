@@ -166,7 +166,6 @@ class Indicators {
                 ypos = (_height * 0.75).toNumber();
             }
             drawHeartRate2(dc, xpos, ypos);
-            dc.clearClip();
         }
 
         // Draw the recovery time indicator
@@ -392,6 +391,7 @@ class Indicators {
 
     // Draw the heart rate if it is available, return true if it was drawn.
     // This private function is used by both, the legacy and modern code.
+    // Note: Sets and clears the clipping region of the device context.
     private function drawHeartRate2(dc as Dc, xpos as Number, ypos as Number) as Boolean {
         var ret = false;
         var heartRate = null;
@@ -413,10 +413,11 @@ class Indicators {
             var width = (fontHeight * 2.1).toNumber(); // Indicator width
             var hr = heartRate.format("%d");
 
-            dc.setClip(xpos - width*0.48, ypos - fontHeight*0.38, width, fontHeight*0.85);
             var bgColor = ClockView.colors[ClockView.colorMode][ClockView.C_BACKGROUND];
+            dc.setClip(xpos - width*0.48, ypos - fontHeight*0.38, width, fontHeight*0.85);
             dc.setColor(Graphics.COLOR_TRANSPARENT, bgColor);
             dc.clear();
+            dc.clearClip();
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
             dc.drawText(
                 heartRate > 99 ? xpos - width*2/16 - 1 : xpos, ypos - 1, 

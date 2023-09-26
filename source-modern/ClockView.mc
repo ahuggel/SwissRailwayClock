@@ -274,8 +274,7 @@ class ClockView extends WatchUi.WatchFace {
                 or ($.Config.O_HIDE_SECONDS_IN_DM == secondsOption and M_DARK == colorMode);
             _secondLayer.setVisible(_sleepTimer > 0 or !_hideSecondHand);
 
-            // Clear the background layer with the background color
-            _backgroundDc.clearClip();
+            // Draw the background
             if (System.SCREEN_SHAPE_ROUND == _screenShape) {
                 // Fill the entire background with the background color
                 _backgroundDc.setColor(colors[colorMode][C_BACKGROUND], colors[colorMode][C_BACKGROUND]);
@@ -303,7 +302,7 @@ class ClockView extends WatchUi.WatchFace {
             _hourMinuteDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
             _hourMinuteDc.clear();
 
-            // Draw the hour and minute hands and their shadows on the corresponding layer
+            // Draw the hour and minute hands and their shadows
             var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
             var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
             var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
