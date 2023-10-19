@@ -26,7 +26,7 @@ import Toybox.Time;
 import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
 
-//! Implements the Swiss Railway Clock watch face
+//! Implements the Swiss Railway Clock watch face for legacy watches, using a buffered bitmap
 class ClockView extends WatchUi.WatchFace {
 
     // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the colors Array.

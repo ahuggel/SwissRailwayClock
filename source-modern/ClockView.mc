@@ -24,7 +24,7 @@ import Toybox.Math;
 import Toybox.System;
 import Toybox.WatchUi;
 
-//! Implements the Swiss Railway Clock watch face
+//! Implements the Swiss Railway Clock watch face for modern watches, using layers
 class ClockView extends WatchUi.WatchFace {
 
     // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the colors Array.
