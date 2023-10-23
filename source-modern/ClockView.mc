@@ -57,6 +57,7 @@ class ClockView extends WatchUi.WatchFace {
 
     private var _lastDrawnMin as Number = -1; // Minute when the watch face was last completely re-drawn
     private var _doPartialUpdates as Boolean = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
+    private var _doWireHands as Number = 0; // Number of seconds to show the minute and hour hands was wire hands after press
     private var _sleepTimer as Number = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
     private var _hideSecondHand as Boolean = false;
     private var _show3dEffects as Boolean = false;
@@ -225,6 +226,12 @@ class ClockView extends WatchUi.WatchFace {
         WatchUi.requestUpdate();
     }
 
+    public function startWireHands() as Void {
+        _doWireHands = 6;
+        _lastDrawnMin = -1;
+        WatchUi.requestUpdate();
+    }
+
     public function stopPartialUpdates() as Void {
         _doPartialUpdates = false;
         colors[M_LIGHT][C_BACKGROUND] = Graphics.COLOR_BLUE; // Make the issue visible
@@ -249,8 +256,16 @@ class ClockView extends WatchUi.WatchFace {
         // Update the low-power mode timer
         if (isAwake) { 
             _sleepTimer = SECOND_HAND_TIMER; // Reset the timer
-        } else if (_sleepTimer > 0) {
+        } else if (_sleepTimer != 0) {
             _sleepTimer -= 1;
+        }
+
+        // Update the wire hands timer
+        if (_doWireHands != 0) {
+            _doWireHands -= 1;
+            if (0 == _doWireHands) {
+                _lastDrawnMin = -1;
+            }
         }
 
         var clockTime = System.getClockTime();
@@ -272,7 +287,7 @@ class ClockView extends WatchUi.WatchFace {
             var secondsOption = $.config.getValue($.Config.I_HIDE_SECONDS);
             _hideSecondHand = $.Config.O_HIDE_SECONDS_ALWAYS == secondsOption 
                 or ($.Config.O_HIDE_SECONDS_IN_DM == secondsOption and M_DARK == colorMode);
-            _secondLayer.setVisible(_sleepTimer > 0 or !_hideSecondHand);
+            _secondLayer.setVisible(_sleepTimer != 0 or !_hideSecondHand);
 
             // Draw the background
             if (System.SCREEN_SHAPE_ROUND == _screenShape) {
@@ -306,14 +321,21 @@ class ClockView extends WatchUi.WatchFace {
             var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
             var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
             var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
-            if (isAwake and _show3dEffects) {
+            if (isAwake and _show3dEffects and 0 == _doWireHands) {
                 _hourMinuteDc.setFill(_shadowColor);
                 _hourMinuteDc.fillPolygon(shadowCoords(hourHandCoords, 7));
                 _hourMinuteDc.fillPolygon(shadowCoords(minuteHandCoords, 8));
             }
-            _hourMinuteDc.setColor(colors[colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
-            _hourMinuteDc.fillPolygon(hourHandCoords);
-            _hourMinuteDc.fillPolygon(minuteHandCoords);
+            if (0 == _doWireHands) {
+                _hourMinuteDc.setColor(colors[colorMode][C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+                _hourMinuteDc.fillPolygon(hourHandCoords);
+                _hourMinuteDc.fillPolygon(minuteHandCoords);
+            } else {
+                _hourMinuteDc.setStroke(_shadowColor);
+                _hourMinuteDc.setPenWidth(3); // TODO: Should be a percentage of the clock radius
+                drawPolygon(_hourMinuteDc, hourHandCoords);
+                drawPolygon(_hourMinuteDc, minuteHandCoords);
+            }
         } // if (_lastDrawnMin != clockTime.min)
 
         var doIt = true;
@@ -343,8 +365,14 @@ class ClockView extends WatchUi.WatchFace {
     //! @param dc Device context
     public function onPartialUpdate(dc as Dc) as Void {
         isAwake = false; // To state the obvious. Workaround for an Enduro 2 firmware bug.
-
-        if (_sleepTimer > 0) { 
+        if (_doWireHands !=  0) {
+            _doWireHands -= 1;
+            if (0 == _doWireHands) {
+                _lastDrawnMin = -1;
+                WatchUi.requestUpdate();
+            }
+        }
+        if (_sleepTimer != 0) { 
             _sleepTimer -= 1;
             if (0 == _sleepTimer and _hideSecondHand) {
                 // Delete the second hand for the last time
@@ -353,11 +381,11 @@ class ClockView extends WatchUi.WatchFace {
                 _secondLayer.setVisible(false);
             }
         }
-        if (_sleepTimer > 0 or !_hideSecondHand) {
+        if (_sleepTimer != 0 or !_hideSecondHand) {
             var second = System.getClockTime().sec;
 
-            // Continue to draw the heart rate indicator every 5 seconds in onPartialUpdate()
-            if (0 == second % 5) {
+            // Continue to draw the heart rate indicator every 10 seconds in onPartialUpdate()
+            if (0 == second % 10) {
                 _indicators.drawHeartRate(_backgroundDc);
             }
 
@@ -365,6 +393,16 @@ class ClockView extends WatchUi.WatchFace {
             _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
             _secondDc.clear();
             drawSecondHand(_secondDc, second);
+        }
+    }
+
+    // Draw the edges of a polygon
+    private function drawPolygon(dc as Dc, pts as Array< Array<Numeric> >) as Void {
+        var size = pts.size();
+        for (var i = 0; i < size; i++) {
+            var startPoint = pts[i];
+            var endPoint = pts[(i + 1) % size];
+            dc.drawLine(startPoint[0], startPoint[1], endPoint[0], endPoint[1]);
         }
     }
 
@@ -378,7 +416,7 @@ class ClockView extends WatchUi.WatchFace {
         // Set the clipping region
         dc.setClip(sd[10], sd[11], sd[12], sd[13]);
 
-        if (isAwake and _show3dEffects) {
+        if (isAwake and _show3dEffects and 0 == _doWireHands) {
             // Set the clipping region of the shadow by moving the clipping region of the second hand
             var sc = shadowCoords([[sd[0], sd[1]], [sd[10], sd[11]]] as Array< Array<Number> >, 9);
             _secondShadowDc.setClip(sc[1][0], sc[1][1], sd[12], sd[13]);
@@ -540,7 +578,7 @@ class ClockView extends WatchUi.WatchFace {
 
 } // class ClockView
 
-//! Receives watch face events
+// Receives watch face events
 class ClockDelegate extends WatchUi.WatchFaceDelegate {
     private var _view as ClockView;
 
@@ -550,12 +588,18 @@ class ClockDelegate extends WatchUi.WatchFaceDelegate {
         _view = view;
     }
 
-    //! The onPowerBudgetExceeded callback is called by the system if the
-    //! onPartialUpdate method exceeds the allowed power budget. If this occurs,
-    //! the system will stop invoking onPartialUpdate each second, so we notify the
-    //! view here to let the rendering methods know they should not be rendering a
-    //! second hand.
-    //! @param powerInfo Information about the power budget
+    // The onPress callback is called when user does a touch and hold (Since API Level 4.2.0)
+    public function onPress(clickEvent as ClickEvent) as Boolean {
+        _view.startWireHands();
+        return true;
+    }
+
+    // The onPowerBudgetExceeded callback is called by the system if the
+    // onPartialUpdate method exceeds the allowed power budget. If this occurs,
+    // the system will stop invoking onPartialUpdate each second, so we notify the
+    // view here to let the rendering methods know they should not be rendering a
+    // second hand.
+    // @param powerInfo Information about the power budget
     public function onPowerBudgetExceeded(powerInfo as WatchFacePowerInfo) as Void {
         System.println("Average execution time: " + powerInfo.executionTimeAverage);
         System.println("Allowed execution time: " + powerInfo.executionTimeLimit);
