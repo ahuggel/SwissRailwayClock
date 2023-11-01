@@ -15,6 +15,56 @@
 
 This program reflects the progress of my ongoing journey to learn [Monkey C] and the Garmin [Connect IQ ecosystem] to create an analog watchface. I am making it available in the hope that others will find it useful to grasp the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
 
+## Compatible devices
+
+The Architecture column shows for every device, if it supports the layer based implementation (Modern) or uses a buffered bitmap (Legacy). 
+
+| Device name | Architecture |
+| ----------- | ------------ |
+| Captain Marvel | Modern |
+| Darth Vader™ | Modern |
+| Descent™ Mk2 / Descent™ Mk2i | Legacy |
+| Descent™ Mk2 S | Legacy       |
+| fēnix® 5 Plus | Legacy |
+| fēnix® 5S Plus | Legacy |
+| fēnix® 5X Plus | Legacy |
+| fēnix® 6 / 6 Solar / 6 Dual Power | Legacy |
+| fēnix® 6 Pro / 6 Sapphire / 6 Pro Solar / 6 Pro Dual Power / quatix® 6 | Legacy |
+| fēnix® 6S / 6S Solar / 6S Dual Power | Legacy |
+| fēnix® 6S Pro / 6S Sapphire / 6S Pro Solar / 6S Pro Dual Power | Legacy |
+| fēnix® 6X Pro / 6X Sapphire / 6X Pro Solar / tactix® Delta Sapphire / Delta Solar / Delta Solar - Ballistics Edition / quatix® 6X / 6X Solar / 6X Dual Power | Legacy |
+| fēnix® 7 / quatix® 7 | Modern |
+| fēnix® 7 PRO | Modern |
+| fēnix® 7 System 6 Preview | Modern |
+| fēnix® 7S | Modern |
+| fēnix® 7S PRO | Modern |
+| fēnix® 7X / tactix® 7 / quatix® 7X Solar / Enduro™ 2 | Modern |
+| fēnix® 7X PRO | Modern |
+| First Avenger | Modern |
+| Forerunner® 245 | Legacy |
+| Forerunner® 245 Music | Legacy |
+| Forerunner® 255 | Modern |
+| Forerunner® 255 Music | Modern |
+| Forerunner® 255s | Modern |
+| Forerunner® 255s Music | Modern |
+| Forerunner® 645 Music | Legacy |
+| Forerunner® 745 | Legacy |
+| Forerunner® 945 | Legacy |
+| Forerunner® 945 LTE | Legacy |
+| Forerunner® 955 / Solar | Modern |
+| MARQ® Adventurer | Legacy |
+| MARQ® Athlete | Legacy |
+| MARQ® Aviator | Legacy |
+| MARQ® Captain / MARQ® Captain: American Magic Edition | Legacy |
+| MARQ® Commander | Legacy |
+| MARQ® Driver | Legacy |
+| MARQ® Expedition | Legacy |
+| MARQ® Golfer | Legacy |
+| Rey™ | Modern |
+| vívoactive® 3 Music | Legacy |
+| vívoactive® 4 | Modern |
+| vívoactive® 4S | Modern |
+
 ## Credits
 
 The [Swiss railway clock] design was created by Hans Hilfiker, who was employed by the Swiss Federal Railways (SBB) at that time, in the 1940s and 1950s. It continues to be used at every railway station in Switzerland until today.
