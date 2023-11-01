@@ -96,7 +96,7 @@ class ClockView extends WatchUi.WatchFace {
         // 4) A dedicated layer for the second hand.
         //
         // Using layers is elegant and makes it possible to draw some indicators even in low-power
-        // mode, e.g., the heart rate is updated every second in high-power mode and every 5 seconds
+        // mode, e.g., the heart rate is updated every second in high-power mode and every 10 seconds
         // in low power mode.
         // On the other hand, this architecture requires more memory and is only feasible on CIQ 4
         // devices, i.e., on devices with a graphics pool, and on a few older models which have
