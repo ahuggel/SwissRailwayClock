@@ -84,27 +84,23 @@ class Indicators {
         ] as Array< Array<Number> >;
     }
 
-    (:legacy)
-    public function initialize(width as Number, height as Number, clockRadius as Number) {
+    (:legacy) public function initialize(width as Number, height as Number, clockRadius as Number) {
         _width = width;
         _height = height;
         _batteryLevel = new BatteryLevel(clockRadius);
     }
 
     // Update any indicator positions, which depend on numbers that are not available yet when the constructor is called
-    (:modern)
-    public function updatePos(width as Number, height as Number, s0 as Float, s3 as Float) as Void {
+    (:modern) public function updatePos(width as Number, height as Number, s0 as Float, s3 as Float) as Void {
         _pos[6] = [(width * 0.50).toNumber(), (height * 0.50 + s3 + (s0 - Graphics.getFontHeight(ClockView.iconFont as FontResource))/3).toNumber()];
     }
 
-    (:legacy)
-    public function updatePos(s0 as Float, s3 as Float) as Void {
+    (:legacy) public function updatePos(s0 as Float, s3 as Float) as Void {
         _phoneConnectedY = (_height * 0.50 + s3 + (s0 - Graphics.getFontHeight(ClockView.iconFont as FontResource))/3).toNumber();
     }
 
     // Draw all indicators. The legacy version checks settings and determines positions within this function as well.
-    (:legacy)
-    public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
+    (:legacy) public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
         var activityInfo = ActivityMonitor.getInfo();
         var w2 = (_width * 0.50).toNumber();
 
@@ -190,8 +186,7 @@ class Indicators {
 
     // Draw all the indicators, which are updated once a minute (all except the heart rate).
     // The modern version uses a helper function to determine if and where each indicator is drawn.
-    (:modern)
-    public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
+    (:modern) public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
         var activityInfo = ActivityMonitor.getInfo();
 
         // Draw the move bar (at a fixed position, so we don't use getIndicatorPosition() here)
@@ -299,8 +294,7 @@ class Indicators {
 
     // Draw the heart rate if it is available, return true if it was drawn.
     // Modern devices call this every few seconds, also in low-power mode.
-    (:modern)
-    public function drawHeartRate(dc as Dc) as Boolean {
+    (:modern) public function drawHeartRate(dc as Dc) as Boolean {
         return -1 == _drawHeartRate ? false : drawHeartRate2(dc, _pos[_drawHeartRate][0], _pos[_drawHeartRate][1]);
     }
 
@@ -308,8 +302,7 @@ class Indicators {
     // This function exists to have all decisions regarding indicator placing, some of which are 
     // interdependent, in one place.
     // The position returned is an index into _pos. -1 means the indicator should not be drawn.
-    (:modern)
-    private function getIndicatorPosition(indicator as Symbol) as Number {
+    (:modern) private function getIndicatorPosition(indicator as Symbol) as Number {
         var idx = -1;
         switch (indicator) {
             case :recoveryTime:
@@ -537,8 +530,7 @@ class Indicators {
     }
 
     // Draw the steps, return true if it was drawn
-    (:modern)
-    private function drawSteps(
+    (:modern) private function drawSteps(
         dc as Dc,
         xpos as Number, 
         ypos as Number,
@@ -582,9 +574,7 @@ class Indicators {
         radius as Number,
         moveBarLevel as Number?
     ) as Boolean {
-
-moveBarLevel = 5;
-
+        // moveBarLevel = 5;
         var ret = false;
         if (moveBarLevel != null and moveBarLevel > 0) {
             var width = (0.10 * radius).toNumber();
