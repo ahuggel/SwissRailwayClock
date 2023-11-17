@@ -22,6 +22,7 @@ import Toybox.Activity;
 import Toybox.ActivityMonitor;
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
@@ -37,26 +38,29 @@ import Toybox.WatchUi;
 // indicators, so there are fewer interdependencies for the positions and it's necessary to minimize
 // memory usage.
 class Indicators {
-    (:legacy)
-    private var _width as Number;
-    (:legacy)
-    private var _height as Number;
-    (:legacy)
-    private var _phoneConnectedY as Number = 0;
-
     private var _batteryLevel as BatteryLevel;
     private var _symbolsDrawn as Boolean = false;
 
-    (:modern)
-    private var _batteryDrawn as Boolean = false;
-    (:modern)
-    private var _drawHeartRate as Number = -1;
-    (:modern)
-    private var _pos as Array< Array<Number> >; // Positions (x,y) of the indicators
+    (:legacy) private var _width as Number;
+    (:legacy) private var _height as Number;
+    (:legacy) private var _phoneConnectedY as Number = 0;
+
+    (:modern) private var _screenCenter as Array<Number>;
+    (:modern) private var _clockRadius as Number;
+    (:modern) private var _moveBarDrawn as Boolean = false;
+    (:modern) private var _batteryDrawn as Boolean = false;
+    (:modern) private var _drawHeartRate as Number = -1;
+    (:modern) private var _pos as Array< Array<Number> >; // Positions (x,y) of the indicators
 
     // Constructor
-    (:modern)
-    public function initialize(width as Number, height as Number, clockRadius as Number) {
+    (:modern) public function initialize(
+        width as Number, 
+        height as Number, 
+        screenCenter as Array<Number>,
+        clockRadius as Number
+    ) {
+        _screenCenter = screenCenter;
+        _clockRadius = clockRadius;
         _batteryLevel = new BatteryLevel(clockRadius);
 
         // Positions of the various indicators
@@ -73,7 +77,10 @@ class Indicators {
             [(width * 0.50).toNumber(), (height * 0.69).toNumber()], //  9: Date (weekday and day format) at 6 o'clock, with steps
             [(width * 0.49).toNumber(), (height * 0.70).toNumber()], // 10: Steps at 6 o'clock, w/o date (weekday and day format)
             [(width * 0.49).toNumber(), (height * 0.65).toNumber()], // 11: Steps at 6 o'clock, with date (weekday and day format)
-            [(width * 0.49).toNumber(), (height * 0.76).toNumber()]  // 12: Heart rate indicator at 6 o'clock with steps
+            [(width * 0.49).toNumber(), (height * 0.76).toNumber()], // 12: Heart rate indicator at 6 o'clock with steps
+            [(width * 0.50).toNumber(), (height * 0.21).toNumber()], // 13: Alarms and notifications at 12 o'clock with move bar
+            [(width * 0.50).toNumber(), (height * 0.35).toNumber()], // 14: Battery level indicator at 12 o'clock with notifications and move bar
+            [(width * 0.50).toNumber(), (height * 0.28).toNumber()]  // 15: Battery level indicator at 12 o'clock w/o notifications and with move bar
         ] as Array< Array<Number> >;
     }
 
@@ -186,6 +193,12 @@ class Indicators {
     (:modern)
     public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
         var activityInfo = ActivityMonitor.getInfo();
+
+        // Draw the move bar (at a fixed position, so we don't use getIndicatorPosition() here)
+        _moveBarDrawn = false;
+        if ($.Config.O_MOVE_BAR_ON == $.config.getValue($.Config.I_MOVE_BAR)) {
+            _moveBarDrawn = drawMoveBar(dc, _screenCenter[0], _screenCenter[1], _clockRadius, activityInfo.moveBarLevel);
+        }
 
         // Draw alarm and notification indicators
         _symbolsDrawn = false;
@@ -306,13 +319,13 @@ class Indicators {
                 break;
             case :battery:
                 if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
-                   idx = _symbolsDrawn ? 3 : 4;
+                    idx = _symbolsDrawn ? (_moveBarDrawn ? 14 : 3) : (_moveBarDrawn ? 15 : 4);
                 }
                 break;
             case :symbols:
                 if (   $.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS)
                     or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
-                    idx = 5;
+                    idx = _moveBarDrawn ? 13 : 5;
                 }
                 break;
             case :phoneConnected:
@@ -560,6 +573,77 @@ class Indicators {
         }
         return ret;
     }
+
+    // Draw the move bar, return true if it was drawn
+    (:modern) private function drawMoveBar(
+        dc as Dc,
+        x as Number,
+        y as Number,
+        radius as Number,
+        moveBarLevel as Number?
+    ) as Boolean {
+
+moveBarLevel = 5;
+
+        var ret = false;
+        if (moveBarLevel != null and moveBarLevel > 0) {
+            var width = (0.10 * radius).toNumber();
+            if (0 == width % 2) { width -= 1; } // make sure width is an odd number
+            radius = (0.67 * radius).toNumber();
+
+            System.println("radius = " + radius + ", width = " + width);
+
+            var angle = 150;
+            var bar = 0;
+            for (var i = 1; i <= moveBarLevel; i++) {
+                bar = i == 1 ? 36 : 18; // bar length in degrees
+        		dc.setColor(ClockView.colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
+                dc.setPenWidth(width);
+                dc.drawArc(x, y, radius, Graphics.ARC_CLOCKWISE, angle, angle-bar);
+
+        		dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_BACKGROUND], Graphics.COLOR_TRANSPARENT);
+                dc.setPenWidth(1);
+                dc.fillPolygon(arrowPoints(x, y, radius, width, angle));
+
+		    	angle = angle - bar - 3;
+            }
+            // Draw the arrow tips in a second loop, so they are drawn over the background color arrow tails 
+            angle = 150;
+        	dc.setColor(ClockView.colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
+            for (var i = 1; i <= moveBarLevel; i++) {
+                bar = i == 1 ? 36 : 18; // bar length in degrees
+                dc.setPenWidth(1);
+                dc.fillPolygon(arrowPoints(x, y, radius, width, angle-bar));
+
+		    	angle = angle - bar - 3;
+            }
+            ret = true;
+        }
+        return ret;
+    }
+
+    // Compute the coordinates of the rotated triangles used for the tails and tips of the move bar arcs
+    (:modern) private function arrowPoints(
+        x as Number,
+        y as Number,
+        radius as Numeric, 
+        width as Numeric, 
+        angle as Numeric
+    ) as Array< Array<Number> > {
+        var pts = new Array< Array<Number> >[3];
+        var r = radius - width/2;
+        var beta = (180 - angle).toFloat() / 180.0 * Math.PI;
+        var cos = Math.cos(beta);
+        var sin = Math.sin(beta);
+        pts[0] = [(x - r * cos + 0.5).toNumber(), (y - r * sin + 0.5).toNumber()];
+        r = (radius + width/2).toNumber();
+        pts[1] = [(x - r * cos + 0.5).toNumber(), (y - r * sin + 0.5).toNumber()];
+        beta = (180 - angle + 4).toFloat() / 180.0 * Math.PI;
+        pts[2] = [(x - radius * Math.cos(beta) + 0.5).toNumber(), (y - radius * Math.sin(beta) + 0.5).toNumber()];
+
+        return pts;
+    }
+
 } // class Indicators
 
 class BatteryLevel {

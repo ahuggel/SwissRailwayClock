@@ -46,6 +46,7 @@ class Config {
         I_HEART_RATE,
         I_RECOVERY_TIME,
         I_STEPS,
+        I_MOVE_BAR,
         I_DARK_MODE, 
         I_DM_CONTRAST, 
         I_HIDE_SECONDS, 
@@ -69,6 +70,7 @@ class Config {
         :HeartRate,
         :RecoveryTime,
         :Steps,
+        :MoveBar,
         :DarkMode, 
         :DmContrast, 
         :HideSeconds, 
@@ -90,6 +92,7 @@ class Config {
         "heartRate", 
         "recoveryTime",
         "steps",
+        "moveBar",
         "darkMode", 
         "dmContrast", 
         "hideSeconds", 
@@ -109,6 +112,7 @@ class Config {
     enum { O_HEART_RATE_OFF, O_HEART_RATE_ON } // Default: Off
     enum { O_RECOVERY_TIME_OFF, O_RECOVERY_TIME_ON } // Default: Off
     enum { O_STEPS_OFF, O_STEPS_ON } // Default: Off
+    enum { O_MOVE_BAR_OFF, O_MOVE_BAR_ON } // Default: Off
     enum { O_DARK_MODE_SCHEDULED, O_DARK_MODE_OFF, O_DARK_MODE_ON, O_DARK_MODE_IN_DND }
     enum { O_HIDE_SECONDS_IN_DM, O_HIDE_SECONDS_ALWAYS, O_HIDE_SECONDS_NEVER }
     enum { O_3D_EFFECTS_ON, O_3D_EFFECTS_OFF } // Default: On
@@ -240,6 +244,7 @@ class Config {
             case I_HEART_RATE:
             case I_RECOVERY_TIME:
             case I_STEPS:
+            case I_MOVE_BAR:
             case I_3D_EFFECTS:
             case I_BATTERY_PCT:
             case I_BATTERY_DAYS:
@@ -321,6 +326,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 addToggleMenuItem($.Config.I_HEART_RATE, $.Config.O_HEART_RATE_ON);
                 addToggleMenuItem($.Config.I_RECOVERY_TIME, $.Config.O_RECOVERY_TIME_ON);
                 addToggleMenuItem($.Config.I_STEPS, $.Config.O_STEPS_ON);
+                addToggleMenuItem($.Config.I_MOVE_BAR, $.Config.O_MOVE_BAR_ON);
                 addMenuItem($.Config.I_DARK_MODE);
                 //Fallthrough
             case $.Config.I_DARK_MODE:
@@ -365,6 +371,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 deleteAnyItem($.Config.I_HEART_RATE);
                 deleteAnyItem($.Config.I_RECOVERY_TIME);
                 deleteAnyItem($.Config.I_STEPS);
+                deleteAnyItem($.Config.I_MOVE_BAR);
                 deleteAnyItem($.Config.I_DARK_MODE);
                 // Fallthrough
             case $.Config.I_DARK_MODE:
@@ -455,6 +462,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
             case $.Config.I_HEART_RATE:
             case $.Config.I_RECOVERY_TIME:
             case $.Config.I_STEPS:
+            case $.Config.I_MOVE_BAR:
             case $.Config.I_3D_EFFECTS:
             case $.Config.I_BATTERY_PCT:
             case $.Config.I_BATTERY_DAYS:

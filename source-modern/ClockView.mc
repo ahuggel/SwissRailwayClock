@@ -126,7 +126,7 @@ class ClockView extends WatchUi.WatchFace {
         _secondDc.setAntiAlias(true);
         _secondShadowDc.setAntiAlias(true);
 
-        _indicators = new Indicators(width, height, _clockRadius);
+        _indicators = new Indicators(width, height, _screenCenter, _clockRadius);
     }
 
     //! Load resources and configure the layout of the watchface for this device

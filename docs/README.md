@@ -5,7 +5,7 @@
 
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a [second hand] in both high- and low-power mode;
 - The operation differs from the original Swiss railway clock in that the second hand updates only every second and it does not pause at 12 o'clock. There is also an option to make the second hand disappear in low-power mode, after about 30s;
-- On-device settings allow the configuration of battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects and some other options (see the picture with all the "configurable clutter" above). The menu implements three different types of menu items as well as a basic time picker;
+- On-device settings allow the configuration of battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a [Move Bar] and some other options (see the picture with all the "configurable clutter" above). The menu implements three different types of menu items as well as a basic time picker;
 - Symbols for active alarms, phone connection and notifications, as well as the heart rate and recovery time indicators use icons from a [custom font];
 - On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955 and fēnix 7 series and the Enduro 2);
 - A global settings class synchronises the selected options to persistent storage and makes them available across the app;
@@ -91,7 +91,8 @@ Recovery time icon by Urs Huggel.
 [CC 3.0 BY]: https://creativecommons.org/licenses/by/3.0/
 [Flaticon license]: https://www.freepikcompany.com/legal?&_ga=2.78543444.1954543656.1683086561-616594141.1683086561&_gl=1*4sgkt0*test_ga*NjE2NTk0MTQxLjE2ODMwODY1NjE.*test_ga_523JXC6VL7*MTY4MzEyNDUwMi4yLjEuMTY4MzEyNDg0OS41NC4wLjA.*fp_ga*NjE2NTk0MTQxLjE2ODMwODY1NjE.*fp_ga_1ZY8468CQB*MTY4MzEyNDUzMi4yLjEuMTY4MzEyNDg0OS41NC4wLjA.#nav-flaticon
 [Prettier Monkey C]: https://marketplace.visualstudio.com/items?itemName=markw65.prettier-extension-monkeyc
- 
+[Move Bar]: https://support.garmin.com/en-US/?faq=JwIMwaMTTV0t7r0mvkdA08
+
 ## License
 
 Copyright (C) Andreas Huggel <ahuggel@gmx.net>
