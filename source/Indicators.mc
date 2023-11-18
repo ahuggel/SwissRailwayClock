@@ -574,22 +574,20 @@ class Indicators {
         radius as Number,
         moveBarLevel as Number?
     ) as Boolean {
-        // moveBarLevel = 5;
+//      moveBarLevel = 5;
         var ret = false;
         if (moveBarLevel != null and moveBarLevel > 0) {
             var width = (0.10 * radius).toNumber();
             if (0 == width % 2) { width -= 1; } // make sure width is an odd number
             radius = (0.67 * radius).toNumber();
-
-            System.println("radius = " + radius + ", width = " + width);
-
+//          System.println("radius = " + radius + ", width = " + width);
             var angle = 150;
             var bar = 0;
             for (var i = 1; i <= moveBarLevel; i++) {
                 bar = i == 1 ? 36 : 18; // bar length in degrees
-        		dc.setColor(ClockView.colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
+        	    dc.setColor(ClockView.colorMode ? Graphics.COLOR_DK_BLUE : Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
                 dc.setPenWidth(width);
-                dc.drawArc(x, y, radius, Graphics.ARC_CLOCKWISE, angle, angle-bar);
+                dc.drawArc(x-1, y, radius, Graphics.ARC_CLOCKWISE, angle, angle-bar);
 
         		dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_BACKGROUND], Graphics.COLOR_TRANSPARENT);
                 dc.setPenWidth(1);
@@ -599,11 +597,12 @@ class Indicators {
             }
             // Draw the arrow tips in a second loop, so they are drawn over the background color arrow tails 
             angle = 150;
-        	dc.setColor(ClockView.colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
+        	dc.setColor(ClockView.colorMode ? Graphics.COLOR_DK_BLUE : Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
+//          dc.setColor(ClockView.colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
             for (var i = 1; i <= moveBarLevel; i++) {
                 bar = i == 1 ? 36 : 18; // bar length in degrees
                 dc.setPenWidth(1);
-                dc.fillPolygon(arrowPoints(x, y, radius, width, angle-bar));
+                dc.fillPolygon(arrowPoints(x-1, y, radius, width, angle-bar));
 
 		    	angle = angle - bar - 3;
             }
@@ -612,7 +611,7 @@ class Indicators {
         return ret;
     }
 
-    // Compute the coordinates of the rotated triangles used for the tails and tips of the move bar arcs
+    // Compute the coordinates of the rotated polygon used for the tails and tips of the move bar arcs
     (:modern) private function arrowPoints(
         x as Number,
         y as Number,
@@ -620,16 +619,18 @@ class Indicators {
         width as Numeric, 
         angle as Numeric
     ) as Array< Array<Number> > {
-        var pts = new Array< Array<Number> >[3];
-        var r = radius - width/2;
+        var pts = new Array< Array<Number> >[4];
+        var r = (radius - width/2).toNumber();
         var beta = (180 - angle).toFloat() / 180.0 * Math.PI;
         var cos = Math.cos(beta);
         var sin = Math.sin(beta);
         pts[0] = [(x - r * cos + 0.5).toNumber(), (y - r * sin + 0.5).toNumber()];
-        r = (radius + width/2).toNumber();
-        pts[1] = [(x - r * cos + 0.5).toNumber(), (y - r * sin + 0.5).toNumber()];
+        beta = (180 - angle - 3).toFloat() / 180.0 * Math.PI;
+        pts[1] = [(x - radius * Math.cos(beta) + 0.5).toNumber(), (y - radius * Math.sin(beta) + 0.5).toNumber()];
+        r = (radius + width/2 + 0.5).toNumber();
+        pts[2] = [(x - r * cos + 0.5).toNumber(), (y - r * sin + 0.5).toNumber()];
         beta = (180 - angle + 4).toFloat() / 180.0 * Math.PI;
-        pts[2] = [(x - radius * Math.cos(beta) + 0.5).toNumber(), (y - radius * Math.sin(beta) + 0.5).toNumber()];
+        pts[3] = [(x - radius * Math.cos(beta) + 0.5).toNumber(), (y - radius * Math.sin(beta) + 0.5).toNumber()];
 
         return pts;
     }
