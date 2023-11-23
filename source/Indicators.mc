@@ -581,7 +581,7 @@ class Indicators {
             if (0 == width % 2) { width -= 1; } // make sure width is an odd number
             radius = (0.67 * radius).toNumber();
 //          System.println("radius = " + radius + ", width = " + width);
-            var angle = 150;
+            var angle = 152;
             var bar = 0;
             for (var i = 1; i <= moveBarLevel; i++) {
                 bar = i == 1 ? 36 : 18; // bar length in degrees
@@ -596,7 +596,7 @@ class Indicators {
 		    	angle = angle - bar - 3;
             }
             // Draw the arrow tips in a second loop, so they are drawn over the background color arrow tails 
-            angle = 150;
+            angle = 152;
         	dc.setColor(ClockView.colorMode ? Graphics.COLOR_DK_BLUE : Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
 //          dc.setColor(ClockView.colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
             for (var i = 1; i <= moveBarLevel; i++) {
