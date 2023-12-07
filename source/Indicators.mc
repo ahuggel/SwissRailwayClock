@@ -587,7 +587,7 @@ class Indicators {
                 bar = i == 1 ? 36 : 18; // bar length in degrees
         	    dc.setColor(ClockView.colorMode ? Graphics.COLOR_DK_BLUE : Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
                 dc.setPenWidth(width);
-                dc.drawArc(x-1, y, radius, Graphics.ARC_CLOCKWISE, angle, angle-bar);
+                dc.drawArc(x, y, radius, Graphics.ARC_CLOCKWISE, angle, angle-bar);
 
         		dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_BACKGROUND], Graphics.COLOR_TRANSPARENT);
                 dc.setPenWidth(1);
@@ -602,7 +602,7 @@ class Indicators {
             for (var i = 1; i <= moveBarLevel; i++) {
                 bar = i == 1 ? 36 : 18; // bar length in degrees
                 dc.setPenWidth(1);
-                dc.fillPolygon(arrowPoints(x-1, y, radius, width, angle-bar));
+                dc.fillPolygon(arrowPoints(x, y, radius, width, angle-bar));
 
 		    	angle = angle - bar - 3;
             }
