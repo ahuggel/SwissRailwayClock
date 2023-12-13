@@ -11,7 +11,7 @@
     <string id="HeartRate">Herzfrequenz</string>
     <string id="RecoveryTime">Erholungszeit</string>
     <string id="Steps">Schritte</string>
-    <string id="MoveBar">Move Bar</string>
+    <string id="MoveBar">Inaktivitätsstatus</string>
     <string id="DarkMode">Dunkelmodus</string>
     <string id="DmContrast">Kontrast</string>
     <string id="HideSeconds">Sekunden ausblenden</string>
