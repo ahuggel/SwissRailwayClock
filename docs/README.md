@@ -36,7 +36,6 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | fēnix® 7 / quatix® 7 | Modern |
 | fēnix® 7 PRO | Modern |
 | fēnix® 7 Pro - Solar Edition (no Wi-Fi) | Modern |
-| fēnix® 7 System 6 Preview | Modern |
 | fēnix® 7S | Modern |
 | fēnix® 7S PRO | Modern |
 | fēnix® 7X / tactix® 7 / quatix® 7X Solar / Enduro™ 2 | Modern |
