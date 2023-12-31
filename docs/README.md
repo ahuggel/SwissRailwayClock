@@ -17,7 +17,7 @@ This program reflects the progress of my ongoing journey to learn [Monkey C] and
 
 ## Compatible devices
 
-The Architecture column shows for every [device], if it supports the layer based implementation (Modern) or uses a buffered bitmap (Legacy). 
+The Architecture column shows for each of the [compatible devices], if it supports the layer based implementation (Modern) or uses a buffered bitmap (Legacy). 
 
 | Device name | Architecture |
 | ----------- | ------------ |
@@ -94,7 +94,7 @@ Recovery time icon by Urs Huggel.
 [Flaticon license]: https://www.freepikcompany.com/legal?&_ga=2.78543444.1954543656.1683086561-616594141.1683086561&_gl=1*4sgkt0*test_ga*NjE2NTk0MTQxLjE2ODMwODY1NjE.*test_ga_523JXC6VL7*MTY4MzEyNDUwMi4yLjEuMTY4MzEyNDg0OS41NC4wLjA.*fp_ga*NjE2NTk0MTQxLjE2ODMwODY1NjE.*fp_ga_1ZY8468CQB*MTY4MzEyNDUzMi4yLjEuMTY4MzEyNDg0OS41NC4wLjA.#nav-flaticon
 [Prettier Monkey C]: https://marketplace.visualstudio.com/items?itemName=markw65.prettier-extension-monkeyc
 [Move Bar]: https://support.garmin.com/en-US/?faq=JwIMwaMTTV0t7r0mvkdA08
-[device]: https://developer.garmin.com/connect-iq/compatible-devices/
+[compatible devices]: https://developer.garmin.com/connect-iq/compatible-devices/
 
 ## License
 
