@@ -17,54 +17,54 @@ This program reflects the progress of my ongoing journey to learn [Monkey C] and
 
 ## Compatible devices
 
-The Architecture column shows for each of the [compatible devices], if it supports the layer based implementation (Modern) or uses a buffered bitmap (Legacy). 
+The Architecture column shows for each of the [compatible devices], if it supports the layer based implementation (Modern) or uses a buffered bitmap (Legacy).
 
-| Device name | Architecture |
-| ----------- | ------------ |
-| Captain Marvel | Modern |
-| Darth Vader™ | Modern |
-| Descent™ Mk2 / Descent™ Mk2i | Legacy |
-| Descent™ Mk2 S | Legacy       |
-| fēnix® 5 Plus | Legacy |
-| fēnix® 5S Plus | Legacy |
-| fēnix® 5X Plus | Legacy |
-| fēnix® 6 / 6 Solar / 6 Dual Power | Legacy |
-| fēnix® 6 Pro / 6 Sapphire / 6 Pro Solar / 6 Pro Dual Power / quatix® 6 | Legacy |
-| fēnix® 6S / 6S Solar / 6S Dual Power | Legacy |
-| fēnix® 6S Pro / 6S Sapphire / 6S Pro Solar / 6S Pro Dual Power | Legacy |
-| fēnix® 6X Pro / 6X Sapphire / 6X Pro Solar / tactix® Delta Sapphire / Delta Solar / Delta Solar - Ballistics Edition / quatix® 6X / 6X Solar / 6X Dual Power | Legacy |
-| fēnix® 7 / quatix® 7 | Modern |
-| fēnix® 7 PRO | Modern |
-| fēnix® 7 Pro - Solar Edition (no Wi-Fi) | Modern |
-| fēnix® 7S | Modern |
-| fēnix® 7S PRO | Modern |
-| fēnix® 7X / tactix® 7 / quatix® 7X Solar / Enduro™ 2 | Modern |
-| fēnix® 7X PRO | Modern |
-| fēnix® 7X Pro - Solar Edition (no Wi-Fi) | Modern |
-| First Avenger | Modern |
-| Forerunner® 245 | Legacy |
-| Forerunner® 245 Music | Legacy |
-| Forerunner® 255 | Modern |
-| Forerunner® 255 Music | Modern |
-| Forerunner® 255s | Modern |
-| Forerunner® 255s Music | Modern |
-| Forerunner® 645 Music | Legacy |
-| Forerunner® 745 | Legacy |
-| Forerunner® 945 | Legacy |
-| Forerunner® 945 LTE | Legacy |
-| Forerunner® 955 / Solar | Modern |
-| MARQ® Adventurer | Legacy |
-| MARQ® Athlete | Legacy |
-| MARQ® Aviator | Legacy |
-| MARQ® Captain / MARQ® Captain: American Magic Edition | Legacy |
-| MARQ® Commander | Legacy |
-| MARQ® Driver | Legacy |
-| MARQ® Expedition | Legacy |
-| MARQ® Golfer | Legacy |
-| Rey™ | Modern |
-| vívoactive® 3 Music | Legacy |
-| vívoactive® 4 | Modern |
-| vívoactive® 4S | Modern |
+| Device name | Architecture | Label |
+| ----------- | ------------ | ----- |
+| Captain Marvel | Modern | legacyherocaptainmarvel |
+| Darth Vader™ | Modern | legacysagadarthvader |
+| Descent™ Mk2 / Descent™ Mk2i | Legacy | descentmk2 |
+| Descent™ Mk2 S | Legacy | descentmk2s |
+| fēnix® 5 Plus | Legacy | fenix5plus |
+| fēnix® 5S Plus | Legacy | fenix5splus |
+| fēnix® 5X Plus | Legacy | fenix5xplus |
+| fēnix® 6 / 6 Solar / 6 Dual Power | Legacy | fenix6 |
+| fēnix® 6 Pro / 6 Sapphire / 6 Pro Solar / 6 Pro Dual Power / quatix® 6 | Legacy | fenix6pro |
+| fēnix® 6S / 6S Solar / 6S Dual Power | Legacy | fenix6s |
+| fēnix® 6S Pro / 6S Sapphire / 6S Pro Solar / 6S Pro Dual Power | Legacy | fenix6spro |
+| fēnix® 6X Pro / 6X Sapphire / 6X Pro Solar / tactix® Delta Sapphire / Delta Solar / Delta Solar - Ballistics Edition / quatix® 6X / 6X Solar / 6X Dual Power | Legacy | fenix6xpro |
+| fēnix® 7 / quatix® 7 | Modern | fenix7 |
+| fēnix® 7 PRO | Modern | fenix7pro |
+| fēnix® 7 Pro - Solar Edition (no Wi-Fi) | Modern | fenix7pronowifi |
+| fēnix® 7S | Modern | fenix7s |
+| fēnix® 7S PRO | Modern | fenix7spro |
+| fēnix® 7X / tactix® 7 / quatix® 7X Solar / Enduro™ 2 | Modern | fenix7x |
+| fēnix® 7X PRO | Modern | fenix7xpro |
+| fēnix® 7X Pro - Solar Edition (no Wi-Fi) | Modern | fenix7xpronowifi |
+| First Avenger | Modern | legacyherofirstavenger |
+| Forerunner® 245 | Legacy | fr245 |
+| Forerunner® 245 Music | Legacy | fr245m |
+| Forerunner® 255 | Modern | fr255 |
+| Forerunner® 255 Music | Modern | fr255m |
+| Forerunner® 255s | Modern | fr255s |
+| Forerunner® 255s Music | Modern | fr255sm |
+| Forerunner® 645 Music | Legacy | fr645m |
+| Forerunner® 745 | Legacy | fr745 |
+| Forerunner® 945 | Legacy | fr945 |
+| Forerunner® 945 LTE | Legacy | fr945lte |
+| Forerunner® 955 / Solar | Modern | fr955 |
+| MARQ® Adventurer | Legacy | marqadventurer |
+| MARQ® Athlete | Legacy | marqathlete |
+| MARQ® Aviator | Legacy | marqaviator |
+| MARQ® Captain / MARQ® Captain: American Magic Edition | Legacy | marqcaptain |
+| MARQ® Commander | Legacy | marqcommander |
+| MARQ® Driver | Legacy | marqdriver |
+| MARQ® Expedition | Legacy | marqexpedition |
+| MARQ® Golfer | Legacy | marqgolfer |
+| Rey™ | Modern | legacysagarey |
+| vívoactive® 3 Music | Legacy | vivoactive3m |
+| vívoactive® 4 | Modern | vivoactive4 |
+| vívoactive® 4S | Modern | vivoactive4s |
 
 ## Credits
 
