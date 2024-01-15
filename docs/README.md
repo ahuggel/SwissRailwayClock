@@ -10,8 +10,8 @@
 - On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955 and fēnix 7 series and the Enduro 2);
 - A global settings class synchronises the selected options to persistent storage and makes them available across the app;
 - The program compiles with only a single warning with the compiler type checking level set to "Strict";
-- Newer watches with support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. Older devices without layer support or insufficient memory use a buffered bitmap. The distinction is made using [Jungle file build instructions]. ```minApiLevel``` is set to 3.2.0 as that's the minimum level required for on-device settings. Devices with [AMOLED] displays are not supported.
-- Memory usage on older devices is now really close to the limit. I highly recommend using the [Prettier Monkey C] extension for Visual Studio Code to optimize the generated program as much as possible. (From my experience, memory usage of the optimized program is reduced by 2-4%.)
+- Newer ("Modern") watches with support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. Older ("Legacy") devices without layer support or insufficient memory use a buffered bitmap. The distinction is made using [Jungle file build instructions]. ```minApiLevel``` is set to 3.2.0 as that's the minimum level required for on-device settings. Devices with [AMOLED] displays are not supported.
+- Memory usage on legacy devices is now really close to the limit. I highly recommend using the [Prettier Monkey C] extension for Visual Studio Code to optimize the generated program as much as possible. (From my experience, memory usage of the optimized program is reduced by 2-4%.)
 
 This program reflects the progress of my ongoing journey to learn [Monkey C] and the Garmin [Connect IQ ecosystem] to create an analog watchface. I am making it available in the hope that others will find it useful to grasp the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
 
@@ -19,52 +19,52 @@ This program reflects the progress of my ongoing journey to learn [Monkey C] and
 
 The Architecture column shows for each of the [compatible devices], if it supports the layer based implementation (Modern) or uses a buffered bitmap (Legacy).
 
-| Device name | Architecture | Label |
-| ----------- | ------------ | ----- |
-| Captain Marvel | Modern | legacyherocaptainmarvel |
-| Darth Vader™ | Modern | legacysagadarthvader |
-| Descent™ Mk2 / Descent™ Mk2i | Legacy | descentmk2 |
-| Descent™ Mk2 S | Legacy | descentmk2s |
-| fēnix® 5 Plus | Legacy | fenix5plus |
-| fēnix® 5S Plus | Legacy | fenix5splus |
-| fēnix® 5X Plus | Legacy | fenix5xplus |
-| fēnix® 6 / 6 Solar / 6 Dual Power | Legacy | fenix6 |
-| fēnix® 6 Pro / 6 Sapphire / 6 Pro Solar / 6 Pro Dual Power / quatix® 6 | Legacy | fenix6pro |
-| fēnix® 6S / 6S Solar / 6S Dual Power | Legacy | fenix6s |
-| fēnix® 6S Pro / 6S Sapphire / 6S Pro Solar / 6S Pro Dual Power | Legacy | fenix6spro |
-| fēnix® 6X Pro / 6X Sapphire / 6X Pro Solar / tactix® Delta Sapphire / Delta Solar / Delta Solar - Ballistics Edition / quatix® 6X / 6X Solar / 6X Dual Power | Legacy | fenix6xpro |
-| fēnix® 7 / quatix® 7 | Modern | fenix7 |
-| fēnix® 7 PRO | Modern | fenix7pro |
-| fēnix® 7 Pro - Solar Edition (no Wi-Fi) | Modern | fenix7pronowifi |
-| fēnix® 7S | Modern | fenix7s |
-| fēnix® 7S PRO | Modern | fenix7spro |
-| fēnix® 7X / tactix® 7 / quatix® 7X Solar / Enduro™ 2 | Modern | fenix7x |
-| fēnix® 7X PRO | Modern | fenix7xpro |
-| fēnix® 7X Pro - Solar Edition (no Wi-Fi) | Modern | fenix7xpronowifi |
-| First Avenger | Modern | legacyherofirstavenger |
-| Forerunner® 245 | Legacy | fr245 |
-| Forerunner® 245 Music | Legacy | fr245m |
-| Forerunner® 255 | Modern | fr255 |
-| Forerunner® 255 Music | Modern | fr255m |
-| Forerunner® 255s | Modern | fr255s |
-| Forerunner® 255s Music | Modern | fr255sm |
-| Forerunner® 645 Music | Legacy | fr645m |
-| Forerunner® 745 | Legacy | fr745 |
-| Forerunner® 945 | Legacy | fr945 |
-| Forerunner® 945 LTE | Legacy | fr945lte |
-| Forerunner® 955 / Solar | Modern | fr955 |
-| MARQ® Adventurer | Legacy | marqadventurer |
-| MARQ® Athlete | Legacy | marqathlete |
-| MARQ® Aviator | Legacy | marqaviator |
-| MARQ® Captain / MARQ® Captain: American Magic Edition | Legacy | marqcaptain |
-| MARQ® Commander | Legacy | marqcommander |
-| MARQ® Driver | Legacy | marqdriver |
-| MARQ® Expedition | Legacy | marqexpedition |
-| MARQ® Golfer | Legacy | marqgolfer |
-| Rey™ | Modern | legacysagarey |
-| vívoactive® 3 Music | Legacy | vivoactive3m |
-| vívoactive® 4 | Modern | vivoactive4 |
-| vívoactive® 4S | Modern | vivoactive4s |
+| Device name | Label | Architecture |
+| ----------- | ----- | ------------ |
+| Captain Marvel | legacyherocaptainmarvel | Modern |
+| Darth Vader™ | legacysagadarthvader | Modern |
+| Descent™ Mk2 / Descent™ Mk2i | descentmk2 | Legacy |
+| Descent™ Mk2 S | descentmk2s | Legacy |
+| fēnix® 5 Plus | fenix5plus | Legacy |
+| fēnix® 5S Plus | fenix5splus | Legacy |
+| fēnix® 5X Plus | fenix5xplus | Legacy |
+| fēnix® 6 / 6 Solar / 6 Dual Power | fenix6 | Legacy |
+| fēnix® 6 Pro / 6 Sapphire / 6 Pro Solar / 6 Pro Dual Power / quatix® 6 | fenix6pro | Legacy |
+| fēnix® 6S / 6S Solar / 6S Dual Power | fenix6s | Legacy |
+| fēnix® 6S Pro / 6S Sapphire / 6S Pro Solar / 6S Pro Dual Power | fenix6spro | Legacy |
+| fēnix® 6X Pro / 6X Sapphire / 6X Pro Solar / tactix® Delta Sapphire / Delta Solar / Delta Solar - Ballistics Edition / quatix® 6X / 6X Solar / 6X Dual Power | fenix6xpro | Legacy |
+| fēnix® 7 / quatix® 7 | fenix7 | Modern |
+| fēnix® 7 PRO | fenix7pro | Modern |
+| fēnix® 7 Pro - Solar Edition (no Wi-Fi) | fenix7pronowifi | Modern |
+| fēnix® 7S | fenix7s | Modern |
+| fēnix® 7S PRO | fenix7spro | Modern |
+| fēnix® 7X / tactix® 7 / quatix® 7X Solar / Enduro™ 2 | fenix7x | Modern |
+| fēnix® 7X PRO | fenix7xpro | Modern |
+| fēnix® 7X Pro - Solar Edition (no Wi-Fi) | fenix7xpronowifi | Modern |
+| First Avenger | legacyherofirstavenger | Modern |
+| Forerunner® 245 | fr245 | Legacy |
+| Forerunner® 245 Music | fr245m | Legacy |
+| Forerunner® 255 | fr255 | Modern |
+| Forerunner® 255 Music | fr255m | Modern |
+| Forerunner® 255s | fr255s | Modern |
+| Forerunner® 255s Music | fr255sm | Modern |
+| Forerunner® 645 Music | fr645m | Legacy |
+| Forerunner® 745 | fr745 | Legacy |
+| Forerunner® 945 | fr945 | Legacy |
+| Forerunner® 945 LTE | fr945lte | Legacy |
+| Forerunner® 955 / Solar | fr955 | Modern |
+| MARQ® Adventurer | marqadventurer | Legacy |
+| MARQ® Athlete | marqathlete | Legacy |
+| MARQ® Aviator | marqaviator | Legacy |
+| MARQ® Captain / MARQ® Captain: American Magic Edition | marqcaptain | Legacy |
+| MARQ® Commander | marqcommander | Legacy |
+| MARQ® Driver | marqdriver | Legacy |
+| MARQ® Expedition | marqexpedition | Legacy |
+| MARQ® Golfer | marqgolfer | Legacy |
+| Rey™ | legacysagarey | Modern |
+| vívoactive® 3 Music | vivoactive3m | Legacy |
+| vívoactive® 4 | vivoactive4 | Modern |
+| vívoactive® 4S | vivoactive4s | Modern |
 
 ## Credits
 
