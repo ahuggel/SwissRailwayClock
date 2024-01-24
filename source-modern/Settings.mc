@@ -130,7 +130,7 @@ class Config {
         I_HIDE_SECONDS => [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever]
     } as Dictionary<Item, Array<Symbol> >;
 
-    private var _values as Dictionary<Item, Number>;  // Values for the configuration items
+    private var _values as Array<Number> = new Array<Number>[I_SIZE]; ;  // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
 
@@ -138,7 +138,6 @@ class Config {
     public function initialize() {
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasBatteryInDays = (System.Stats has :batteryInDays);
-        _values = {} as Dictionary<Item, Number>;
         // Read the configuration values from persistent storage 
         for (var id = 0; id < I_SIZE; id++) {
             var value = Storage.getValue(_itemLabels[id]) as Number;
@@ -167,7 +166,7 @@ class Config {
                     if (null == value) { value = 0; }
                     break;
             }
-            _values[id as Item] = value;
+            _values[id] = value;
         }
     }
 
@@ -176,7 +175,7 @@ class Config {
     //!@return Label of the currently selected option
     public function getLabel(id as Item) as String {
         var option = "";
-        var value = _values[id];
+        var value = _values[id as Number];
         switch (id) {
             case I_BATTERY:
             case I_DATE_DISPLAY:
@@ -208,7 +207,7 @@ class Config {
     //!@param id Setting
     //!@return The current value of the setting
     public function getValue(id as Item) as Number {
-        var value = _values[id] as Number;
+        var value = _values[id as Number];
         switch (id) {
             case I_DM_CONTRAST:
                 value = O_DM_CONTRAST[value];
@@ -227,7 +226,7 @@ class Config {
     //! Advance the setting to the next value.
     //!@param id Setting
     public function setNext(id as Item) as Void {
-        var value = _values[id];
+        var value = _values[id as Number];
         switch (id) {
             case I_BATTERY:
             case I_DATE_DISPLAY:
@@ -235,8 +234,8 @@ class Config {
             case I_DM_CONTRAST:
             case I_HIDE_SECONDS:
                 var label = _labels[id] as Array<Symbol>;
-                _values[id] = (value as Number + 1) % label.size();
-                Storage.setValue(_itemLabels[id as Number], _values[id]);
+                _values[id as Number] = (value + 1) % label.size();
+                Storage.setValue(_itemLabels[id as Number], _values[id as Number]);
                 break;
             case I_ALARMS:
             case I_NOTIFICATIONS:
@@ -248,8 +247,8 @@ class Config {
             case I_3D_EFFECTS:
             case I_BATTERY_PCT:
             case I_BATTERY_DAYS:
-                _values[id] = (value as Number + 1) % 2;
-                Storage.setValue(_itemLabels[id as Number], _values[id]);
+                _values[id as Number] = (value + 1) % 2;
+                Storage.setValue(_itemLabels[id as Number], _values[id as Number]);
                 break;
             default:
                 System.println("ERROR: Config.setNext() is not implemented for id = " + id);
@@ -261,8 +260,8 @@ class Config {
         switch (id) {
             case I_DM_ON:
             case I_DM_OFF:
-                _values[id] = value;
-                Storage.setValue(_itemLabels[id as Number], _values[id]);
+                _values[id as Number] = value;
+                Storage.setValue(_itemLabels[id as Number], _values[id as Number]);
                 break;
             default:
                 System.println("ERROR: Config.seValue() is not implemented for id = " + id);
