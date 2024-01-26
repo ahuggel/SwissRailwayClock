@@ -37,7 +37,7 @@ function getStringResource(id as Symbol) as String {
 class Config {
     // Configuration item identifiers. Used throughout the app to refer to individual settings.
     // The last one must be I_SIZE, it is used like size(), those after I_SIZE are hacks
-    enum Item { 
+    enum Item {
         I_BATTERY, 
         I_DATE_DISPLAY, 
         I_DARK_MODE, 
@@ -59,6 +59,7 @@ class Config {
         I_DONE, 
         I_ALL 
     }
+
     // Symbols for the configuration item display name resources.
     // Must be in the same sequence as Item, above.
 	private var _itemSymbols as Array<Symbol> = [
@@ -80,27 +81,28 @@ class Config {
         :DmOn, 
         :DmOff
     ] as Array<Symbol>;
+
     // Configuration item labels only used as keys for storing the configuration values.
     // Also must be in the same sequence as Item.
     // Using these for persistent storage, rather than Item, is more robust.
     private var _itemLabels as Array<String> = [
-        "battery", 
-        "dateDisplay", 
-        "darkMode", 
-        "hideSeconds", 
-        "dmContrast", 
-        "alarms", 
-        "notifications", 
-        "connected", 
-        "heartRate", 
-        "recoveryTime",
-        "steps",
-        "moveBar",
-        "3dEffects", 
-        "batteryPct", 
-        "batteryDays", 
-        "dmOn", 
-        "dmOff"
+        "ba", // I_BATTERY
+        "dd", // I_DATE_DISPLAY
+        "dm", // I_DARK_MODE
+        "hs", // I_HIDE_SECONDS
+        "dc", // I_DM_CONTRAST
+        "al", // I_ALARMS
+        "no", // I_NOTIFICATIONS
+        "co", // I_CONNECTED
+        "hr", // I_HEART_RATE
+        "rt", // I_RECOVERY_TIME
+        "st", // I_STEPS
+        "mb", // I_MOVE_BAR
+        "3d", // I_3D_EFFECTS
+        "bp", // I_BATTERY_PCT
+        "bd", // I_BATTERY_DAYS
+        "dn", // I_DM_ON
+        "df"  // I_DM_OFF
     ] as Array<String>;
 
     // Option labels for list items. One array of symbols for each of the them. These inner arrays are accessed
