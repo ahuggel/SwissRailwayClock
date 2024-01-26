@@ -40,6 +40,9 @@ class Config {
     enum Item { 
         I_BATTERY, 
         I_DATE_DISPLAY, 
+        I_DARK_MODE, 
+        I_HIDE_SECONDS, 
+        I_DM_CONTRAST, 
         I_ALARMS,
         I_NOTIFICATIONS,
         I_CONNECTED,
@@ -47,9 +50,6 @@ class Config {
         I_RECOVERY_TIME,
         I_STEPS,
         I_MOVE_BAR,
-        I_DARK_MODE, 
-        I_DM_CONTRAST, 
-        I_HIDE_SECONDS, 
         I_3D_EFFECTS, 
         I_BATTERY_PCT, 
         I_BATTERY_DAYS, 
@@ -64,6 +64,9 @@ class Config {
 	private var _itemSymbols as Array<Symbol> = [
         :Battery, 
         :DateDisplay, 
+        :DarkMode, 
+        :HideSeconds, 
+        :DmContrast, 
         :Alarms,
         :Notifications,
         :Connected,
@@ -71,9 +74,6 @@ class Config {
         :RecoveryTime,
         :Steps,
         :MoveBar,
-        :DarkMode, 
-        :DmContrast, 
-        :HideSeconds, 
         :Shadows, 
         :BatteryPct, 
         :BatteryDays, 
@@ -86,6 +86,9 @@ class Config {
     private var _itemLabels as Array<String> = [
         "battery", 
         "dateDisplay", 
+        "darkMode", 
+        "hideSeconds", 
+        "dmContrast", 
         "alarms", 
         "notifications", 
         "connected", 
@@ -93,9 +96,6 @@ class Config {
         "recoveryTime",
         "steps",
         "moveBar",
-        "darkMode", 
-        "dmContrast", 
-        "hideSeconds", 
         "3dEffects", 
         "batteryPct", 
         "batteryDays", 
@@ -103,9 +103,24 @@ class Config {
         "dmOff"
     ] as Array<String>;
 
+    // Option labels for list items. One array of symbols for each of the them. These inner arrays are accessed
+    // using Item enums, so list items need to be the first ones in that enum and in the same order.
+    private var _labels as Array< Array<Symbol> > = [
+        [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern, :BatteryHybrid], // I_BATTERY
+        [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay], // I_DATE_DISPLAY
+        [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
+        [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever], // I_HIDE_SECONDS
+        [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite] // I_DM_CONTRAST
+     ] as Array< Array<Symbol> >;
+
+    // Colors for the dark mode contrast icon menu item. The index (0, 1 or 2) is stored, but getValue() returns the color.
+    static const O_DM_CONTRAST as Array<Number> = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>;
+
     // Options for list and toggle configuration items. Using enums, the compiler can help detect issues like typos or outdated values.
     enum { O_BATTERY_OFF, O_BATTERY_CLASSIC_WARN, O_BATTERY_MODERN_WARN, O_BATTERY_CLASSIC, O_BATTERY_MODERN, O_BATTERY_HYBRID }
     enum { O_DATE_DISPLAY_OFF, O_DATE_DISPLAY_DAY_ONLY, O_DATE_DISPLAY_WEEKDAY_AND_DAY }
+    enum { O_DARK_MODE_SCHEDULED, O_DARK_MODE_OFF, O_DARK_MODE_ON, O_DARK_MODE_IN_DND }
+    enum { O_HIDE_SECONDS_IN_DM, O_HIDE_SECONDS_ALWAYS, O_HIDE_SECONDS_NEVER }
     enum { O_ALARMS_ON, O_ALARMS_OFF } // Default: On
     enum { O_NOTIFICATIONS_OFF, O_NOTIFICATIONS_ON } // Default: Off
     enum { O_CONNECTED_ON, O_CONNECTED_OFF } // Default: On
@@ -113,22 +128,9 @@ class Config {
     enum { O_RECOVERY_TIME_OFF, O_RECOVERY_TIME_ON } // Default: Off
     enum { O_STEPS_OFF, O_STEPS_ON } // Default: Off
     enum { O_MOVE_BAR_OFF, O_MOVE_BAR_ON } // Default: Off
-    enum { O_DARK_MODE_SCHEDULED, O_DARK_MODE_OFF, O_DARK_MODE_ON, O_DARK_MODE_IN_DND }
-    enum { O_HIDE_SECONDS_IN_DM, O_HIDE_SECONDS_ALWAYS, O_HIDE_SECONDS_NEVER }
     enum { O_3D_EFFECTS_ON, O_3D_EFFECTS_OFF } // Default: On
     enum { O_BATTERY_PCT_OFF, O_BATTERY_PCT_ON } // Default: Off
     enum { O_BATTERY_DAYS_OFF, O_BATTERY_DAYS_ON } // Default: Off
-    // Colors for the dark mode contrast icon menu item. The index (0, 1 or 2) is stored, but getValue() returns the color.
-    static const O_DM_CONTRAST as Array<Number> = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>;
-
-    // Option labels for list items. One for each of the enum values above and in the same order.
-    private var _labels as Dictionary<Item, Array<Symbol> > = {
-        I_BATTERY      => [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern, :BatteryHybrid],
-        I_DATE_DISPLAY => [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay],
-        I_DARK_MODE    => [:DarkModeScheduled, :Off, :On, :DarkModeInDnD],
-        I_DM_CONTRAST  => [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite],
-        I_HIDE_SECONDS => [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever]
-    } as Dictionary<Item, Array<Symbol> >;
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; ;  // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
@@ -180,9 +182,9 @@ class Config {
             case I_BATTERY:
             case I_DATE_DISPLAY:
             case I_DARK_MODE:
-            case I_DM_CONTRAST:
             case I_HIDE_SECONDS:
-                var label = _labels[id] as Array<Symbol>;
+            case I_DM_CONTRAST:
+                var label = _labels[id as Number] as Array<Symbol>;
                 option = $.getStringResource(label[value]);
                 break;
             case I_DM_ON:
@@ -231,9 +233,9 @@ class Config {
             case I_BATTERY:
             case I_DATE_DISPLAY:
             case I_DARK_MODE:
-            case I_DM_CONTRAST:
             case I_HIDE_SECONDS:
-                var label = _labels[id] as Array<Symbol>;
+            case I_DM_CONTRAST:
+                var label = _labels[id as Number] as Array<Symbol>;
                 _values[id as Number] = (value + 1) % label.size();
                 Storage.setValue(_itemLabels[id as Number], _values[id as Number]);
                 break;
