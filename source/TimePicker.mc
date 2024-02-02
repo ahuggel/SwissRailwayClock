@@ -36,7 +36,7 @@ class TimePicker extends WatchUi.Picker {
     //! Constructor
     public function initialize(id as Config.Item) {
         var title = new WatchUi.Text({
-            :text=>$.config.getName(id),
+            :text=>$.config.getSymbol(id),
             :font=>Graphics.FONT_SMALL,
             :locX=>WatchUi.LAYOUT_HALIGN_CENTER,
             :locY=>WatchUi.LAYOUT_VALIGN_BOTTOM, 
