@@ -27,6 +27,12 @@ import Toybox.WatchUi;
 //! Global variable that keeps track of the settings and makes them available to the app.
 var config as Config = new Config();
 
+// Global helper function to load string resources, just to keep the code simpler and see only one compiler warning. 
+// Decided not to cache the strings.
+function getStringResource(id as Symbol) as String {
+    return WatchUi.loadResource(Rez.Strings[id] as Symbol) as String;
+}
+
 //! This class maintains application settings and synchronises them to persistent storage.
 class Config {
     // Configuration item identifiers. Used throughout the app to refer to individual settings.
@@ -190,6 +196,15 @@ class Config {
         return ret;
     }
 
+    // Return a string resource for the current value of the setting
+    public function getLabel(id as Item) as String {
+        var label = getOption(id);
+        if (label instanceof Lang.Symbol) {
+            label = $.getStringResource(getOption(id) as Symbol);
+        }
+        return label;
+    }
+
     // Return true if the setting is enabled, else false.
     // Does not make sense for I_DM_CONTRAST, I_DM_ON and I_DM_OFF.
     public function isEnabled(id as Item) as Boolean {
@@ -211,9 +226,9 @@ class Config {
         return value;
     }
 
-    // Return the resource identifier of the specified setting
-    public function getSymbol(id as Item) as Symbol {
-        return _itemSymbols[id as Number];
+    // Return a string resource for the setting
+    public function getName(id as Item) as String {
+        return $.getStringResource(_itemSymbols[id as Number] as Symbol);
     }
 
     // Advance the setting to the next value. Does not make sense for I_DM_ON, I_DM_OFF
@@ -248,7 +263,7 @@ class Config {
 class SettingsMenu extends WatchUi.Menu2 {
     //! Constructor
     public function initialize() {
-        Menu2.initialize({:title=>:Settings});
+        Menu2.initialize({:title=>Rez.Strings.Settings});
         buildMenu($.Config.I_ALL);
     }
 
@@ -259,12 +274,12 @@ class SettingsMenu extends WatchUi.Menu2 {
         var idx = findItemById($.Config.I_DM_ON);
         if (-1 != idx) {
             var menuItem = getItem(idx) as MenuItem;
-            menuItem.setSubLabel($.config.getOption($.Config.I_DM_ON));
+            menuItem.setSubLabel($.config.getLabel($.Config.I_DM_ON));
         }
         idx = findItemById($.Config.I_DM_OFF);
         if (-1 != idx) {
             var menuItem = getItem(idx) as MenuItem;
-            menuItem.setSubLabel($.config.getOption($.Config.I_DM_OFF));
+            menuItem.setSubLabel($.config.getLabel($.Config.I_DM_OFF));
         }
     }
 
@@ -301,8 +316,8 @@ class SettingsMenu extends WatchUi.Menu2 {
                 // Add the menu item for dark mode contrast only if dark mode is not set to "Off"
                 if ($.config.isEnabled($.Config.I_DARK_MODE)) {
                     Menu2.addItem(new WatchUi.IconMenuItem(
-                        $.config.getSymbol($.Config.I_DM_CONTRAST), 
-                        $.config.getOption($.Config.I_DM_CONTRAST), 
+                        $.config.getName($.Config.I_DM_CONTRAST), 
+                        $.config.getLabel($.Config.I_DM_CONTRAST), 
                         $.Config.I_DM_CONTRAST,
                         new MenuIcon($.config.getValue($.Config.I_DM_CONTRAST)),
                         {}
@@ -312,7 +327,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 if ($.config.hasAlpha()) {
                     addToggleMenuItem($.Config.I_3D_EFFECTS); 
                 }
-                Menu2.addItem(new WatchUi.MenuItem(:Done, :DoneLabel, $.Config.I_DONE, {}));
+                Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.Done, Rez.Strings.DoneLabel, $.Config.I_DONE, {}));
                 break;
         }
     }
@@ -347,14 +362,14 @@ class SettingsMenu extends WatchUi.Menu2 {
 
     //! Add a MenuItem to the menu.
     private function addMenuItem(item as Config.Item) as Void {
-        Menu2.addItem(new WatchUi.MenuItem($.config.getSymbol(item), $.config.getOption(item), item, {}));
+        Menu2.addItem(new WatchUi.MenuItem($.config.getName(item), $.config.getLabel(item), item, {}));
     }
 
     //! Add a ToggleMenuItem to the menu.
     private function addToggleMenuItem(item as Config.Item) as Void {
         Menu2.addItem(new WatchUi.ToggleMenuItem(
-            $.config.getSymbol(item), 
-            {:enabled=>:On, :disabled=>:Off},
+            $.config.getName(item), 
+            {:enabled=>Rez.Strings.On, :disabled=>Rez.Strings.Off},
             item, 
             $.config.isEnabled(item), 
             {}
@@ -393,12 +408,12 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
             case $.Config.I_HIDE_SECONDS:
                 // Advance to the next option and show the selected option as the sub label
                 $.config.setNext(id);
-                menuItem.setSubLabel($.config.getOption(id));
+                menuItem.setSubLabel($.config.getLabel(id));
                 break;
             case $.Config.I_DM_CONTRAST:
                 // Advance to the next option and show the selected option as the sub label
                 $.config.setNext(id);
-                menuItem.setSubLabel($.config.getOption(id));
+                menuItem.setSubLabel($.config.getLabel(id));
                 // Update the color of the icon
                 var menuIcon = menuItem.getIcon() as MenuIcon;
                 menuIcon.setColor($.config.getValue(id));
@@ -407,7 +422,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
             case $.Config.I_DARK_MODE:
                 // Advance to the next option and show the selected option as the sub label
                 $.config.setNext(id);
-                menuItem.setSubLabel($.config.getOption(id));
+                menuItem.setSubLabel($.config.getLabel(id));
                 // Delete all the following menu items, rebuild the menu with only the items required
                 _menu.deleteMenu(id);
                 _menu.buildMenu(id);

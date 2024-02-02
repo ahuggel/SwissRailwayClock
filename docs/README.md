@@ -9,7 +9,7 @@
 - Symbols for active alarms, phone connection and notifications, as well as the heart rate and recovery time indicators use icons from a [custom font];
 - On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955 and fēnix 7 series and the Enduro 2);
 - A global settings class synchronises the selected options to persistent storage and makes them available across the app;
-- The program compiles without warnings with the compiler type checking level set to "Strict";
+- The program compiles with only a single warning with the compiler type checking level set to "Strict";
 - Newer ("Modern") watches with support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. Older ("Legacy") devices without layer support or insufficient memory use a buffered bitmap. The distinction is made using [Jungle file build instructions]. ```minApiLevel``` is set to 3.2.0 as that's the minimum level required for on-device settings. Devices with [AMOLED] displays are not supported.
 - Memory usage on legacy devices is now really close to the limit. I highly recommend using the [Prettier Monkey C] extension for Visual Studio Code to optimize the generated program as much as possible. (From my experience, memory usage of the optimized program is reduced by 2-4%.)
 
