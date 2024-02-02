@@ -109,9 +109,9 @@ class Config {
         [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite] // I_DM_CONTRAST
      ] as Array< Array<Symbol> >;
 
-    private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _defaults as Number = 0x4280; // 0b0 0100 0010 1000 0000 default values of on/off settings, each bit is one
 
+    private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
 
