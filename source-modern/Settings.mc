@@ -172,48 +172,34 @@ class Config {
     public function getOption(id as Item) as Symbol or String {
         var ret;
         var value = _values[id as Number];
-        switch (id) {
-            case I_BATTERY:
-            case I_DATE_DISPLAY:
-            case I_DARK_MODE:
-            case I_HIDE_SECONDS:
-            case I_DM_CONTRAST:
-                var label = _labels[id as Number] as Array<Symbol>;
-                ret = label[value];
-                break;
-            case I_DM_ON:
-            case I_DM_OFF:
-                var pm = "";
-                var hour = (value as Number / 60).toNumber();
-                if (!System.getDeviceSettings().is24Hour) {
-                    pm = hour < 12 ? " am" : " pm";
-                    hour %= 12;
-                    if (0 == hour) { hour = 12; }
-                }
-                ret = hour + ":" + (value as Number % 60).format("%02d") + pm;
-                break;
-            default:
-                ret = isEnabled(id) ? :On : :Off;
-                break;
+        if (id >= I_ALARMS) {
+            ret = isEnabled(id) ? :On : :Off;            
+        } else if (id <= I_DM_CONTRAST) {
+            var label = _labels[id as Number] as Array<Symbol>;
+            ret = label[value];
+        } else { // if (I_DM_ON == id or I_DM_OFF == id) {
+            var pm = "";
+            var hour = (value as Number / 60).toNumber();
+            if (!System.getDeviceSettings().is24Hour) {
+                pm = hour < 12 ? " am" : " pm";
+                hour %= 12;
+                if (0 == hour) { hour = 12; }
+            }
+            ret = hour + ":" + (value as Number % 60).format("%02d") + pm;
         }
         return ret;
     }
 
     // Return true if the setting is enabled, else false.
+    // Does not make sense for I_DM_CONTRAST, I_DM_ON and I_DM_OFF.
     public function isEnabled(id as Item) as Boolean {
-        var ret = true;
-        switch (id) {
-            case I_DARK_MODE:
-                ret = 1 != _values[id as Number];
-                break;
-            case I_HIDE_SECONDS:
-                ret = 2 != _values[id as Number];
-                break;
-            default: // for I_DM_CONTRAST, I_DM_ON, I_DM_OFF this doesn't make sense
-                ret = 0 != _values[id as Number];
-                break;
+        var disabled = 0; // value when the setting is disabled
+        if (I_DARK_MODE == id) {
+            disabled = 1;
+        } else if (I_HIDE_SECONDS == id) {
+            disabled = 2;
         }
-        return ret;
+        return disabled != _values[id as Number];
     }
 
     // Return the current value of the specified setting.
@@ -230,45 +216,21 @@ class Config {
         return _itemSymbols[id as Number];
     }
 
-    //! Advance the setting to the next value.
-    //!@param id Setting
+    // Advance the setting to the next value. Does not make sense for I_DM_ON, I_DM_OFF
     public function setNext(id as Item) as Void {
-        var value = _values[id as Number];
-        // TODO: Replace this with an if to save memory. Maybe combine with setValue().
-        switch (id) {
-            case I_BATTERY:
-            case I_DATE_DISPLAY:
-            case I_DARK_MODE:
-            case I_HIDE_SECONDS:
-            case I_DM_CONTRAST:
-                var label = _labels[id as Number] as Array<Symbol>;
-                _values[id as Number] = (value + 1) % label.size();
-                Storage.setValue(_itemLabels[id as Number], _values[id as Number]);
-                break;
-            case I_ALARMS:
-            case I_NOTIFICATIONS:
-            case I_CONNECTED:
-            case I_HEART_RATE:
-            case I_RECOVERY_TIME:
-            case I_STEPS:
-            case I_MOVE_BAR:
-            case I_3D_EFFECTS:
-            case I_BATTERY_PCT:
-            case I_BATTERY_DAYS:
-                _values[id as Number] = (value + 1) % 2;
-                Storage.setValue(_itemLabels[id as Number], _values[id as Number]);
-                break;
+        var d = 2;
+        if (id <= I_DM_CONTRAST) {
+            d = _labels[id as Number].size();
         }
+        var value = _values[id as Number];
+        _values[id as Number] = (value + 1) % d;
+        Storage.setValue(_itemLabels[id as Number], _values[id as Number]);            
     }
 
+    // Set the value of a setting. Only used for I_DM_ON and I_DM_OFF
     public function setValue(id as Item, value as Number) as Void {
-        switch (id) {
-            case I_DM_ON:
-            case I_DM_OFF:
-                _values[id as Number] = value;
-                Storage.setValue(_itemLabels[id as Number], _values[id as Number]);
-                break;
-        }
+        _values[id as Number] = value;
+        Storage.setValue(_itemLabels[id as Number], _values[id as Number]);
     }
 
     // Returns true if the device supports an alpha channel, false if not.
