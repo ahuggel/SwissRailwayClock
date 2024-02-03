@@ -28,12 +28,14 @@ import Toybox.WatchUi;
 var config as Config = new Config();
 
 // Global helper function to load string resources, just to keep the code simpler and see only one compiler warning. 
-// Decided not to cache the strings.
 function getStringResource(id as Symbol) as String {
     return WatchUi.loadResource(Rez.Strings[id] as Symbol) as String;
 }
 
-//! This class maintains application settings and synchronises them to persistent storage.
+// This class maintains application settings and synchronises them to persistent storage.
+// Having a Setting class (hierarchy) to model individual settings and an array of these for the entire
+// collection would be better design. As objects are expensive in Monkey C, that approach uses way too 
+// much memory though.
 class Config {
     // Configuration item identifiers. Used throughout the app to refer to individual settings.
     // The last one must be I_SIZE, it is used like size(), those after I_SIZE are hacks
@@ -42,7 +44,7 @@ class Config {
         I_DATE_DISPLAY, 
         I_DARK_MODE, 
         I_HIDE_SECONDS, 
-        I_DM_CONTRAST, 
+        I_DM_CONTRAST, // the last list item, add new ones before this
         I_DM_ON, 
         I_DM_OFF, 
         I_ALARMS, // the first of the on/off switches (see _defaults)
@@ -105,9 +107,9 @@ class Config {
         "bd"  // I_BATTERY_DAYS
     ] as Array<String>;
 
-    // Option labels for list items. One array of symbols for each of the them. These inner arrays are accessed
-    // using Item enums, so list items need to be the first ones in that enum and in the same order.
-    private var _labels as Array< Array<Symbol> > = [
+    // Options for list items. One array of symbols for each of the them. These inner arrays are accessed
+    // using Item enums, so list items need to be the first ones in the Item enum and in the same order.
+    private var _options as Array< Array<Symbol> > = [
         [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern, :BatteryHybrid], // I_BATTERY
         [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay], // I_DATE_DISPLAY
         [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
@@ -115,7 +117,7 @@ class Config {
         [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite] // I_DM_CONTRAST
      ] as Array< Array<Symbol> >;
 
-    private var _defaults as Number = 0x4280; // 0b0 0100 0010 1000 0000 default values of on/off settings, each bit is one
+    private var _defaults as Number = 0x4280; // 0b0 0100 0010 1000 0000 default values for on/off settings, each bit is one
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
@@ -173,16 +175,30 @@ class Config {
         }
     }
 
+    // Return a string resource for the setting (the name of the setting).
+    public function getName(id as Item) as String {
+        return $.getStringResource(_itemSymbols[id as Number] as Symbol);
+    }
+
+    // Return a string resource for the current value of the setting (the name of the option).
+    public function getLabel(id as Item) as String {
+        var label = getOption(id);
+        if (label instanceof Lang.Symbol) {
+            label = $.getStringResource(getOption(id) as Symbol);
+        }
+        return label;
+    }
+
     // Return the symbol corresponding to the current value of the setting, 
-    // or the value formatted as a time string
+    // or the value formatted as a time string.
     public function getOption(id as Item) as Symbol or String {
         var ret;
         var value = _values[id as Number];
         if (id >= I_ALARMS) {
             ret = isEnabled(id) ? :On : :Off;            
         } else if (id <= I_DM_CONTRAST) {
-            var label = _labels[id as Number] as Array<Symbol>;
-            ret = label[value];
+            var opts = _options[id as Number] as Array<Symbol>;
+            ret = opts[value];
         } else { // if (I_DM_ON == id or I_DM_OFF == id) {
             var pm = "";
             var hour = (value as Number / 60).toNumber();
@@ -194,15 +210,6 @@ class Config {
             ret = hour + ":" + (value as Number % 60).format("%02d") + pm;
         }
         return ret;
-    }
-
-    // Return a string resource for the current value of the setting
-    public function getLabel(id as Item) as String {
-        var label = getOption(id);
-        if (label instanceof Lang.Symbol) {
-            label = $.getStringResource(getOption(id) as Symbol);
-        }
-        return label;
     }
 
     // Return true if the setting is enabled, else false.
@@ -226,26 +233,21 @@ class Config {
         return value;
     }
 
-    // Return a string resource for the setting
-    public function getName(id as Item) as String {
-        return $.getStringResource(_itemSymbols[id as Number] as Symbol);
-    }
-
-    // Advance the setting to the next value. Does not make sense for I_DM_ON, I_DM_OFF
+    // Advance the setting to the next value. Does not make sense for I_DM_ON, I_DM_OFF.
     public function setNext(id as Item) as Void {
         var d = 2;
         if (id <= I_DM_CONTRAST) {
-            d = _labels[id as Number].size();
+            d = _options[id as Number].size();
         }
-        var value = _values[id as Number];
-        _values[id as Number] = (value + 1) % d;
-        Storage.setValue(_itemLabels[id as Number], _values[id as Number]);            
+        var value = (_values[id as Number] + 1) % d;
+        _values[id as Number] = value;
+        Storage.setValue(_itemLabels[id as Number], value);
     }
 
-    // Set the value of a setting. Only used for I_DM_ON and I_DM_OFF
+    // Set the value of a setting. Only used for I_DM_ON and I_DM_OFF.
     public function setValue(id as Item, value as Number) as Void {
         _values[id as Number] = value;
-        Storage.setValue(_itemLabels[id as Number], _values[id as Number]);
+        Storage.setValue(_itemLabels[id as Number], value);
     }
 
     // Returns true if the device supports an alpha channel, false if not.
