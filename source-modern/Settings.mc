@@ -44,8 +44,8 @@ class Config {
         I_DATE_DISPLAY, 
         I_DARK_MODE, 
         I_HIDE_SECONDS, 
-        I_DM_CONTRAST, // the last list item, add new ones before this
-        I_DM_ON, 
+        I_DM_CONTRAST,
+        I_DM_ON, // the first item that is not a list item
         I_DM_OFF, 
         I_ALARMS, // the first of the on/off switches (see _defaults)
         I_NOTIFICATIONS,
@@ -196,7 +196,7 @@ class Config {
         var value = _values[id as Number];
         if (id >= I_ALARMS) {
             ret = isEnabled(id) ? :On : :Off;            
-        } else if (id <= I_DM_CONTRAST) {
+        } else if (id < I_DM_ON) { // list items
             var opts = _options[id as Number] as Array<Symbol>;
             ret = opts[value];
         } else { // if (I_DM_ON == id or I_DM_OFF == id) {
@@ -235,8 +235,8 @@ class Config {
 
     // Advance the setting to the next value. Does not make sense for I_DM_ON, I_DM_OFF.
     public function setNext(id as Item) as Void {
-        var d = 2;
-        if (id <= I_DM_CONTRAST) {
+        var d = 2; // toggle items have two options
+        if (id < I_DM_ON) { // for list items get the number of options
             d = _options[id as Number].size();
         }
         var value = (_values[id as Number] + 1) % d;
