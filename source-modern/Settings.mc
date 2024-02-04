@@ -177,7 +177,7 @@ class Config {
 
     // Return a string resource for the setting (the name of the setting).
     public function getName(id as Item) as String {
-        return $.getStringResource(_itemSymbols[id as Number] as Symbol);
+        return $.getStringResource(_itemSymbols[id as Number]);
     }
 
     // Return a string resource for the current value of the setting (the name of the option).
