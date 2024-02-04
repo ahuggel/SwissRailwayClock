@@ -33,92 +33,86 @@ function getStringResource(id as Symbol) as String {
     return WatchUi.loadResource(Rez.Strings[id] as Symbol) as String;
 }
 
-//! This class maintains application settings and synchronises them to persistent storage.
+// This class maintains application settings and synchronises them to persistent storage.
+// Having a Setting class (hierarchy) to model individual settings and an array of these for the entire
+// collection would be better design. As objects are expensive in Monkey C, that approach uses way too 
+// much memory though.
 class Config {
     // Configuration item identifiers. Used throughout the app to refer to individual settings.
     // The last one must be I_SIZE, it is used like size(), those after I_SIZE are hacks
     enum Item { 
         I_BATTERY, 
         I_DATE_DISPLAY, 
-        I_ALARMS,
+        I_DARK_MODE, 
+        I_HIDE_SECONDS, 
+        I_DM_ON, // the first item that is not a list item
+        I_DM_OFF, 
+        I_ALARMS, // the first of the on/off switches (see _defaults)
         I_NOTIFICATIONS,
         I_CONNECTED,
         I_HEART_RATE,
         I_RECOVERY_TIME,
-        I_DARK_MODE, 
-        I_HIDE_SECONDS, 
         I_BATTERY_PCT, 
         I_BATTERY_DAYS, 
-        I_DM_ON, 
-        I_DM_OFF, 
         I_SIZE, 
         I_DONE, 
         I_ALL 
     }
+
     // Symbols for the configuration item display name resources.
     // Must be in the same sequence as Item, above.
 	private var _itemSymbols as Array<Symbol> = [
         :Battery, 
         :DateDisplay, 
+        :DarkMode, 
+        :HideSeconds, 
+        :DmOn, 
+        :DmOff,
         :Alarms,
         :Notifications,
         :Connected,
         :HeartRate,
         :RecoveryTime,
-        :DarkMode, 
-        :HideSeconds, 
         :BatteryPct, 
-        :BatteryDays, 
-        :DmOn, 
-        :DmOff
+        :BatteryDays
     ] as Array<Symbol>;
+
     // Configuration item labels only used as keys for storing the configuration values.
     // Also must be in the same sequence as Item.
     // Using these for persistent storage, rather than Item, is more robust.
     private var _itemLabels as Array<String> = [
-        "battery", 
-        "dateDisplay", 
-        "alarms", 
-        "notifications", 
-        "connected", 
-        "heartRate", 
-        "recoveryTime",
-        "darkMode", 
-        "hideSeconds", 
-        "batteryPct", 
-        "batteryDays", 
-        "dmOn", 
-        "dmOff"
+        "ba", // I_BATTERY
+        "dd", // I_DATE_DISPLAY
+        "dm", // I_DARK_MODE
+        "hs", // I_HIDE_SECONDS
+        "dn", // I_DM_ON
+        "df", // I_DM_OFF
+        "al", // I_ALARMS
+        "no", // I_NOTIFICATIONS
+        "co", // I_CONNECTED
+        "hr", // I_HEART_RATE
+        "rt", // I_RECOVERY_TIME
+        "bp", // I_BATTERY_PCT
+        "bd"  // I_BATTERY_DAYS
     ] as Array<String>;
 
-    // Options for list and toggle configuration items. Using enums, the compiler can help detect issues like typos or outdated values.
-    enum { O_BATTERY_OFF, O_BATTERY_CLASSIC_WARN, O_BATTERY_MODERN_WARN, O_BATTERY_CLASSIC, O_BATTERY_MODERN, O_BATTERY_HYBRID }
-    enum { O_DATE_DISPLAY_OFF, O_DATE_DISPLAY_DAY_ONLY, O_DATE_DISPLAY_WEEKDAY_AND_DAY }
-    enum { O_ALARMS_ON, O_ALARMS_OFF } // Default: On
-    enum { O_NOTIFICATIONS_OFF, O_NOTIFICATIONS_ON } // Default: Off
-    enum { O_CONNECTED_ON, O_CONNECTED_OFF } // Default: On
-    enum { O_HEART_RATE_OFF, O_HEART_RATE_ON } // Default: Off
-    enum { O_RECOVERY_TIME_OFF, O_RECOVERY_TIME_ON } // Default: Off
-    enum { O_DARK_MODE_SCHEDULED, O_DARK_MODE_OFF, O_DARK_MODE_ON, O_DARK_MODE_IN_DND }
-    enum { O_HIDE_SECONDS_IN_DM, O_HIDE_SECONDS_ALWAYS, O_HIDE_SECONDS_NEVER }
-    enum { O_BATTERY_PCT_OFF, O_BATTERY_PCT_ON } // Default: Off
-    enum { O_BATTERY_DAYS_OFF, O_BATTERY_DAYS_ON } // Default: Off
+    // Options for list items. One array of symbols for each of the them. These inner arrays are accessed
+    // using Item enums, so list items need to be the first ones in the Item enum and in the same order.
+    private var _options as Array< Array<Symbol> > = [
+        [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern, :BatteryHybrid], // I_BATTERY
+        [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay], // I_DATE_DISPLAY
+        [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
+        [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever] // I_HIDE_SECONDS
+     ] as Array< Array<Symbol> >;
 
-    // Option labels for list items. One for each of the enum values above and in the same order.
-    private var _labels as Dictionary<Item, Array<Symbol> > = {
-        I_BATTERY      => [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern, :BatteryHybrid],
-        I_DATE_DISPLAY => [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay],
-        I_DARK_MODE    => [:DarkModeScheduled, :Off, :On, :DarkModeInDnD],
-        I_HIDE_SECONDS => [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever]
-    } as Dictionary<Item, Array<Symbol> >;
+    private var _defaults as Number = 0x0140; // 0b0 0001 0100 0000 default values for on/off settings, each bit is one
 
-    private var _values as Dictionary<Item, Number>;  // Values for the configuration items
+    private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
 
     //! Constructor
     public function initialize() {
         _hasBatteryInDays = (System.Stats has :batteryInDays);
-        _values = {} as Dictionary<Item, Number>;
         // Read the configuration values from persistent storage 
         for (var id = 0; id < I_SIZE; id++) {
             var value = Storage.getValue(_itemLabels[id]) as Number;
@@ -134,104 +128,99 @@ class Config {
                     }
                     break;
                 case I_BATTERY_DAYS:
-                    if (null == value) { value = 0; }
+                    if (null == value) { 
+                        value = (_defaults & (1 << id)) >> id;
+                    }
                     // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
-                    if (!_hasBatteryInDays and O_BATTERY_DAYS_ON == value) { value = O_BATTERY_DAYS_OFF; }
+                    if (!_hasBatteryInDays) { value = 0; }
+                    break;
+                case I_ALARMS:
+                case I_NOTIFICATIONS:
+                case I_CONNECTED:
+                case I_HEART_RATE:
+                case I_RECOVERY_TIME:
+                case I_BATTERY_PCT:
+                    if (null == value) { 
+                        value = (_defaults & (1 << id)) >> id; 
+                    }
                     break;
                 default:
                     if (null == value) { value = 0; }
                     break;
             }
-            _values[id as Item] = value;
+            _values[id] = value;
         }
     }
 
-    //! Return the current label for the specified setting.
-    //!@param id Setting
-    //!@return Label of the currently selected option
-    public function getLabel(id as Item) as String {
-        var option = "";
-        var value = _values[id];
-        switch (id) {
-            case I_BATTERY:
-            case I_DATE_DISPLAY:
-            case I_DARK_MODE:
-            case I_HIDE_SECONDS:
-                var label = _labels[id] as Array<Symbol>;
-                option = $.getStringResource(label[value]);
-                break;
-            case I_DM_ON:
-            case I_DM_OFF:
-                var pm = "";
-                var hour = (value as Number / 60).toNumber();
-                if (!System.getDeviceSettings().is24Hour) {
-                    pm = hour < 12 ? " am" : " pm";
-                    hour %= 12;
-                    if (0 == hour) { hour = 12; }
-                }
-                option = hour + ":" + (value as Number % 60).format("%02d") + pm;
-                break;
-            default:
-                System.println("ERROR: Config.getLabel() is not implemented for id = " + id);
-                break;
-        }
-        return option;
-    }
-
-    //! Return the current value of the specified setting.
-    //!@param id Setting
-    //!@return The current value of the setting
-    public function getValue(id as Item) as Number {
-        return _values[id] as Number;
-    }
-
-    //! Return the name for the specified setting.
-    //!@param id Setting
-    //!@return Setting name
+    // Return a string resource for the setting (the name of the setting).
     public function getName(id as Item) as String {
         return $.getStringResource(_itemSymbols[id as Number]);
     }
 
-    //! Advance the setting to the next value.
-    //!@param id Setting
-    public function setNext(id as Item) as Void {
-        var value = _values[id];
-        switch (id) {
-            case I_BATTERY:
-            case I_DATE_DISPLAY:
-            case I_DARK_MODE:
-            case I_HIDE_SECONDS:
-                var label = _labels[id] as Array<Symbol>;
-                _values[id] = (value as Number + 1) % label.size();
-                Storage.setValue(_itemLabels[id as Number], _values[id]);
-                break;
-            case I_ALARMS:
-            case I_NOTIFICATIONS:
-            case I_CONNECTED:
-            case I_HEART_RATE:
-            case I_RECOVERY_TIME:
-            case I_BATTERY_PCT:
-            case I_BATTERY_DAYS:
-                _values[id] = (value as Number + 1) % 2;
-                Storage.setValue(_itemLabels[id as Number], _values[id]);
-                break;
-            default:
-                System.println("ERROR: Config.setNext() is not implemented for id = " + id);
-                break;
+    // Return a string resource for the current value of the setting (the name of the option).
+    public function getLabel(id as Item) as String {
+        var label = getOption(id);
+        if (label instanceof Lang.Symbol) {
+            label = $.getStringResource(getOption(id) as Symbol);
         }
+        return label;
     }
 
-    public function setValue(id as Item, value as Number) as Void {
-        switch (id) {
-            case I_DM_ON:
-            case I_DM_OFF:
-                _values[id] = value;
-                Storage.setValue(_itemLabels[id as Number], _values[id]);
-                break;
-            default:
-                System.println("ERROR: Config.seValue() is not implemented for id = " + id);
-                break;
+    // Return the symbol corresponding to the current value of the setting, 
+    // or the value formatted as a time string.
+    public function getOption(id as Item) as Symbol or String {
+        var ret;
+        var value = _values[id as Number];
+        if (id >= I_ALARMS) {
+            ret = isEnabled(id) ? :On : :Off;            
+        } else if (id < I_DM_ON) { // list items
+            var opts = _options[id as Number] as Array<Symbol>;
+            ret = opts[value];
+        } else { // if (I_DM_ON == id or I_DM_OFF == id) {
+            var pm = "";
+            var hour = (value as Number / 60).toNumber();
+            if (!System.getDeviceSettings().is24Hour) {
+                pm = hour < 12 ? " am" : " pm";
+                hour %= 12;
+                if (0 == hour) { hour = 12; }
+            }
+            ret = hour + ":" + (value as Number % 60).format("%02d") + pm;
         }
+        return ret;
+    }
+
+    // Return true if the setting is enabled, else false.
+    // Does not make sense for I_DM_ON and I_DM_OFF.
+    public function isEnabled(id as Item) as Boolean {
+        var disabled = 0; // value when the setting is disabled
+        if (I_DARK_MODE == id) {
+            disabled = 1;
+        } else if (I_HIDE_SECONDS == id) {
+            disabled = 2;
+        }
+        return disabled != _values[id as Number];
+    }
+
+    // Return the current value of the specified setting.
+    public function getValue(id as Item) as Number {
+        return _values[id as Number];
+    }
+
+    // Advance the setting to the next value. Does not make sense for I_DM_ON, I_DM_OFF.
+    public function setNext(id as Item) as Void {
+        var d = 2; // toggle items have two options
+        if (id < I_DM_ON) { // for list items get the number of options
+            d = _options[id as Number].size();
+        }
+        var value = (_values[id as Number] + 1) % d;
+        _values[id as Number] = value;
+        Storage.setValue(_itemLabels[id as Number], value);
+    }
+
+    // Set the value of a setting. Only used for I_DM_ON and I_DM_OFF.
+    public function setValue(id as Item, value as Number) as Void {
+        _values[id as Number] = value;
+        Storage.setValue(_itemLabels[id as Number], value);
     }
 
     // Returns true if the device provides battery in days estimates, false if not.
@@ -244,7 +233,7 @@ class Config {
 class SettingsMenu extends WatchUi.Menu2 {
     //! Constructor
     public function initialize() {
-        Menu2.initialize({:title=>$.getStringResource(:Settings)});
+        Menu2.initialize({:title=>Rez.Strings.Settings});
         buildMenu($.Config.I_ALL);
     }
 
