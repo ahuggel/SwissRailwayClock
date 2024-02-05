@@ -47,7 +47,7 @@ class Config {
         I_HIDE_SECONDS, 
         I_DM_ON, // the first item that is not a list item
         I_DM_OFF, 
-        I_ALARMS, // the first of the on/off switches (see _defaults)
+        I_ALARMS, // the first toggle item (see _defaults)
         I_NOTIFICATIONS,
         I_CONNECTED,
         I_HEART_RATE,
@@ -105,7 +105,7 @@ class Config {
         [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever] // I_HIDE_SECONDS
      ] as Array< Array<Symbol> >;
 
-    private var _defaults as Number = 0x0140; // 0b0 0001 0100 0000 default values for on/off settings, each bit is one
+    private var _defaults as Number = 0x0140; // 0b0 0001 0100 0000 default values for toggle items, each bit is one
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
@@ -116,37 +116,25 @@ class Config {
         // Read the configuration values from persistent storage 
         for (var id = 0; id < I_SIZE; id++) {
             var value = Storage.getValue(_itemLabels[id]) as Number;
-            switch (id) {
-                case I_DM_ON:
-                    if (null == value or value < 0 or value > 1439) {
-                        value = 1320; // Default time to turn dark mode on: 22:00
-                    }
-                    break;
-                case I_DM_OFF:
-                    if (null == value or value < 0 or value > 1439) {
-                        value = 420; // Default time to turn dark more off: 07:00
-                    }
-                    break;
-                case I_BATTERY_DAYS:
-                    if (null == value) { 
-                        value = (_defaults & (1 << id)) >> id;
-                    }
-                    // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
-                    if (!_hasBatteryInDays) { value = 0; }
-                    break;
-                case I_ALARMS:
-                case I_NOTIFICATIONS:
-                case I_CONNECTED:
-                case I_HEART_RATE:
-                case I_RECOVERY_TIME:
-                case I_BATTERY_PCT:
-                    if (null == value) { 
-                        value = (_defaults & (1 << id)) >> id; 
-                    }
-                    break;
-                default:
-                    if (null == value) { value = 0; }
-                    break;
+            if (id >= I_ALARMS) { // toggle items
+                if (null == value) { 
+                    value = (_defaults & (1 << id)) >> id;
+                }
+                // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
+                if (I_BATTERY_DAYS == id and !_hasBatteryInDays) { 
+                    value = 0;
+                }
+            } else if (id < I_DM_ON) { // list items
+                if (null == value) { 
+                    value = 0;
+                }
+            } else { // I_DM_ON or I_DM_OFF
+                if (I_DM_ON == id and (null == value or value < 0 or value > 1439)) {
+                    value = 1320; // Default time to turn dark mode on: 22:00
+                }
+                if (I_DM_OFF == id and (null == value or value < 0 or value > 1439)) {
+                    value = 420; // Default time to turn dark more off: 07:00
+                }
             }
             _values[id] = value;
         }
@@ -171,7 +159,7 @@ class Config {
     public function getOption(id as Item) as Symbol or String {
         var ret;
         var value = _values[id as Number];
-        if (id >= I_ALARMS) {
+        if (id >= I_ALARMS) { // toggle items
             ret = isEnabled(id) ? :On : :Off;            
         } else if (id < I_DM_ON) { // list items
             var opts = _options[id as Number] as Array<Symbol>;
