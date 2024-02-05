@@ -106,8 +106,7 @@ class Indicators {
 
         // Draw alarm and notification indicators
         _symbolsDrawn = false;
-        if (   $.Config.O_ALARMS_ON == $.config.getValue($.Config.I_ALARMS)
-            or $.Config.O_NOTIFICATIONS_ON == $.config.getValue($.Config.I_NOTIFICATIONS)) {
+        if ($.config.isEnabled($.Config.I_ALARMS) or $.config.isEnabled($.Config.I_NOTIFICATIONS)) {
             _symbolsDrawn = drawSymbols(
                 dc,
                 w2, 
@@ -118,7 +117,7 @@ class Indicators {
         }
 
         // Draw the battery level indicator
-        if ($.config.getValue($.Config.I_BATTERY) > $.Config.O_BATTERY_OFF) {
+        if ($.config.isEnabled($.Config.I_BATTERY)) {
             _batteryLevel.draw(
                 dc,
                 w2, 
@@ -129,29 +128,27 @@ class Indicators {
         // Draw the date string
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
         dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
-        switch ($.config.getValue($.Config.I_DATE_DISPLAY)) {
-            case $.Config.O_DATE_DISPLAY_DAY_ONLY: 
-                dc.drawText(
-                    (_width * 0.75).toNumber(), 
-                    (_height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber(), 
-                    Graphics.FONT_MEDIUM, 
-                    info.day.format("%02d"), 
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                break;
-            case $.Config.O_DATE_DISPLAY_WEEKDAY_AND_DAY:
-                dc.drawText(
-                    w2, 
-                    (_height * 0.65).toNumber(), 
-                    Graphics.FONT_MEDIUM, 
-                    Lang.format("$1$ $2$", [info.day_of_week, info.day]), 
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                break;
+        var dateDisplay = $.config.getOption($.Config.I_DATE_DISPLAY);
+        if (:DateDisplayDayOnly == dateDisplay) {
+            dc.drawText(
+                (_width * 0.75).toNumber(), 
+                (_height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber(), 
+                Graphics.FONT_MEDIUM, 
+                info.day.format("%02d"), 
+                Graphics.TEXT_JUSTIFY_CENTER
+            );
+        } else if (:DateDisplayWeekdayAndDay == dateDisplay) {
+            dc.drawText(
+                w2, 
+                (_height * 0.65).toNumber(), 
+                Graphics.FONT_MEDIUM, 
+                Lang.format("$1$ $2$", [info.day_of_week, info.day]), 
+                Graphics.TEXT_JUSTIFY_CENTER
+            );
         }
 
         // Draw the phone connection indicator on the 6 o'clock tick mark
-        if ($.Config.O_CONNECTED_ON == $.config.getValue($.Config.I_CONNECTED)) { 
+        if ($.config.isEnabled($.Config.I_CONNECTED)) { 
             drawPhoneConnected(
                 dc,
                 w2,
@@ -161,10 +158,10 @@ class Indicators {
         }
 
         // Draw the heart rate indicator
-        if ($.Config.O_HEART_RATE_ON == $.config.getValue($.Config.I_HEART_RATE)) {
+        if ($.config.isEnabled($.Config.I_HEART_RATE)) {
             var xpos = (_width * 0.73).toNumber();
             var ypos = (_height * 0.50).toNumber();
-            if ($.Config.O_DATE_DISPLAY_DAY_ONLY == $.config.getValue($.Config.I_DATE_DISPLAY)) {
+            if (:DateDisplayDayOnly == dateDisplay) {
                 xpos = (_width * 0.48).toNumber();
                 ypos = (_height * 0.75).toNumber();
             }
@@ -172,7 +169,7 @@ class Indicators {
         }
 
         // Draw the recovery time indicator
-        if ($.Config.O_RECOVERY_TIME_ON == $.config.getValue($.Config.I_RECOVERY_TIME)) { 
+        if ($.config.isEnabled($.Config.I_RECOVERY_TIME)) { 
             if (ActivityMonitor.Info has :timeToRecovery) {
                 drawRecoveryTime(
                     dc,

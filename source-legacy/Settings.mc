@@ -261,32 +261,28 @@ class SettingsMenu extends WatchUi.Menu2 {
                 // Fallthrough
             case $.Config.I_BATTERY:
                 // Add menu items for the battery label options only if battery is not set to "Off"
-                if ($.Config.O_BATTERY_OFF != $.config.getValue($.Config.I_BATTERY)) {
-                    addToggleMenuItem($.Config.I_BATTERY_PCT, $.Config.O_BATTERY_PCT_ON);
+                if ($.config.isEnabled($.Config.I_BATTERY)) {
+                    addToggleMenuItem($.Config.I_BATTERY_PCT);
                     if ($.config.hasBatteryInDays()) { 
-                        addToggleMenuItem($.Config.I_BATTERY_DAYS, $.Config.O_BATTERY_DAYS_ON); 
+                        addToggleMenuItem($.Config.I_BATTERY_DAYS); 
                     }
                 }
                 addMenuItem($.Config.I_DATE_DISPLAY);
-                addToggleMenuItem($.Config.I_ALARMS, $.Config.O_ALARMS_ON);
-                addToggleMenuItem($.Config.I_NOTIFICATIONS, $.Config.O_NOTIFICATIONS_ON);
-                addToggleMenuItem($.Config.I_CONNECTED, $.Config.O_CONNECTED_ON);
-                addToggleMenuItem($.Config.I_HEART_RATE, $.Config.O_HEART_RATE_ON);
-                addToggleMenuItem($.Config.I_RECOVERY_TIME, $.Config.O_RECOVERY_TIME_ON);
+                addToggleMenuItem($.Config.I_ALARMS);
+                addToggleMenuItem($.Config.I_NOTIFICATIONS);
+                addToggleMenuItem($.Config.I_CONNECTED);
+                addToggleMenuItem($.Config.I_HEART_RATE);
+                addToggleMenuItem($.Config.I_RECOVERY_TIME);
                 addMenuItem($.Config.I_DARK_MODE);
                 //Fallthrough
             case $.Config.I_DARK_MODE:
                 // Add menu items for the dark mode on and off times only if dark mode is set to "Scheduled"
-                var dm = $.config.getValue($.Config.I_DARK_MODE);
-                if ($.Config.O_DARK_MODE_SCHEDULED == dm) {
+                if (:DarkModeScheduled == $.config.getOption($.Config.I_DARK_MODE)) {
                     addMenuItem($.Config.I_DM_ON);
                     addMenuItem($.Config.I_DM_OFF);
                 }
                 addMenuItem($.Config.I_HIDE_SECONDS);
-                Menu2.addItem(new WatchUi.MenuItem($.getStringResource(:Done), $.getStringResource(:DoneLabel), $.Config.I_DONE, {}));
-                break;
-            default:
-                System.println("ERROR: SettingsMenu.buildMenu() is not implemented for id = " + id);
+                Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.Done, Rez.Strings.DoneLabel, $.Config.I_DONE, {}));
                 break;
         }
     }
@@ -312,9 +308,6 @@ class SettingsMenu extends WatchUi.Menu2 {
                 deleteAnyItem($.Config.I_HIDE_SECONDS);
                 deleteAnyItem($.Config.I_DONE);
                 break;
-            default:
-                System.println("ERROR: SettingsMenu.deleteMenu() is not implemented for id = " + id);
-                break;
         }
     }
 
@@ -324,12 +317,12 @@ class SettingsMenu extends WatchUi.Menu2 {
     }
 
     //! Add a ToggleMenuItem to the menu.
-    private function addToggleMenuItem(item as Config.Item, isEnabled as Number) as Void {
+    private function addToggleMenuItem(item as Config.Item) as Void {
         Menu2.addItem(new WatchUi.ToggleMenuItem(
             $.config.getName(item), 
-            {:enabled=>$.getStringResource(:On), :disabled=>$.getStringResource(:Off)},
+            {:enabled=>Rez.Strings.On, :disabled=>Rez.Strings.Off},
             item, 
-            isEnabled == $.config.getValue(item), 
+            $.config.isEnabled(item), 
             {}
         ));
     }
@@ -394,9 +387,6 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 break;
             case $.Config.I_DONE:
                 WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-                break;
-            default:
-                System.println("ERROR: SettingsMenuDelegate.onSelect() is not implemented for id = " + id);
                 break;
         }
   	}

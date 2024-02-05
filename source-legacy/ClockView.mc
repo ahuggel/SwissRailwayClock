@@ -235,9 +235,9 @@ class ClockView extends WatchUi.WatchFace {
             colorMode = setColorMode(deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
 
             // Handle the setting to disable the second hand in sleep mode after some time
-            var secondsOption = $.config.getValue($.Config.I_HIDE_SECONDS);
-            _hideSecondHand = $.Config.O_HIDE_SECONDS_ALWAYS == secondsOption 
-                or ($.Config.O_HIDE_SECONDS_IN_DM == secondsOption and M_DARK == colorMode);
+            var secondsOption = $.config.getOption($.Config.I_HIDE_SECONDS);
+            _hideSecondHand = :HideSecondsAlways == secondsOption 
+                or (:HideSecondsInDm == secondsOption and M_DARK == colorMode);
 
             // Draw the background
             if (System.SCREEN_SHAPE_ROUND == _screenShape) {
@@ -486,21 +486,21 @@ class ClockView extends WatchUi.WatchFace {
 
     private function setColorMode(doNotDisturb as Boolean, hour as Number, min as Number) as Number {
         var colorMode = M_LIGHT;
-        switch ($.config.getValue($.Config.I_DARK_MODE)) {
-            case $.Config.O_DARK_MODE_SCHEDULED:
+        switch ($.config.getOption($.Config.I_DARK_MODE)) {
+            case :DarkModeScheduled:
                 colorMode = M_LIGHT;
                 var time = hour * 60 + min;
                 if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
                     colorMode = M_DARK;
                 }
                 break;
-            case $.Config.O_DARK_MODE_OFF:
+            case :Off:
                 colorMode = M_LIGHT;
                 break;
-            case $.Config.O_DARK_MODE_ON:
+            case :On:
                 colorMode = M_DARK;
                 break;
-            case $.Config.O_DARK_MODE_IN_DND:
+            case :DarkModeInDnD:
                 colorMode = doNotDisturb ? M_DARK : M_LIGHT;
                 break;
         }
