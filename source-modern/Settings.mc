@@ -383,55 +383,31 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
 
-    //! Handle a menu item being selected
-    //! @param menuItem The menu item selected
+    // Handle a menu item being selected
     public function onSelect(menuItem as MenuItem) as Void {
         var id = menuItem.getId() as Config.Item;
-        switch (id) {
-            case $.Config.I_DATE_DISPLAY:
-            case $.Config.I_HIDE_SECONDS:
-                // Advance to the next option and show the selected option as the sub label
-                $.config.setNext(id);
-                menuItem.setSubLabel($.config.getLabel(id));
-                break;
-            case $.Config.I_DM_CONTRAST:
-                // Advance to the next option and show the selected option as the sub label
-                $.config.setNext(id);
-                menuItem.setSubLabel($.config.getLabel(id));
-                // Update the color of the icon
-                var menuIcon = menuItem.getIcon() as MenuIcon;
-                menuIcon.setColor($.config.getValue(id));
-                break;
-            case $.Config.I_BATTERY:
-            case $.Config.I_DARK_MODE:
-                // Advance to the next option and show the selected option as the sub label
-                $.config.setNext(id);
-                menuItem.setSubLabel($.config.getLabel(id));
+        if ($.Config.I_DONE == id) {
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        } else if (id >= $.Config.I_ALARMS) { // toggle items
+            // Toggle the two possible configuration values
+            $.config.setNext(id);
+        } else if (id < $.Config.I_DM_ON) { // list items
+            // Advance to the next option and show the selected option as the sub label
+            $.config.setNext(id);
+            menuItem.setSubLabel($.config.getLabel(id));
+            if ($.Config.I_BATTERY == id or $.Config.I_DARK_MODE == id) {
                 // Delete all the following menu items, rebuild the menu with only the items required
                 _menu.deleteMenu(id);
                 _menu.buildMenu(id);
-                break;
-            case $.Config.I_ALARMS:
-            case $.Config.I_NOTIFICATIONS:
-            case $.Config.I_CONNECTED:
-            case $.Config.I_HEART_RATE:
-            case $.Config.I_RECOVERY_TIME:
-            case $.Config.I_STEPS:
-            case $.Config.I_MOVE_BAR:
-            case $.Config.I_3D_EFFECTS:
-            case $.Config.I_BATTERY_PCT:
-            case $.Config.I_BATTERY_DAYS:
-                // Toggle the two possible configuration values
-                $.config.setNext(id);
-                break;
-            case $.Config.I_DM_ON:
-            case $.Config.I_DM_OFF:
-                // Let the user select the time
-                WatchUi.pushView(new TimePicker(id), new TimePickerDelegate(id), WatchUi.SLIDE_IMMEDIATE);
-                break;
-            case $.Config.I_DONE:
-                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-                break;
+            }
+            if ($.Config.I_DM_CONTRAST == id) {
+                // Update the color of the icon
+                var menuIcon = menuItem.getIcon() as MenuIcon;
+                menuIcon.setColor($.config.getValue(id));
+            }
+        } else { // I_DM_ON or I_DM_OFF
+            // Let the user select the time
+            WatchUi.pushView(new TimePicker(id), new TimePickerDelegate(id), WatchUi.SLIDE_IMMEDIATE);
         }
   	}
 } // class SettingsMenuDelegate
