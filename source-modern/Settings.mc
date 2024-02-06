@@ -210,7 +210,7 @@ class Config {
     public function getValue(id as Item) as Number {
         var value = _values[id as Number];
         if (I_DM_CONTRAST == id) {
-            value = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>[value];
+            value = ([Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>)[value];
         }
         return value;
     }
