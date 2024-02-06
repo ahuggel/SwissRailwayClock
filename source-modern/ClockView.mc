@@ -280,13 +280,13 @@ class ClockView extends WatchUi.WatchFace {
             colorMode = setColorMode(deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
 
             // Note: Whether 3D effects are supported by the device is also ensured by getValue().
-            _show3dEffects = $.Config.O_3D_EFFECTS_ON == $.config.getValue($.Config.I_3D_EFFECTS) and M_LIGHT == colorMode;
+            _show3dEffects = $.config.isEnabled($.Config.I_3D_EFFECTS) and M_LIGHT == colorMode;
             _secondShadowLayer.setVisible(_show3dEffects and isAwake);
 
             // Handle the setting to disable the second hand in sleep mode after some time
-            var secondsOption = $.config.getValue($.Config.I_HIDE_SECONDS);
-            _hideSecondHand = $.Config.O_HIDE_SECONDS_ALWAYS == secondsOption 
-                or ($.Config.O_HIDE_SECONDS_IN_DM == secondsOption and M_DARK == colorMode);
+            var secondsOption = $.config.getOption($.Config.I_HIDE_SECONDS);
+            _hideSecondHand = :HideSecondsAlways == secondsOption 
+                or (:HideSecondsInDm == secondsOption and M_DARK == colorMode);
             _secondLayer.setVisible(_sleepTimer != 0 or !_hideSecondHand);
 
             // Draw the background
@@ -539,38 +539,25 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     private function setColorMode(doNotDisturb as Boolean, hour as Number, min as Number) as Number {
+        var darkMode = $.config.getOption($.Config.I_DARK_MODE);
         var colorMode = M_LIGHT;
-        switch ($.config.getValue($.Config.I_DARK_MODE)) {
-            case $.Config.O_DARK_MODE_SCHEDULED:
-                colorMode = M_LIGHT;
-                var time = hour * 60 + min;
-                if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
-                    colorMode = M_DARK;
-                }
-                break;
-            case $.Config.O_DARK_MODE_OFF:
-                colorMode = M_LIGHT;
-                break;
-            case $.Config.O_DARK_MODE_ON:
+        if (:DarkModeScheduled == darkMode) {
+            var time = hour * 60 + min;
+            if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
                 colorMode = M_DARK;
-                break;
-            case $.Config.O_DARK_MODE_IN_DND:
-                colorMode = doNotDisturb ? M_DARK : M_LIGHT;
-                break;
+            }
+        } else if (   :On == darkMode
+                   or (:DarkModeInDnD == darkMode and doNotDisturb)) {
+            colorMode = M_DARK;
         }
-
-        // In dark mode, adjust colors based on the contrast setting
+        // In dark mode, adjust text color based on the contrast setting
         if (M_DARK == colorMode) {
             var foregroundColor = $.config.getValue($.Config.I_DM_CONTRAST);
             colors[M_DARK][C_FOREGROUND] = foregroundColor;
-            switch (foregroundColor) {
-                case Graphics.COLOR_WHITE:
-                    colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
-                    break;
-                case Graphics.COLOR_LT_GRAY:
-                case Graphics.COLOR_DK_GRAY:
-                    colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
-                    break;
+            if (Graphics.COLOR_WHITE == foregroundColor) {
+                colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
+            } else { // Graphics.COLOR_LT_GRAY or Graphics.COLOR_DK_GRAY
+                colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
             }
         }
         return colorMode;

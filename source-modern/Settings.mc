@@ -28,42 +28,50 @@ import Toybox.WatchUi;
 var config as Config = new Config();
 
 // Global helper function to load string resources, just to keep the code simpler and see only one compiler warning. 
-// Decided not to cache the strings.
 function getStringResource(id as Symbol) as String {
     return WatchUi.loadResource(Rez.Strings[id] as Symbol) as String;
 }
 
-//! This class maintains application settings and synchronises them to persistent storage.
+// This class maintains application settings and synchronises them to persistent storage.
+// Having a Setting class (hierarchy) to model individual settings and an array of these for the entire
+// collection would be better design. As objects are expensive in Monkey C, that approach uses way too 
+// much memory though.
 class Config {
     // Configuration item identifiers. Used throughout the app to refer to individual settings.
     // The last one must be I_SIZE, it is used like size(), those after I_SIZE are hacks
-    enum Item { 
+    enum Item {
         I_BATTERY, 
         I_DATE_DISPLAY, 
-        I_ALARMS,
+        I_DARK_MODE, 
+        I_HIDE_SECONDS, 
+        I_DM_CONTRAST,
+        I_DM_ON, // the first item that is not a list item
+        I_DM_OFF, 
+        I_ALARMS, // the first toggle item (see _defaults)
         I_NOTIFICATIONS,
         I_CONNECTED,
         I_HEART_RATE,
         I_RECOVERY_TIME,
         I_STEPS,
         I_MOVE_BAR,
-        I_DARK_MODE, 
-        I_DM_CONTRAST, 
-        I_HIDE_SECONDS, 
         I_3D_EFFECTS, 
         I_BATTERY_PCT, 
         I_BATTERY_DAYS, 
-        I_DM_ON, 
-        I_DM_OFF, 
         I_SIZE, 
         I_DONE, 
         I_ALL 
     }
+
     // Symbols for the configuration item display name resources.
     // Must be in the same sequence as Item, above.
 	private var _itemSymbols as Array<Symbol> = [
         :Battery, 
         :DateDisplay, 
+        :DarkMode, 
+        :HideSeconds, 
+        :DmContrast, 
+        :DmOn, 
+        :DmOff,
         :Alarms,
         :Notifications,
         :Connected,
@@ -71,66 +79,47 @@ class Config {
         :RecoveryTime,
         :Steps,
         :MoveBar,
-        :DarkMode, 
-        :DmContrast, 
-        :HideSeconds, 
         :Shadows, 
         :BatteryPct, 
-        :BatteryDays, 
-        :DmOn, 
-        :DmOff
+        :BatteryDays
     ] as Array<Symbol>;
+
     // Configuration item labels only used as keys for storing the configuration values.
     // Also must be in the same sequence as Item.
     // Using these for persistent storage, rather than Item, is more robust.
     private var _itemLabels as Array<String> = [
-        "battery", 
-        "dateDisplay", 
-        "alarms", 
-        "notifications", 
-        "connected", 
-        "heartRate", 
-        "recoveryTime",
-        "steps",
-        "moveBar",
-        "darkMode", 
-        "dmContrast", 
-        "hideSeconds", 
-        "3dEffects", 
-        "batteryPct", 
-        "batteryDays", 
-        "dmOn", 
-        "dmOff"
+        "ba", // I_BATTERY
+        "dd", // I_DATE_DISPLAY
+        "dm", // I_DARK_MODE
+        "hs", // I_HIDE_SECONDS
+        "dc", // I_DM_CONTRAST
+        "dn", // I_DM_ON
+        "df", // I_DM_OFF
+        "al", // I_ALARMS
+        "no", // I_NOTIFICATIONS
+        "co", // I_CONNECTED
+        "hr", // I_HEART_RATE
+        "rt", // I_RECOVERY_TIME
+        "st", // I_STEPS
+        "mb", // I_MOVE_BAR
+        "3d", // I_3D_EFFECTS
+        "bp", // I_BATTERY_PCT
+        "bd"  // I_BATTERY_DAYS
     ] as Array<String>;
 
-    // Options for list and toggle configuration items. Using enums, the compiler can help detect issues like typos or outdated values.
-    enum { O_BATTERY_OFF, O_BATTERY_CLASSIC_WARN, O_BATTERY_MODERN_WARN, O_BATTERY_CLASSIC, O_BATTERY_MODERN, O_BATTERY_HYBRID }
-    enum { O_DATE_DISPLAY_OFF, O_DATE_DISPLAY_DAY_ONLY, O_DATE_DISPLAY_WEEKDAY_AND_DAY }
-    enum { O_ALARMS_ON, O_ALARMS_OFF } // Default: On
-    enum { O_NOTIFICATIONS_OFF, O_NOTIFICATIONS_ON } // Default: Off
-    enum { O_CONNECTED_ON, O_CONNECTED_OFF } // Default: On
-    enum { O_HEART_RATE_OFF, O_HEART_RATE_ON } // Default: Off
-    enum { O_RECOVERY_TIME_OFF, O_RECOVERY_TIME_ON } // Default: Off
-    enum { O_STEPS_OFF, O_STEPS_ON } // Default: Off
-    enum { O_MOVE_BAR_OFF, O_MOVE_BAR_ON } // Default: Off
-    enum { O_DARK_MODE_SCHEDULED, O_DARK_MODE_OFF, O_DARK_MODE_ON, O_DARK_MODE_IN_DND }
-    enum { O_HIDE_SECONDS_IN_DM, O_HIDE_SECONDS_ALWAYS, O_HIDE_SECONDS_NEVER }
-    enum { O_3D_EFFECTS_ON, O_3D_EFFECTS_OFF } // Default: On
-    enum { O_BATTERY_PCT_OFF, O_BATTERY_PCT_ON } // Default: Off
-    enum { O_BATTERY_DAYS_OFF, O_BATTERY_DAYS_ON } // Default: Off
-    // Colors for the dark mode contrast icon menu item. The index (0, 1 or 2) is stored, but getValue() returns the color.
-    static const O_DM_CONTRAST as Array<Number> = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>;
+    // Options for list items. One array of symbols for each of the them. These inner arrays are accessed
+    // using Item enums, so list items need to be the first ones in the Item enum and in the same order.
+    private var _options as Array< Array<Symbol> > = [
+        [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern, :BatteryHybrid], // I_BATTERY
+        [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay], // I_DATE_DISPLAY
+        [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
+        [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever], // I_HIDE_SECONDS
+        [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite] // I_DM_CONTRAST
+     ] as Array< Array<Symbol> >;
 
-    // Option labels for list items. One for each of the enum values above and in the same order.
-    private var _labels as Dictionary<Item, Array<Symbol> > = {
-        I_BATTERY      => [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern, :BatteryHybrid],
-        I_DATE_DISPLAY => [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay],
-        I_DARK_MODE    => [:DarkModeScheduled, :Off, :On, :DarkModeInDnD],
-        I_DM_CONTRAST  => [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite],
-        I_HIDE_SECONDS => [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever]
-    } as Dictionary<Item, Array<Symbol> >;
+    private var _defaults as Number = 0x4280; // 0b0 0100 0010 1000 0000 default values for toggle items, each bit is one
 
-    private var _values as Dictionary<Item, Number>;  // Values for the configuration items
+    private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
 
@@ -138,136 +127,109 @@ class Config {
     public function initialize() {
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasBatteryInDays = (System.Stats has :batteryInDays);
-        _values = {} as Dictionary<Item, Number>;
         // Read the configuration values from persistent storage 
         for (var id = 0; id < I_SIZE; id++) {
             var value = Storage.getValue(_itemLabels[id]) as Number;
-            switch (id) {
-                case I_DM_ON:
-                    if (null == value or value < 0 or value > 1439) {
-                        value = 1320; // Default time to turn dark mode on: 22:00
-                    }
-                    break;
-                case I_DM_OFF:
-                    if (null == value or value < 0 or value > 1439) {
-                        value = 420; // Default time to turn dark more off: 07:00
-                    }
-                    break;
-                case I_3D_EFFECTS:
-                    if (null == value) { value = 0; }
-                    // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
-                    if (!_hasAlpha and O_3D_EFFECTS_ON == value) { value = O_3D_EFFECTS_OFF; }
-                    break;
-                case I_BATTERY_DAYS:
-                    if (null == value) { value = 0; }
-                    // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
-                    if (!_hasBatteryInDays and O_BATTERY_DAYS_ON == value) { value = O_BATTERY_DAYS_OFF; }
-                    break;
-                default:
-                    if (null == value) { value = 0; }
-                    break;
-            }
-            _values[id as Item] = value;
-        }
-    }
-
-    //! Return the current label for the specified setting.
-    //!@param id Setting
-    //!@return Label of the currently selected option
-    public function getLabel(id as Item) as String {
-        var option = "";
-        var value = _values[id];
-        switch (id) {
-            case I_BATTERY:
-            case I_DATE_DISPLAY:
-            case I_DARK_MODE:
-            case I_DM_CONTRAST:
-            case I_HIDE_SECONDS:
-                var label = _labels[id] as Array<Symbol>;
-                option = $.getStringResource(label[value]);
-                break;
-            case I_DM_ON:
-            case I_DM_OFF:
-                var pm = "";
-                var hour = (value as Number / 60).toNumber();
-                if (!System.getDeviceSettings().is24Hour) {
-                    pm = hour < 12 ? " am" : " pm";
-                    hour %= 12;
-                    if (0 == hour) { hour = 12; }
+            if (id >= I_ALARMS) { // toggle items
+                if (null == value) { 
+                    value = (_defaults & (1 << id)) >> id;
                 }
-                option = hour + ":" + (value as Number % 60).format("%02d") + pm;
-                break;
-            default:
-                System.println("ERROR: Config.getLabel() is not implemented for id = " + id);
-                break;
+                // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
+                if (I_BATTERY_DAYS == id and !_hasBatteryInDays) { 
+                    value = 0;
+                }
+                if (I_3D_EFFECTS == id and !_hasAlpha) { 
+                    value = 0; 
+                }
+            } else if (id < I_DM_ON) { // list items
+                if (null == value) { 
+                    value = 0;
+                }
+            } else { // I_DM_ON or I_DM_OFF
+                if (I_DM_ON == id and (null == value or value < 0 or value > 1439)) {
+                    value = 1320; // Default time to turn dark mode on: 22:00
+                }
+                if (I_DM_OFF == id and (null == value or value < 0 or value > 1439)) {
+                    value = 420; // Default time to turn dark more off: 07:00
+                }
+            }
+            _values[id] = value;
         }
-        return option;
     }
 
-    //! Return the current value of the specified setting.
-    //!@param id Setting
-    //!@return The current value of the setting
-    public function getValue(id as Item) as Number {
-        var value = _values[id] as Number;
-        switch (id) {
-            case I_DM_CONTRAST:
-                value = O_DM_CONTRAST[value];
-                break;
-        }
-        return value;
-    }
-
-    //! Return the name for the specified setting.
-    //!@param id Setting
-    //!@return Setting name
+    // Return a string resource for the setting (the name of the setting).
     public function getName(id as Item) as String {
         return $.getStringResource(_itemSymbols[id as Number]);
     }
 
-    //! Advance the setting to the next value.
-    //!@param id Setting
-    public function setNext(id as Item) as Void {
-        var value = _values[id];
-        switch (id) {
-            case I_BATTERY:
-            case I_DATE_DISPLAY:
-            case I_DARK_MODE:
-            case I_DM_CONTRAST:
-            case I_HIDE_SECONDS:
-                var label = _labels[id] as Array<Symbol>;
-                _values[id] = (value as Number + 1) % label.size();
-                Storage.setValue(_itemLabels[id as Number], _values[id]);
-                break;
-            case I_ALARMS:
-            case I_NOTIFICATIONS:
-            case I_CONNECTED:
-            case I_HEART_RATE:
-            case I_RECOVERY_TIME:
-            case I_STEPS:
-            case I_MOVE_BAR:
-            case I_3D_EFFECTS:
-            case I_BATTERY_PCT:
-            case I_BATTERY_DAYS:
-                _values[id] = (value as Number + 1) % 2;
-                Storage.setValue(_itemLabels[id as Number], _values[id]);
-                break;
-            default:
-                System.println("ERROR: Config.setNext() is not implemented for id = " + id);
-                break;
+    // Return a string resource for the current value of the setting (the name of the option).
+    public function getLabel(id as Item) as String {
+        var label = getOption(id);
+        if (label instanceof Lang.Symbol) {
+            label = $.getStringResource(getOption(id) as Symbol);
         }
+        return label;
     }
 
-    public function setValue(id as Item, value as Number) as Void {
-        switch (id) {
-            case I_DM_ON:
-            case I_DM_OFF:
-                _values[id] = value;
-                Storage.setValue(_itemLabels[id as Number], _values[id]);
-                break;
-            default:
-                System.println("ERROR: Config.seValue() is not implemented for id = " + id);
-                break;
+    // Return the symbol corresponding to the current value of the setting, 
+    // or the value formatted as a time string.
+    public function getOption(id as Item) as Symbol or String {
+        var ret;
+        var value = _values[id as Number];
+        if (id >= I_ALARMS) { // toggle items
+            ret = isEnabled(id) ? :On : :Off;            
+        } else if (id < I_DM_ON) { // list items
+            var opts = _options[id as Number] as Array<Symbol>;
+            ret = opts[value];
+        } else { // if (I_DM_ON == id or I_DM_OFF == id) {
+            var pm = "";
+            var hour = (value as Number / 60).toNumber();
+            if (!System.getDeviceSettings().is24Hour) {
+                pm = hour < 12 ? " am" : " pm";
+                hour %= 12;
+                if (0 == hour) { hour = 12; }
+            }
+            ret = hour + ":" + (value as Number % 60).format("%02d") + pm;
         }
+        return ret;
+    }
+
+    // Return true if the setting is enabled, else false.
+    // Does not make sense for I_DM_CONTRAST, I_DM_ON and I_DM_OFF.
+    public function isEnabled(id as Item) as Boolean {
+        var disabled = 0; // value when the setting is disabled
+        if (I_DARK_MODE == id) {
+            disabled = 1;
+        } else if (I_HIDE_SECONDS == id) {
+            disabled = 2;
+        }
+        return disabled != _values[id as Number];
+    }
+
+    // Return the current value of the specified setting.
+    public function getValue(id as Item) as Number {
+        var value = _values[id as Number];
+        if (I_DM_CONTRAST == id) {
+            value = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>[value];
+        }
+        return value;
+    }
+
+    // Advance the setting to the next value. Does not make sense for I_DM_ON, I_DM_OFF.
+    public function setNext(id as Item) as Void {
+        var d = 2; // toggle items have two options
+        if (id < I_DM_ON) { // for list items get the number of options
+            d = _options[id as Number].size();
+        }
+        var value = (_values[id as Number] + 1) % d;
+        _values[id as Number] = value;
+        Storage.setValue(_itemLabels[id as Number], value);
+    }
+
+    // Set the value of a setting. Only used for I_DM_ON and I_DM_OFF.
+    public function setValue(id as Item, value as Number) as Void {
+        _values[id as Number] = value;
+        Storage.setValue(_itemLabels[id as Number], value);
     }
 
     // Returns true if the device supports an alpha channel, false if not.
@@ -285,7 +247,7 @@ class Config {
 class SettingsMenu extends WatchUi.Menu2 {
     //! Constructor
     public function initialize() {
-        Menu2.initialize({:title=>$.getStringResource(:Settings)});
+        Menu2.initialize({:title=>Rez.Strings.Settings});
         buildMenu($.Config.I_ALL);
     }
 
@@ -313,47 +275,43 @@ class SettingsMenu extends WatchUi.Menu2 {
                 // Fallthrough
             case $.Config.I_BATTERY:
                 // Add menu items for the battery label options only if battery is not set to "Off"
-                if ($.Config.O_BATTERY_OFF != $.config.getValue($.Config.I_BATTERY)) {
-                    addToggleMenuItem($.Config.I_BATTERY_PCT, $.Config.O_BATTERY_PCT_ON);
+                if ($.config.isEnabled($.Config.I_BATTERY)) {
+                    addToggleMenuItem($.Config.I_BATTERY_PCT);
                     if ($.config.hasBatteryInDays()) { 
-                        addToggleMenuItem($.Config.I_BATTERY_DAYS, $.Config.O_BATTERY_DAYS_ON); 
+                        addToggleMenuItem($.Config.I_BATTERY_DAYS); 
                     }
                 }
                 addMenuItem($.Config.I_DATE_DISPLAY);
-                addToggleMenuItem($.Config.I_ALARMS, $.Config.O_ALARMS_ON);
-                addToggleMenuItem($.Config.I_NOTIFICATIONS, $.Config.O_NOTIFICATIONS_ON);
-                addToggleMenuItem($.Config.I_CONNECTED, $.Config.O_CONNECTED_ON);
-                addToggleMenuItem($.Config.I_HEART_RATE, $.Config.O_HEART_RATE_ON);
-                addToggleMenuItem($.Config.I_RECOVERY_TIME, $.Config.O_RECOVERY_TIME_ON);
-                addToggleMenuItem($.Config.I_STEPS, $.Config.O_STEPS_ON);
-                addToggleMenuItem($.Config.I_MOVE_BAR, $.Config.O_MOVE_BAR_ON);
+                addToggleMenuItem($.Config.I_ALARMS);
+                addToggleMenuItem($.Config.I_NOTIFICATIONS);
+                addToggleMenuItem($.Config.I_CONNECTED);
+                addToggleMenuItem($.Config.I_HEART_RATE);
+                addToggleMenuItem($.Config.I_RECOVERY_TIME);
+                addToggleMenuItem($.Config.I_STEPS);
+                addToggleMenuItem($.Config.I_MOVE_BAR);
                 addMenuItem($.Config.I_DARK_MODE);
                 //Fallthrough
             case $.Config.I_DARK_MODE:
                 // Add menu items for the dark mode on and off times only if dark mode is set to "Scheduled"
-                var dm = $.config.getValue($.Config.I_DARK_MODE);
-                if ($.Config.O_DARK_MODE_SCHEDULED == dm) {
+                if (:DarkModeScheduled == $.config.getOption($.Config.I_DARK_MODE)) {
                     addMenuItem($.Config.I_DM_ON);
                     addMenuItem($.Config.I_DM_OFF);
                 }
                 // Add the menu item for dark mode contrast only if dark mode is not set to "Off"
-                if ($.Config.O_DARK_MODE_OFF != dm) {
+                if ($.config.isEnabled($.Config.I_DARK_MODE)) {
                     Menu2.addItem(new WatchUi.IconMenuItem(
                         $.config.getName($.Config.I_DM_CONTRAST), 
                         $.config.getLabel($.Config.I_DM_CONTRAST), 
-                        $.Config.I_DM_CONTRAST, 
+                        $.Config.I_DM_CONTRAST,
                         new MenuIcon($.config.getValue($.Config.I_DM_CONTRAST)),
                         {}
                     ));
                 }
                 addMenuItem($.Config.I_HIDE_SECONDS);
                 if ($.config.hasAlpha()) {
-                    addToggleMenuItem($.Config.I_3D_EFFECTS, $.Config.O_3D_EFFECTS_ON); 
+                    addToggleMenuItem($.Config.I_3D_EFFECTS); 
                 }
-                Menu2.addItem(new WatchUi.MenuItem($.getStringResource(:Done), $.getStringResource(:DoneLabel), $.Config.I_DONE, {}));
-                break;
-            default:
-                System.println("ERROR: SettingsMenu.buildMenu() is not implemented for id = " + id);
+                Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.Done, Rez.Strings.DoneLabel, $.Config.I_DONE, {}));
                 break;
         }
     }
@@ -383,9 +341,6 @@ class SettingsMenu extends WatchUi.Menu2 {
                 deleteAnyItem($.Config.I_3D_EFFECTS);
                 deleteAnyItem($.Config.I_DONE);
                 break;
-            default:
-                System.println("ERROR: SettingsMenu.deleteMenu() is not implemented for id = " + id);
-                break;
         }
     }
 
@@ -395,12 +350,12 @@ class SettingsMenu extends WatchUi.Menu2 {
     }
 
     //! Add a ToggleMenuItem to the menu.
-    private function addToggleMenuItem(item as Config.Item, isEnabled as Number) as Void {
+    private function addToggleMenuItem(item as Config.Item) as Void {
         Menu2.addItem(new WatchUi.ToggleMenuItem(
             $.config.getName(item), 
-            {:enabled=>$.getStringResource(:On), :disabled=>$.getStringResource(:Off)},
+            {:enabled=>Rez.Strings.On, :disabled=>Rez.Strings.Off},
             item, 
-            isEnabled == $.config.getValue(item), 
+            $.config.isEnabled(item), 
             {}
         ));
     }
@@ -428,58 +383,31 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
 
-    //! Handle a menu item being selected
-    //! @param menuItem The menu item selected
+    // Handle a menu item being selected
     public function onSelect(menuItem as MenuItem) as Void {
         var id = menuItem.getId() as Config.Item;
-        switch (id) {
-            case $.Config.I_DATE_DISPLAY:
-            case $.Config.I_HIDE_SECONDS:
-                // Advance to the next option and show the selected option as the sub label
-                $.config.setNext(id);
-                menuItem.setSubLabel($.config.getLabel(id));
-                break;
-            case $.Config.I_DM_CONTRAST:
-                // Advance to the next option and show the selected option as the sub label
-                $.config.setNext(id);
-                menuItem.setSubLabel($.config.getLabel(id));
-                // Update the color of the icon
-                var menuIcon = menuItem.getIcon() as MenuIcon;
-                menuIcon.setColor($.config.getValue(id));
-                break;
-            case $.Config.I_BATTERY:
-            case $.Config.I_DARK_MODE:
-                // Advance to the next option and show the selected option as the sub label
-                $.config.setNext(id);
-                menuItem.setSubLabel($.config.getLabel(id));
+        if ($.Config.I_DONE == id) {
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        } else if (id >= $.Config.I_ALARMS) { // toggle items
+            // Toggle the two possible configuration values
+            $.config.setNext(id);
+        } else if (id < $.Config.I_DM_ON) { // list items
+            // Advance to the next option and show the selected option as the sub label
+            $.config.setNext(id);
+            menuItem.setSubLabel($.config.getLabel(id));
+            if ($.Config.I_BATTERY == id or $.Config.I_DARK_MODE == id) {
                 // Delete all the following menu items, rebuild the menu with only the items required
                 _menu.deleteMenu(id);
                 _menu.buildMenu(id);
-                break;
-            case $.Config.I_ALARMS:
-            case $.Config.I_NOTIFICATIONS:
-            case $.Config.I_CONNECTED:
-            case $.Config.I_HEART_RATE:
-            case $.Config.I_RECOVERY_TIME:
-            case $.Config.I_STEPS:
-            case $.Config.I_MOVE_BAR:
-            case $.Config.I_3D_EFFECTS:
-            case $.Config.I_BATTERY_PCT:
-            case $.Config.I_BATTERY_DAYS:
-                // Toggle the two possible configuration values
-                $.config.setNext(id);
-                break;
-            case $.Config.I_DM_ON:
-            case $.Config.I_DM_OFF:
-                // Let the user select the time
-                WatchUi.pushView(new TimePicker(id), new TimePickerDelegate(id), WatchUi.SLIDE_IMMEDIATE);
-                break;
-            case $.Config.I_DONE:
-                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-                break;
-            default:
-                System.println("ERROR: SettingsMenuDelegate.onSelect() is not implemented for id = " + id);
-                break;
+            }
+            if ($.Config.I_DM_CONTRAST == id) {
+                // Update the color of the icon
+                var menuIcon = menuItem.getIcon() as MenuIcon;
+                menuIcon.setColor($.config.getValue(id));
+            }
+        } else { // I_DM_ON or I_DM_OFF
+            // Let the user select the time
+            WatchUi.pushView(new TimePicker(id), new TimePickerDelegate(id), WatchUi.SLIDE_IMMEDIATE);
         }
   	}
 } // class SettingsMenuDelegate
