@@ -485,24 +485,16 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     private function setColorMode(doNotDisturb as Boolean, hour as Number, min as Number) as Number {
+        var darkMode = $.config.getOption($.Config.I_DARK_MODE);
         var colorMode = M_LIGHT;
-        switch ($.config.getOption($.Config.I_DARK_MODE)) {
-            case :DarkModeScheduled:
-                colorMode = M_LIGHT;
-                var time = hour * 60 + min;
-                if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
-                    colorMode = M_DARK;
-                }
-                break;
-            case :Off:
-                colorMode = M_LIGHT;
-                break;
-            case :On:
+        if (:DarkModeScheduled == darkMode) {
+            var time = hour * 60 + min;
+            if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
                 colorMode = M_DARK;
-                break;
-            case :DarkModeInDnD:
-                colorMode = doNotDisturb ? M_DARK : M_LIGHT;
-                break;
+            }
+        } else if (   :On == darkMode
+                   or (:DarkModeInDnD == darkMode and doNotDisturb)) {
+            colorMode = M_DARK;
         }
         return colorMode;
     }

@@ -539,38 +539,25 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     private function setColorMode(doNotDisturb as Boolean, hour as Number, min as Number) as Number {
+        var darkMode = $.config.getOption($.Config.I_DARK_MODE);
         var colorMode = M_LIGHT;
-        switch ($.config.getOption($.Config.I_DARK_MODE)) {
-            case :DarkModeScheduled:
-                colorMode = M_LIGHT;
-                var time = hour * 60 + min;
-                if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
-                    colorMode = M_DARK;
-                }
-                break;
-            case :Off:
-                colorMode = M_LIGHT;
-                break;
-            case :On:
+        if (:DarkModeScheduled == darkMode) {
+            var time = hour * 60 + min;
+            if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
                 colorMode = M_DARK;
-                break;
-            case :DarkModeInDnD:
-                colorMode = doNotDisturb ? M_DARK : M_LIGHT;
-                break;
+            }
+        } else if (   :On == darkMode
+                   or (:DarkModeInDnD == darkMode and doNotDisturb)) {
+            colorMode = M_DARK;
         }
-
-        // In dark mode, adjust colors based on the contrast setting
+        // In dark mode, adjust text color based on the contrast setting
         if (M_DARK == colorMode) {
             var foregroundColor = $.config.getValue($.Config.I_DM_CONTRAST);
             colors[M_DARK][C_FOREGROUND] = foregroundColor;
-            switch (foregroundColor) {
-                case Graphics.COLOR_WHITE:
-                    colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
-                    break;
-                case Graphics.COLOR_LT_GRAY:
-                case Graphics.COLOR_DK_GRAY:
-                    colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
-                    break;
+            if (Graphics.COLOR_WHITE == foregroundColor) {
+                colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
+            } else { // Graphics.COLOR_LT_GRAY or Graphics.COLOR_DK_GRAY
+                colors[M_DARK][C_TEXT] = Graphics.COLOR_DK_GRAY;
             }
         }
         return colorMode;
