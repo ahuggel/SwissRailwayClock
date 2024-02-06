@@ -689,32 +689,20 @@ class BatteryLevel {
         var color = Graphics.COLOR_GREEN;
         if (level < warnLevel / 2) { color = ClockView.M_LIGHT == ClockView.colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_YELLOW; }
         if (level < warnLevel / 4) { color = Graphics.COLOR_RED; }
-        if (level < warnLevel) {
-            switch (batterySetting) {
-                case :BatteryClassic:
-                case :BatteryClassicWarnings:
-                    drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, ClockView.colorMode, color);
-                    ret = true;
-                    break;
-                case :BatteryModern:
-                case :BatteryModernWarnings:
-                case :BatteryHybrid:
-                    drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, color);
-                    ret = true;
-                    break;
-            }
-        } else {
-            switch (batterySetting) {
-                case :BatteryClassic:
-                case :BatteryHybrid:
-                    drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, ClockView.colorMode, color);
-                    ret = true;
-                    break;
-                case :BatteryModern:
-                    drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, color);
-                    ret = true;
-                    break;
-            }
+
+        // level \ Setting   Classic ClassicWarnings Hybrid Modern ModernWarnings
+        // < warnLevel          C          C           M      M          M       
+        // >= warnLevel         C          -           C      M          -       
+        if (   :BatteryClassic == batterySetting 
+            or (level < warnLevel and :BatteryClassicWarnings == batterySetting)
+            or (level >= warnLevel and :BatteryHybrid == batterySetting)) {
+            drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, ClockView.colorMode, color);
+            ret = true;
+        } else if (   :BatteryModern == batterySetting
+                   or (level < warnLevel and :BatteryModernWarnings == batterySetting)
+                   or (level < warnLevel and :BatteryHybrid == batterySetting)) {
+            drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, color);
+            ret = true;
         }
         return ret;
     }
