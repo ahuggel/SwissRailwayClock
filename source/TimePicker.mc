@@ -86,16 +86,12 @@ class TimeFactory extends WatchUi.PickerFactory {
         PickerFactory.initialize();
         _mode = mode;
         _is24Hour = is24Hour;
-        _stop = 0;
-        _format = "%d";
-        switch (mode) {
-            case T_HOUR:
-                _stop = _is24Hour ? 23 : 11;
-                break;
-            case T_MINUTE:
-                _stop = 59;
-                _format = "%02d";
-                break;
+        if (T_HOUR == mode) {
+            _stop = _is24Hour ? 23 : 11;
+            _format = "%d";
+        } else { // T_MINUTE == mode
+            _stop = 59;
+            _format = "%02d";
         }
     }
 
