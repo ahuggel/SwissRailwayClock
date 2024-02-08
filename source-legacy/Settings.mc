@@ -52,6 +52,7 @@ class Config {
         I_CONNECTED,
         I_HEART_RATE,
         I_RECOVERY_TIME,
+        I_STEPS,
         I_BATTERY_PCT, 
         I_BATTERY_DAYS, 
         I_SIZE, 
@@ -73,6 +74,7 @@ class Config {
         :Connected,
         :HeartRate,
         :RecoveryTime,
+        :Steps,
         :BatteryPct, 
         :BatteryDays
     ] as Array<Symbol>;
@@ -92,6 +94,7 @@ class Config {
         "co", // I_CONNECTED
         "hr", // I_HEART_RATE
         "rt", // I_RECOVERY_TIME
+        "st", // I_STEPS
         "bp", // I_BATTERY_PCT
         "bd"  // I_BATTERY_DAYS
     ] as Array<String>;
@@ -105,7 +108,7 @@ class Config {
         [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever] // I_HIDE_SECONDS
      ] as Array< Array<Symbol> >;
 
-    private var _defaults as Number = 0x0140; // 0b0 0001 0100 0000 default values for toggle items, each bit is one
+    private var _defaults as Number = 0x0140; // 0b00 0001 0100 0000 default values for toggle items, each bit is one
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
@@ -261,6 +264,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 addToggleMenuItem($.Config.I_CONNECTED);
                 addToggleMenuItem($.Config.I_HEART_RATE);
                 addToggleMenuItem($.Config.I_RECOVERY_TIME);
+                addToggleMenuItem($.Config.I_STEPS);
                 addMenuItem($.Config.I_DARK_MODE);
                 //Fallthrough
             case $.Config.I_DARK_MODE:
@@ -287,6 +291,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 deleteAnyItem($.Config.I_CONNECTED);
                 deleteAnyItem($.Config.I_HEART_RATE);
                 deleteAnyItem($.Config.I_RECOVERY_TIME);
+                deleteAnyItem($.Config.I_STEPS);
                 deleteAnyItem($.Config.I_DARK_MODE);
                 // Fallthrough
             case $.Config.I_DARK_MODE:
