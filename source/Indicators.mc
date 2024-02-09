@@ -39,6 +39,7 @@ import Toybox.WatchUi;
 // memory usage.
 class Indicators {
     private var _batteryLevel as BatteryLevel;
+    private var _batteryDrawn as Boolean = false;
     private var _symbolsDrawn as Boolean = false;
 
     (:legacy) private var _width as Number;
@@ -48,7 +49,6 @@ class Indicators {
     (:modern) private var _screenCenter as Array<Number>;
     (:modern) private var _clockRadius as Number;
     (:modern) private var _moveBarDrawn as Boolean = false;
-    (:modern) private var _batteryDrawn as Boolean = false;
     (:modern) private var _drawHeartRate as Number = -1;
     (:modern) private var _pos as Array< Array<Number> >; // Positions (x,y) of the indicators
 
@@ -117,11 +117,13 @@ class Indicators {
         }
 
         // Draw the battery level indicator
+        _batteryDrawn = false;
         if ($.config.isEnabled($.Config.I_BATTERY)) {
-            _batteryLevel.draw(
+            var h = _symbolsDrawn ? 0.32 : 0.25;
+            _batteryDrawn = _batteryLevel.draw(
                 dc,
                 w2, 
-                _symbolsDrawn ? (_height * 0.32).toNumber() : (_height * 0.25).toNumber()
+                (_height * h).toNumber()
             );
         }
 
@@ -138,9 +140,10 @@ class Indicators {
                 Graphics.TEXT_JUSTIFY_CENTER
             );
         } else if (:DateDisplayWeekdayAndDay == dateDisplay) {
+            var h = ($.config.isEnabled($.Config.I_STEPS) and _batteryDrawn) ? 0.69 : 0.65; // idx = 9 : 8
             dc.drawText(
                 w2, 
-                (_height * 0.65).toNumber(), 
+                (_height * h).toNumber(), 
                 Graphics.FONT_MEDIUM, 
                 Lang.format("$1$ $2$", [info.day_of_week, info.day]), 
                 Graphics.TEXT_JUSTIFY_CENTER
@@ -159,13 +162,18 @@ class Indicators {
 
         // Draw the heart rate indicator
         if ($.config.isEnabled($.Config.I_HEART_RATE)) {
-            var xpos = (_width * 0.73).toNumber();
-            var ypos = (_height * 0.50).toNumber();
+            var w = 0.73; // idx = 0
+            var h = 0.50;
             if (:DateDisplayDayOnly == dateDisplay) {
-                xpos = (_width * 0.48).toNumber();
-                ypos = (_height * 0.75).toNumber();
+                if ($.config.isEnabled($.Config.I_STEPS)) {
+                    w = 0.49; // idx = 12
+                    h = 0.76;
+                } else {
+                    w = 0.48; // idx = 1
+                    h = 0.75;
+                }
             }
-            drawHeartRate2(dc, xpos, ypos);
+            drawHeartRate2(dc, (_width * w).toNumber(), (_height * h).toNumber());
         }
 
         // Draw the recovery time indicator
@@ -178,6 +186,29 @@ class Indicators {
                     activityInfo.timeToRecovery
                 );
             }
+        }
+
+        // Draw the steps indicator
+        if ($.config.isEnabled($.Config.I_STEPS)) {
+            var w = 0.49; // idx = 10, 11
+            var h = 0.70;
+            if (:DateDisplayWeekdayAndDay == dateDisplay) {
+                if (_batteryDrawn) {
+                    h = 0.65; // idx = 11
+                } else {
+                    w = 0.50; // idx = 3
+                    h = 0.32; // idx = 3
+                }
+            } else if (    :DateDisplayDayOnly == dateDisplay
+                       and $.config.isEnabled($.Config.I_HEART_RATE)) {
+                h = 0.65; // idx = 11
+            }
+            drawSteps(
+                dc,
+                (_width * w).toNumber(),
+                (_height * h).toNumber(),
+                activityInfo.steps // since API Level 1.0.0
+            );
         }
     }
 
@@ -278,14 +309,12 @@ class Indicators {
         // Draw the steps indicator
         idx = getIndicatorPosition(:footsteps);
         if (-1 != idx) {
-            if (ActivityMonitor.Info has :steps) {
-                drawSteps(
-                    dc,
-                    _pos[idx][0],
-                    _pos[idx][1],
-                    activityInfo.steps
-                );
-            }
+            drawSteps(
+                dc,
+                _pos[idx][0],
+                _pos[idx][1],
+                activityInfo.steps // since API Level 1.0.0
+            );
         }
     }
 
@@ -527,7 +556,7 @@ class Indicators {
     }
 
     // Draw the steps, return true if it was drawn
-    (:modern) private function drawSteps(
+    private function drawSteps(
         dc as Dc,
         xpos as Number, 
         ypos as Number,
