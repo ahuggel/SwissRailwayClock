@@ -232,7 +232,7 @@ class ClockView extends WatchUi.WatchFace {
             colorMode = setColorMode(deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
 
             // Handle the setting to disable the second hand in sleep mode after some time
-            var secondsOption = $.config.getOption($.Config.I_HIDE_SECONDS);
+            var secondsOption = config.getOption(Config.I_HIDE_SECONDS);
             _hideSecondHand = :HideSecondsAlways == secondsOption 
                 or (:HideSecondsInDm == secondsOption and M_DARK == colorMode);
 
@@ -481,11 +481,11 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     private function setColorMode(doNotDisturb as Boolean, hour as Number, min as Number) as Number {
-        var darkMode = $.config.getOption($.Config.I_DARK_MODE);
+        var darkMode = config.getOption(Config.I_DARK_MODE);
         var colorMode = M_LIGHT;
         if (:DarkModeScheduled == darkMode) {
             var time = hour * 60 + min;
-            if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
+            if (time >= config.getValue(Config.I_DM_ON) or time < config.getValue(Config.I_DM_OFF)) {
                 colorMode = M_DARK;
             }
         } else if (   :On == darkMode

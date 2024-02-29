@@ -106,7 +106,7 @@ class Indicators {
 
         // Draw alarm and notification indicators
         _symbolsDrawn = false;
-        if ($.config.isEnabled($.Config.I_ALARMS) or $.config.isEnabled($.Config.I_NOTIFICATIONS)) {
+        if (config.isEnabled(Config.I_ALARMS) or config.isEnabled(Config.I_NOTIFICATIONS)) {
             _symbolsDrawn = drawSymbols(
                 dc,
                 w2, 
@@ -118,7 +118,7 @@ class Indicators {
 
         // Draw the battery level indicator
         _batteryDrawn = false;
-        if ($.config.isEnabled($.Config.I_BATTERY)) {
+        if (config.isEnabled(Config.I_BATTERY)) {
             var h = _symbolsDrawn ? 0.32 : 0.25;
             _batteryDrawn = _batteryLevel.draw(
                 dc,
@@ -130,7 +130,7 @@ class Indicators {
         // Draw the date string
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
         dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
-        var dateDisplay = $.config.getOption($.Config.I_DATE_DISPLAY);
+        var dateDisplay = config.getOption(Config.I_DATE_DISPLAY);
         if (:DateDisplayDayOnly == dateDisplay) {
             dc.drawText(
                 (_width * 0.75).toNumber(), 
@@ -140,7 +140,7 @@ class Indicators {
                 Graphics.TEXT_JUSTIFY_CENTER
             );
         } else if (:DateDisplayWeekdayAndDay == dateDisplay) {
-            var h = ($.config.isEnabled($.Config.I_STEPS) and _batteryDrawn) ? 0.69 : 0.65; // idx = 9 : 8
+            var h = (config.isEnabled(Config.I_STEPS) and _batteryDrawn) ? 0.69 : 0.65; // idx = 9 : 8
             dc.drawText(
                 w2, 
                 (_height * h).toNumber(), 
@@ -151,7 +151,7 @@ class Indicators {
         }
 
         // Draw the phone connection indicator on the 6 o'clock tick mark
-        if ($.config.isEnabled($.Config.I_CONNECTED)) { 
+        if (config.isEnabled(Config.I_CONNECTED)) { 
             drawPhoneConnected(
                 dc,
                 w2,
@@ -161,11 +161,11 @@ class Indicators {
         }
 
         // Draw the heart rate indicator
-        if ($.config.isEnabled($.Config.I_HEART_RATE)) {
+        if (config.isEnabled(Config.I_HEART_RATE)) {
             var w = 0.73; // idx = 0
             var h = 0.50;
             if (:DateDisplayDayOnly == dateDisplay) {
-                if ($.config.isEnabled($.Config.I_STEPS)) {
+                if (config.isEnabled(Config.I_STEPS)) {
                     w = 0.49; // idx = 12
                     h = 0.76;
                 } else {
@@ -177,7 +177,7 @@ class Indicators {
         }
 
         // Draw the recovery time indicator
-        if ($.config.isEnabled($.Config.I_RECOVERY_TIME)) { 
+        if (config.isEnabled(Config.I_RECOVERY_TIME)) { 
             if (ActivityMonitor.Info has :timeToRecovery) {
                 drawRecoveryTime(
                     dc,
@@ -189,7 +189,7 @@ class Indicators {
         }
 
         // Draw the steps indicator
-        if ($.config.isEnabled($.Config.I_STEPS)) {
+        if (config.isEnabled(Config.I_STEPS)) {
             var w = 0.49; // idx = 10, 11
             var h = 0.70;
             if (:DateDisplayWeekdayAndDay == dateDisplay) {
@@ -200,7 +200,7 @@ class Indicators {
                     h = 0.32; // idx = 3
                 }
             } else if (    :DateDisplayDayOnly == dateDisplay
-                       and $.config.isEnabled($.Config.I_HEART_RATE)) {
+                       and config.isEnabled(Config.I_HEART_RATE)) {
                 h = 0.65; // idx = 11
             }
             drawSteps(
@@ -219,7 +219,7 @@ class Indicators {
 
         // Draw the move bar (at a fixed position, so we don't use getIndicatorPosition() here)
         _moveBarDrawn = false;
-        if ($.config.isEnabled($.Config.I_MOVE_BAR)) {
+        if (config.isEnabled(Config.I_MOVE_BAR)) {
             _moveBarDrawn = drawMoveBar(dc, _screenCenter[0], _screenCenter[1], _clockRadius, activityInfo.moveBarLevel);
         }
 
@@ -332,41 +332,41 @@ class Indicators {
         var idx = -1;
         switch (indicator) {
             case :recoveryTime:
-                if ($.config.isEnabled($.Config.I_RECOVERY_TIME)) { 
+                if (config.isEnabled(Config.I_RECOVERY_TIME)) { 
                     idx = 2; 
                 }
                 break;
             case :battery:
-                if ($.config.isEnabled($.Config.I_BATTERY)) {
+                if (config.isEnabled(Config.I_BATTERY)) {
                     idx = _symbolsDrawn ? (_moveBarDrawn ? 14 : 3) : (_moveBarDrawn ? 15 : 4);
                 }
                 break;
             case :symbols:
-                if (   $.config.isEnabled($.Config.I_ALARMS)
-                    or $.config.isEnabled($.Config.I_NOTIFICATIONS)) {
+                if (   config.isEnabled(Config.I_ALARMS)
+                    or config.isEnabled(Config.I_NOTIFICATIONS)) {
                     idx = _moveBarDrawn ? 13 : 5;
                 }
                 break;
             case :phoneConnected:
-                if ($.config.isEnabled($.Config.I_CONNECTED)) { 
+                if (config.isEnabled(Config.I_CONNECTED)) { 
                     idx = 6; 
                 }
                 break;
             case :shortDate:
-                if (:DateDisplayDayOnly == $.config.getOption($.Config.I_DATE_DISPLAY)) { 
+                if (:DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)) { 
                     idx = 7; 
                 }
                 break;
             case :longDate:
-                if (:DateDisplayWeekdayAndDay == $.config.getOption($.Config.I_DATE_DISPLAY)) {
-                    idx = ($.config.isEnabled($.Config.I_STEPS) and _batteryDrawn) ? 9 : 8;
+                if (:DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)) {
+                    idx = (config.isEnabled(Config.I_STEPS) and _batteryDrawn) ? 9 : 8;
                 }
                 break;
             case :heartRate:
-                if ($.config.isEnabled($.Config.I_HEART_RATE)) {
+                if (config.isEnabled(Config.I_HEART_RATE)) {
                     idx = 0;
-                    if (:DateDisplayDayOnly == $.config.getOption($.Config.I_DATE_DISPLAY)) {
-                        idx = ($.config.isEnabled($.Config.I_STEPS)) ? 12 : 1;
+                    if (:DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)) {
+                        idx = (config.isEnabled(Config.I_STEPS)) ? 12 : 1;
                     }
                 }
                 break;
@@ -403,11 +403,11 @@ class Indicators {
                    11: Steps at 6 o'clock, with date (weekday and day format)
                    12: Heart rate indicator at 6 o'clock with steps
                 */
-                if ($.config.isEnabled($.Config.I_STEPS)) {
-                    if (:DateDisplayWeekdayAndDay == $.config.getOption($.Config.I_DATE_DISPLAY)) {
+                if (config.isEnabled(Config.I_STEPS)) {
+                    if (:DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)) {
                         idx = _batteryDrawn ? 11 : 3;
-                    } else if (    :DateDisplayDayOnly == $.config.getOption($.Config.I_DATE_DISPLAY)
-                               and $.config.isEnabled($.Config.I_HEART_RATE)) {
+                    } else if (    :DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)
+                               and config.isEnabled(Config.I_HEART_RATE)) {
                         idx = 11;
                     } else {
                         idx = 10;
@@ -481,8 +481,8 @@ class Indicators {
         var icons = "";
         var space = "";
         var indicators = [
-            $.config.isEnabled($.Config.I_ALARMS) and alarmCount > 0, 
-            $.config.isEnabled($.Config.I_NOTIFICATIONS) and notificationCount > 0
+            config.isEnabled(Config.I_ALARMS) and alarmCount > 0, 
+            config.isEnabled(Config.I_NOTIFICATIONS) and notificationCount > 0
         ];
         for (var i = 0; i < indicators.size(); i++) {
             if (indicators[i]) {
@@ -704,7 +704,7 @@ class BatteryLevel {
         ypos as Number
     ) as Boolean {
         var ret = false;
-        var batterySetting = $.config.getOption($.Config.I_BATTERY);
+        var batterySetting = config.getOption(Config.I_BATTERY);
         var systemStats = System.getSystemStats();
         var level = systemStats.battery;
         var levelInDays = 0.0;
@@ -798,12 +798,12 @@ class BatteryLevel {
         var font = Graphics.FONT_XTINY;
         y += 1; // Looks better aligned on the actual device (fr955) like this
         dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
-        if ($.config.isEnabled($.Config.I_BATTERY_PCT)) {
+        if (config.isEnabled(Config.I_BATTERY_PCT)) {
             var str = (level + 0.5).toNumber() + "% ";
             dc.drawText(x1, y - Graphics.getFontHeight(font)/2, font, str, Graphics.TEXT_JUSTIFY_RIGHT);
         }
         // Note: Whether the device provides battery in days is also ensured by getValue().
-        if ($.config.isEnabled($.Config.I_BATTERY_DAYS)) {
+        if (config.isEnabled(Config.I_BATTERY_DAYS)) {
             var str = " " + (levelInDays + 0.5).toNumber() + WatchUi.loadResource(Rez.Strings.DayUnit);
             dc.drawText(x2, y - Graphics.getFontHeight(font)/2, font, str, Graphics.TEXT_JUSTIFY_LEFT);
         }
