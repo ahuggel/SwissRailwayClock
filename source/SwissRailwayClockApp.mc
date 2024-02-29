@@ -45,8 +45,8 @@ class SwissRailwayClockApp extends Application.AppBase {
         return [view, delegate] as Array<Views or InputDelegates>;
     }
 
-    //! Return the settings view and delegate
-    //! @return Array Pair [View, Delegate]
+    // Return the settings view and delegate
+    // @return Array Pair [View, Delegate]
     public function getSettingsView() as Array<Views or InputDelegates>? {
         var view = new $.SettingsMenu();
         var delegate = new $.SettingsMenuDelegate(view);

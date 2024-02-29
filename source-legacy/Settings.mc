@@ -24,7 +24,7 @@ import Toybox.Lang;
 import Toybox.System;
 import Toybox.WatchUi;
 
-//! Global variable that keeps track of the settings and makes them available to the app.
+// Global variable that keeps track of the settings and makes them available to the app.
 var config as Config = new Config();
 
 // Global helper function to load string resources, just to keep the code simpler and see only one compiler warning. 
@@ -113,7 +113,7 @@ class Config {
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
 
-    //! Constructor
+    // Constructor
     public function initialize() {
         _hasBatteryInDays = (System.Stats has :batteryInDays);
         // Read the configuration values from persistent storage 
@@ -220,9 +220,9 @@ class Config {
     }
 } // class Config
 
-//! The app settings menu
+// The app settings menu
 class SettingsMenu extends WatchUi.Menu2 {
-    //! Constructor
+    // Constructor
     public function initialize() {
         Menu2.initialize({:title=>Rez.Strings.Settings});
         buildMenu($.Config.I_ALL);
@@ -244,7 +244,7 @@ class SettingsMenu extends WatchUi.Menu2 {
         }
     }
 
-    //! Build the menu from a given menu item onwards
+    // Build the menu from a given menu item onwards
     public function buildMenu(id as Config.Item) as Void {
         switch (id) {
             case $.Config.I_ALL:
@@ -279,7 +279,7 @@ class SettingsMenu extends WatchUi.Menu2 {
         }
     }
 
-    //! Delete the menu from a given menu item onwards
+    // Delete the menu from a given menu item onwards
     public function deleteMenu(id as Config.Item) as Void {
         switch (id) {
             case $.Config.I_BATTERY:
@@ -304,12 +304,12 @@ class SettingsMenu extends WatchUi.Menu2 {
         }
     }
 
-    //! Add a MenuItem to the menu.
+    // Add a MenuItem to the menu.
     private function addMenuItem(item as Config.Item) as Void {
         Menu2.addItem(new WatchUi.MenuItem($.config.getName(item), $.config.getLabel(item), item, {}));
     }
 
-    //! Add a ToggleMenuItem to the menu.
+    // Add a ToggleMenuItem to the menu.
     private function addToggleMenuItem(item as Config.Item) as Void {
         Menu2.addItem(new WatchUi.ToggleMenuItem(
             $.config.getName(item), 
@@ -320,7 +320,7 @@ class SettingsMenu extends WatchUi.Menu2 {
         ));
     }
 
-    //! Delete any menu item. Returns true if an item was deleted, else false
+    // Delete any menu item. Returns true if an item was deleted, else false
     private function deleteAnyItem(item as Config.Item) as Boolean {
         var idx = findItemById(item);
         var del = -1 != idx;
@@ -329,11 +329,11 @@ class SettingsMenu extends WatchUi.Menu2 {
     }
 } // class SettingsMenu
 
-//! Input handler for the app settings menu
+// Input handler for the app settings menu
 class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     private var _menu as SettingsMenu;
 
-    //! Constructor
+    // Constructor
     public function initialize(menu as SettingsMenu) {
         Menu2InputDelegate.initialize();
         _menu = menu;

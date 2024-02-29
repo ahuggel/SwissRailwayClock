@@ -33,7 +33,7 @@ import Toybox.WatchUi;
 // used to set an alarm on the fr955 looks great and would allow developers to build
 // apps with a more consistent look and feel.
 class TimePicker extends WatchUi.Picker {
-    //! Constructor
+    // Constructor
     public function initialize(id as Config.Item) {
         var title = new WatchUi.Text({
             :text=>$.config.getName(id),
