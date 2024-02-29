@@ -71,7 +71,7 @@ class Indicators {
             [(width * 0.50).toNumber(), (height * 0.32).toNumber()], //  3: Battery level indicator at 12 o'clock with notifications
             [(width * 0.50).toNumber(), (height * 0.25).toNumber()], //  4: Battery level indicator at 12 o'clock w/o notifications
             [(width * 0.50).toNumber(), (height * 0.18).toNumber()], //  5: Alarms and notifications at 12 o'clock
-            [0.0, 0.0],                                              //  6: Phone connection indicator on the 6 o'clock tick mark (see updatePos() )
+            [0, 0],                                                  //  6: Phone connection indicator on the 6 o'clock tick mark (see updatePos() )
             [(width * 0.75).toNumber(), (height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
             [(width * 0.50).toNumber(), (height * 0.65).toNumber()], //  8: Date (weekday and day format) at 6 o'clock, w/o steps
             [(width * 0.50).toNumber(), (height * 0.69).toNumber()], //  9: Date (weekday and day format) at 6 o'clock, with steps
