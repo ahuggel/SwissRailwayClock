@@ -33,7 +33,7 @@ function getStringResource(id as Symbol) as String {
     return WatchUi.loadResource(Rez.Strings[id] as Symbol) as String;
 }
 
-// This class maintains application settings and synchronises them to persistent storage.
+// This class maintains all application settings and synchronises them to persistent storage.
 // Having a Setting class (hierarchy) to model individual settings and an array of these for the entire
 // collection would be better design. As objects are expensive in Monkey C, that approach uses way too 
 // much memory though.
