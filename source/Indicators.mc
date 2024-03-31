@@ -41,6 +41,7 @@ class Indicators {
     private var _batteryLevel as BatteryLevel;
     private var _batteryDrawn as Boolean = false;
     private var _symbolsDrawn as Boolean = false;
+    private var _stepsDrawn as Boolean = false;
 
     (:legacy) private var _width as Number;
     (:legacy) private var _height as Number;
@@ -307,13 +308,25 @@ class Indicators {
         }
 
         // Draw the steps indicator
+        _stepsDrawn = false;
         idx = getIndicatorPosition(:footsteps);
         if (-1 != idx) {
-            drawSteps(
+            _stepsDrawn = drawSteps(
                 dc,
                 _pos[idx][0],
                 _pos[idx][1],
                 activityInfo.steps // since API Level 1.0.0
+            );
+        }
+
+        // Draw the calories indicator
+        idx = getIndicatorPosition(:calories);
+        if (-1 != idx) {
+            drawSteps(  // TODO: need new function here, one that can be used for steps as well as calories
+                dc,
+                _pos[idx][0],
+                _pos[idx][1],
+                activityInfo.calories // since API Level 1.0.0
             );
         }
     }
@@ -404,19 +417,35 @@ class Indicators {
                    12: Heart rate indicator at 6 o'clock with steps
                 */
                 if (config.isEnabled(Config.I_STEPS)) {
-                    if (:DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)) {
-                        idx = _batteryDrawn ? 11 : 3;
-                    } else if (    :DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)
-                               and config.isEnabled(Config.I_HEART_RATE)) {
-                        idx = 11;
+                    idx = stepsOrCaloriesIdx();
+                }
+                break;
+            case :calories:
+                if (config.isEnabled(Config.I_CALORIES)) {
+                    if (!_stepsDrawn) { // then calories take up the position otherwise used for steps 
+                        idx = stepsOrCaloriesIdx();
                     } else {
-                        idx = 10;
+                        // if steps are enabled, place calories in the upper half of the screen
+
                     }
                 }
                 break;
             default:
-                System.println("ERROR: ClockView.getIndicatorPos() is not implemented for indicator = " + indicator);
+                System.println("ERROR: Indicators.getIndicatorPos() is not implemented for indicator = " + indicator);
                 break;
+        }
+        return idx;
+    }
+
+    (:modern) private function stepsOrCaloriesIdx() as Number {
+        var idx = -1;
+        if (:DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)) {
+            idx = _batteryDrawn ? 11 : 3;
+        } else if (    :DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)
+                   and config.isEnabled(Config.I_HEART_RATE)) {
+            idx = 11;
+        } else {
+            idx = 10;
         }
         return idx;
     }

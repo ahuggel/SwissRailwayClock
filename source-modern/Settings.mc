@@ -53,6 +53,7 @@ class Config {
         I_HEART_RATE,
         I_RECOVERY_TIME,
         I_STEPS,
+        I_CALORIES,
         I_MOVE_BAR,
         I_3D_EFFECTS, 
         I_BATTERY_PCT, 
@@ -78,6 +79,7 @@ class Config {
         :HeartRate,
         :RecoveryTime,
         :Steps,
+        :Calories,
         :MoveBar,
         :Shadows, 
         :BatteryPct, 
@@ -101,6 +103,7 @@ class Config {
         "hr", // I_HEART_RATE
         "rt", // I_RECOVERY_TIME
         "st", // I_STEPS
+        "ca", // I_CALORIES
         "mb", // I_MOVE_BAR
         "3d", // I_3D_EFFECTS
         "bp", // I_BATTERY_PCT
@@ -117,7 +120,8 @@ class Config {
         [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite] // I_DM_CONTRAST
      ] as Array< Array<Symbol> >;
 
-    private var _defaults as Number = 0x4280; // 0b0 0100 0010 1000 0000 default values for toggle items, each bit is one
+    // Default values for toggle items, each bit is one. I_ALARMS, I_CONNECTED and I_3D_EFFECTS are on by default.
+    private var _defaults as Number = 0x8280; // 0b00 1000 0010 1000 0000
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
@@ -288,6 +292,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 addToggleMenuItem(Config.I_HEART_RATE);
                 addToggleMenuItem(Config.I_RECOVERY_TIME);
                 addToggleMenuItem(Config.I_STEPS);
+                addToggleMenuItem(Config.I_CALORIES);
                 addToggleMenuItem(Config.I_MOVE_BAR);
                 addMenuItem(Config.I_DARK_MODE);
                 //Fallthrough
@@ -329,6 +334,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 deleteAnyItem(Config.I_HEART_RATE);
                 deleteAnyItem(Config.I_RECOVERY_TIME);
                 deleteAnyItem(Config.I_STEPS);
+                deleteAnyItem(Config.I_CALORIES);
                 deleteAnyItem(Config.I_MOVE_BAR);
                 deleteAnyItem(Config.I_DARK_MODE);
                 // Fallthrough
