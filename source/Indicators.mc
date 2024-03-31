@@ -49,7 +49,6 @@ class Indicators {
 
     (:modern) private var _screenCenter as Array<Number>;
     (:modern) private var _clockRadius as Number;
-    (:modern) private var _moveBarDrawn as Boolean = false;
     (:modern) private var _drawHeartRate as Number = -1;
     (:modern) private var _pos as Array< Array<Number> >; // Positions (x,y) of the indicators
 
@@ -78,10 +77,7 @@ class Indicators {
             [(width * 0.50).toNumber(), (height * 0.69).toNumber()], //  9: Date (weekday and day format) at 6 o'clock, with steps
             [(width * 0.49).toNumber(), (height * 0.70).toNumber()], // 10: Steps at 6 o'clock, w/o date (weekday and day format)
             [(width * 0.49).toNumber(), (height * 0.65).toNumber()], // 11: Steps at 6 o'clock, with date (weekday and day format)
-            [(width * 0.49).toNumber(), (height * 0.76).toNumber()], // 12: Heart rate indicator at 6 o'clock with steps
-            [(width * 0.50).toNumber(), (height * 0.21).toNumber()], // 13: Alarms and notifications at 12 o'clock with move bar
-            [(width * 0.50).toNumber(), (height * 0.35).toNumber()], // 14: Battery level indicator at 12 o'clock with notifications and move bar
-            [(width * 0.50).toNumber(), (height * 0.28).toNumber()]  // 15: Battery level indicator at 12 o'clock w/o notifications and with move bar
+            [(width * 0.49).toNumber(), (height * 0.76).toNumber()]  // 12: Heart rate indicator at 6 o'clock with steps
         ] as Array< Array<Number> >;
     }
 
@@ -218,10 +214,9 @@ class Indicators {
     (:modern) public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
         var activityInfo = ActivityMonitor.getInfo();
 
-        // Draw the move bar (at a fixed position, so we don't use getIndicatorPosition() here)
-        _moveBarDrawn = false;
+        // Draw the move bar (at a fixed position, so we don't need getIndicatorPosition() here)
         if (config.isEnabled(Config.I_MOVE_BAR)) {
-            _moveBarDrawn = drawMoveBar(dc, _screenCenter[0], _screenCenter[1], _clockRadius, activityInfo.moveBarLevel);
+            drawMoveBar(dc, _screenCenter[0], _screenCenter[1], _clockRadius, activityInfo.moveBarLevel);
         }
 
         // Draw alarm and notification indicators
@@ -351,13 +346,13 @@ class Indicators {
                 break;
             case :battery:
                 if (config.isEnabled(Config.I_BATTERY)) {
-                    idx = _symbolsDrawn ? (_moveBarDrawn ? 14 : 3) : (_moveBarDrawn ? 15 : 4);
+                    idx = _symbolsDrawn ? 3 : 4;
                 }
                 break;
             case :symbols:
                 if (   config.isEnabled(Config.I_ALARMS)
                     or config.isEnabled(Config.I_NOTIFICATIONS)) {
-                    idx = _moveBarDrawn ? 13 : 5;
+                    idx = 5;
                 }
                 break;
             case :phoneConnected:
@@ -384,38 +379,6 @@ class Indicators {
                 }
                 break;
             case :footsteps:
-                /*
-                   Date display Heart rate Steps Positions
-                   ------------ ---------- ----- ---------
-                   Off          Off        Off    -  -  -
-                   Off          Off        On     -  - 10
-                   Off          On         Off    -  0  -
-                   Off          On         On     -  0 10
-                   Short        Off        Off    7  -  -
-                   Short        Off        On     7  - 10
-                   Short        On         Off    7  1  -
-                   Short        On         On     7 12 11
-                   Long         Off        Off    8  -  -
-                   Long         Off        On     9  - 11 or 3
-                   Long         On         Off    8  0  -
-                   Long         On         On     9  0 11 or 3
-
-                   Positions
-                   ---------
-                    0: Heart rate indicator at 3 o'clock
-                    1: Heart rate indicator at 6 o'clock
-                    2: Recovery time indicator at 9 o'clock
-                    3: Battery level indicator at 12 o'clock with notifications
-                    4: Battery level indicator at 12 o'clock w/o notifications
-                    5: Alarms and notifications at 12 o'clock
-                    6: Phone connection indicator on the 6 o'clock tick mark
-                    7: Date (day format) at 3 o'clock
-                    8: Date (weekday and day format) at 6 o'clock, w/o steps
-                    9: Date (weekday and day format) at 6 o'clock, with steps
-                   10: Steps at 6 o'clock, w/o date (weekday and day format)
-                   11: Steps at 6 o'clock, with date (weekday and day format)
-                   12: Heart rate indicator at 6 o'clock with steps
-                */
                 if (config.isEnabled(Config.I_STEPS)) {
                     idx = stepsOrCaloriesIdx();
                 }
@@ -634,7 +597,7 @@ class Indicators {
         if (moveBarLevel != null and moveBarLevel > 0) {
             var width = (0.10 * radius).toNumber();
             if (0 == width % 2) { width -= 1; } // make sure width is an odd number
-            radius = (0.67 * radius).toNumber();
+            radius = (0.83 * radius).toNumber();
 //          System.println("radius = " + radius + ", width = " + width);
             var angle = 152;
             var bar = 0;
@@ -644,7 +607,8 @@ class Indicators {
                 dc.setPenWidth(width);
                 dc.drawArc(x, y, radius, Graphics.ARC_CLOCKWISE, angle, angle-bar);
 
-        		dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_BACKGROUND], Graphics.COLOR_TRANSPARENT);
+                var color = (1 == i or 3 == i) ? ClockView.C_FOREGROUND : ClockView.C_BACKGROUND;
+        		dc.setColor(ClockView.colors[ClockView.colorMode][color], Graphics.COLOR_TRANSPARENT);
                 dc.setPenWidth(1);
                 dc.fillPolygon(arrowPoints(x, y, radius, width, angle));
 
@@ -680,7 +644,7 @@ class Indicators {
         var cos = Math.cos(beta);
         var sin = Math.sin(beta);
         pts[0] = [(x - r * cos + 0.5).toNumber(), (y - r * sin + 0.5).toNumber()];
-        beta = (180 - angle - 3).toFloat() / 180.0 * Math.PI;
+        beta = (180 - angle - 1).toFloat() / 180.0 * Math.PI;
         pts[1] = [(x - radius * Math.cos(beta) + 0.5).toNumber(), (y - radius * Math.sin(beta) + 0.5).toNumber()];
         r = (radius + width/2 + 0.5).toNumber();
         pts[2] = [(x - r * cos + 0.5).toNumber(), (y - r * sin + 0.5).toNumber()];
