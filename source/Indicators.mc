@@ -40,7 +40,7 @@ import Toybox.WatchUi;
 class Indicators {
     private var _batteryLevel as BatteryLevel;
     private var _batteryDrawn as Boolean = false;
-    private var _symbolsDrawn as Boolean = false;
+    private var _iconsDrawn as Boolean = false;
     private var _stepsDrawn as Boolean = false;
 
     (:legacy) private var _width as Number;
@@ -77,7 +77,9 @@ class Indicators {
             [(width * 0.50).toNumber(), (height * 0.69).toNumber()], //  9: Date (weekday and day format) at 6 o'clock, with steps
             [(width * 0.49).toNumber(), (height * 0.70).toNumber()], // 10: Steps at 6 o'clock, w/o date (weekday and day format)
             [(width * 0.49).toNumber(), (height * 0.65).toNumber()], // 11: Steps at 6 o'clock, with date (weekday and day format)
-            [(width * 0.49).toNumber(), (height * 0.76).toNumber()]  // 12: Heart rate indicator at 6 o'clock with steps
+            [(width * 0.49).toNumber(), (height * 0.76).toNumber()], // 12: Heart rate indicator at 6 o'clock with steps
+            [(width * 0.49).toNumber(), (height * 0.41).toNumber()], // 13: Calories in upper half, with notifications and battery
+            [(width * 0.49).toNumber(), (height * 0.35).toNumber()]  // 14: Calories in upper half, w/o notifications but with battery
         ] as Array< Array<Number> >;
     }
 
@@ -102,9 +104,9 @@ class Indicators {
         var w2 = (_width * 0.50).toNumber();
 
         // Draw alarm and notification indicators
-        _symbolsDrawn = false;
+        _iconsDrawn = false;
         if (config.isEnabled(Config.I_ALARMS) or config.isEnabled(Config.I_NOTIFICATIONS)) {
-            _symbolsDrawn = drawSymbols(
+            _iconsDrawn = drawIcons(
                 dc,
                 w2, 
                 (_height * 0.18).toNumber(), 
@@ -116,7 +118,7 @@ class Indicators {
         // Draw the battery level indicator
         _batteryDrawn = false;
         if (config.isEnabled(Config.I_BATTERY)) {
-            var h = _symbolsDrawn ? 0.32 : 0.25;
+            var h = _iconsDrawn ? 0.32 : 0.25;
             _batteryDrawn = _batteryLevel.draw(
                 dc,
                 w2, 
@@ -200,10 +202,11 @@ class Indicators {
                        and config.isEnabled(Config.I_HEART_RATE)) {
                 h = 0.65; // idx = 11
             }
-            drawSteps(
+            drawIndicator(
                 dc,
                 (_width * w).toNumber(),
                 (_height * h).toNumber(),
+                "F",
                 activityInfo.steps // since API Level 1.0.0
             );
         }
@@ -220,11 +223,11 @@ class Indicators {
         }
 
         // Draw alarm and notification indicators
-        _symbolsDrawn = false;
+        _iconsDrawn = false;
         var idx = -1;
-        idx = getIndicatorPosition(:symbols);
+        idx = getIndicatorPosition(:icons);
         if (-1 != idx) {
-            _symbolsDrawn = drawSymbols(
+            _iconsDrawn = drawIcons(
                 dc,
                 _pos[idx][0], 
                 _pos[idx][1], 
@@ -306,10 +309,11 @@ class Indicators {
         _stepsDrawn = false;
         idx = getIndicatorPosition(:footsteps);
         if (-1 != idx) {
-            _stepsDrawn = drawSteps(
+            _stepsDrawn = drawIndicator(
                 dc,
                 _pos[idx][0],
                 _pos[idx][1],
+                "F",
                 activityInfo.steps // since API Level 1.0.0
             );
         }
@@ -317,10 +321,11 @@ class Indicators {
         // Draw the calories indicator
         idx = getIndicatorPosition(:calories);
         if (-1 != idx) {
-            drawSteps(  // TODO: need new function here, one that can be used for steps as well as calories
+            drawIndicator(
                 dc,
                 _pos[idx][0],
                 _pos[idx][1],
+                "C",
                 activityInfo.calories // since API Level 1.0.0
             );
         }
@@ -346,10 +351,10 @@ class Indicators {
                 break;
             case :battery:
                 if (config.isEnabled(Config.I_BATTERY)) {
-                    idx = _symbolsDrawn ? 3 : 4;
+                    idx = _iconsDrawn ? 3 : 4;
                 }
                 break;
-            case :symbols:
+            case :icons:
                 if (   config.isEnabled(Config.I_ALARMS)
                     or config.isEnabled(Config.I_NOTIFICATIONS)) {
                     idx = 5;
@@ -367,7 +372,11 @@ class Indicators {
                 break;
             case :longDate:
                 if (:DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)) {
-                    idx = (config.isEnabled(Config.I_STEPS) and _batteryDrawn) ? 9 : 8;
+                    if (config.isEnabled(Config.I_STEPS)) {
+                        idx = _batteryDrawn or config.isEnabled(Config.I_CALORIES) ? 9 : 8;
+                    } else {
+                        idx = _batteryDrawn and config.isEnabled(Config.I_CALORIES) ? 9 : 8;
+                    }
                 }
                 break;
             case :heartRate:
@@ -380,35 +389,37 @@ class Indicators {
                 break;
             case :footsteps:
                 if (config.isEnabled(Config.I_STEPS)) {
-                    idx = stepsOrCaloriesIdx();
+                    if (   :DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)
+                        or (    :DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)
+                               and config.isEnabled(Config.I_HEART_RATE))) {
+                        idx = _batteryDrawn or config.isEnabled(Config.I_CALORIES) ? 11 : 3;
+                    } else {
+                        idx = 10;
+                    }
                 }
                 break;
             case :calories:
                 if (config.isEnabled(Config.I_CALORIES)) {
-                    if (!_stepsDrawn) { // then calories take up the position otherwise used for steps 
-                        idx = stepsOrCaloriesIdx();
-                    } else {
-                        // if steps are enabled, place calories in the upper half of the screen
-
+                    if (!_stepsDrawn) { // place calories where steps would usually be
+                        if (   :DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)
+                            or (    :DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)
+                                and config.isEnabled(Config.I_HEART_RATE))) {
+                            idx = _batteryDrawn ? 11 : 3;
+                        } else {
+                            idx = 10;
+                        }
+                    } else { // if steps are drawn, place calories in the upper half of the screen
+                        if (_batteryDrawn) {
+                            idx = _iconsDrawn ? 13 : 14;
+                        } else {
+                            idx = 3;
+                        }
                     }
                 }
                 break;
             default:
                 System.println("ERROR: Indicators.getIndicatorPos() is not implemented for indicator = " + indicator);
                 break;
-        }
-        return idx;
-    }
-
-    (:modern) private function stepsOrCaloriesIdx() as Number {
-        var idx = -1;
-        if (:DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)) {
-            idx = _batteryDrawn ? 11 : 3;
-        } else if (    :DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)
-                   and config.isEnabled(Config.I_HEART_RATE)) {
-            idx = 11;
-        } else {
-            idx = 10;
         }
         return idx;
     }
@@ -462,8 +473,8 @@ class Indicators {
         return ret;
     }
 
-    // Draw alarm and notification symbols, return true if something was drawn, else false
-    private function drawSymbols(
+    // Draw alarm and notification icons, return true if something was drawn, else false
+    private function drawIcons(
         dc as Dc,
         xpos as Number, 
         ypos as Number, 
@@ -491,7 +502,7 @@ class Indicators {
         return ret;
     }
 
-    // Draw the Bluetooth symbol when the watch is connected to a phone, return true if something was drawn
+    // Draw the Bluetooth icon when the watch is connected to a phone, return true if something was drawn
     private function drawPhoneConnected(
         dc as Dc,
         xpos as Number, 
@@ -499,13 +510,13 @@ class Indicators {
         phoneConnected as Boolean
     ) as Boolean {
         var ret = false;
-        var symbolColor = Graphics.COLOR_BLUE;
+        var iconColor = Graphics.COLOR_BLUE;
         var fgColor = ClockView.colors[ClockView.colorMode][ClockView.C_FOREGROUND];
         if (Graphics.COLOR_LT_GRAY == fgColor or Graphics.COLOR_WHITE == fgColor) {
-            symbolColor = Graphics.COLOR_DK_BLUE;
+            iconColor = Graphics.COLOR_DK_BLUE;
         }
         if (phoneConnected) {
-            dc.setColor(symbolColor, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(iconColor, Graphics.COLOR_TRANSPARENT);
             dc.drawText(xpos, ypos, ClockView.iconFont as FontResource, "B" as String, Graphics.TEXT_JUSTIFY_CENTER);
             ret = true;
         }
@@ -547,33 +558,34 @@ class Indicators {
         return ret;
     }
 
-    // Draw the steps, return true if it was drawn
-    private function drawSteps(
+    // Draw a simple indicator, return true if it was drawn. Used for steps and calories.
+    private function drawIndicator(
         dc as Dc,
         xpos as Number, 
         ypos as Number,
-        steps as Number?
+        icon as String,
+        value as Number?
     ) as Boolean {
         var ret = false;
-        //steps = 123;
-        //steps = 87654;
-        //steps = 3456;
-        if (steps != null and steps > 0) {
+        //value = 123;
+        //value = 87654;
+        //value = 3456;
+        if (value != null and value > 0) {
             var font = Graphics.FONT_TINY;
             var fontHeight = Graphics.getFontHeight(font);
             var width = (fontHeight * 2.1).toNumber(); // Indicator width
-            var rt = steps.format("%d");
+            var rt = value.format("%d");
             dc.setColor(ClockView.colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                steps > 999 ? steps > 9999 ? xpos - width*22/32 : xpos - width*19/32 : xpos - width*16/32,
+                value > 999 ? value > 9999 ? xpos - width*22/32 : xpos - width*19/32 : xpos - width*16/32,
                 ypos - 1, 
                 ClockView.iconFont as FontResource, 
-                "F" as String, 
+                icon as String, 
                 Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
             );
             dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                steps > 999 ? steps > 9999 ? xpos - width*9/32 : xpos - width*6/32 : xpos - width*3/32, 
+                value > 999 ? value > 9999 ? xpos - width*9/32 : xpos - width*6/32 : xpos - width*3/32, 
                 ypos, 
                 font, 
                 rt,
