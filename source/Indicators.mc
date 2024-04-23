@@ -42,6 +42,8 @@ class Indicators {
     private var _batteryDrawn as Boolean = false;
     private var _iconsDrawn as Boolean = false;
     private var _stepsDrawn as Boolean = false;
+    (:modern) private var _hrat6 as Boolean = false;
+    (:modern) private var _dtat6 as Boolean = false;
 
     (:legacy) private var _width as Number;
     (:legacy) private var _height as Number;
@@ -68,9 +70,9 @@ class Indicators {
             [(width * 0.73).toNumber(), (height * 0.50).toNumber()], //  0: Heart rate indicator at 3 o'clock
             [(width * 0.48).toNumber(), (height * 0.75).toNumber()], //  1: Heart rate indicator at 6 o'clock
             [(width * 0.23).toNumber(), (height * 0.50).toNumber()], //  2: Recovery time indicator at 9 o'clock
-            [(width * 0.50).toNumber(), (height * 0.32).toNumber()], //  3: Battery level indicator at 12 o'clock with notifications
+            [(width * 0.50).toNumber(), (height * 0.30).toNumber()], //  3: Battery level indicator at 12 o'clock with notifications
             [(width * 0.50).toNumber(), (height * 0.25).toNumber()], //  4: Battery level indicator at 12 o'clock w/o notifications
-            [(width * 0.50).toNumber(), (height * 0.18).toNumber()], //  5: Alarms and notifications at 12 o'clock
+            [(width * 0.50).toNumber(), (height * 0.165).toNumber()], //  5: Alarms and notifications at 12 o'clock
             [0, 0],                                                  //  6: Phone connection indicator on the 6 o'clock tick mark (see updatePos() )
             [(width * 0.75).toNumber(), (height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
             [(width * 0.50).toNumber(), (height * 0.65).toNumber()], //  8: Date (weekday and day format) at 6 o'clock, w/o steps
@@ -78,7 +80,7 @@ class Indicators {
             [(width * 0.49).toNumber(), (height * 0.70).toNumber()], // 10: Steps at 6 o'clock, w/o date (weekday and day format)
             [(width * 0.49).toNumber(), (height * 0.65).toNumber()], // 11: Steps at 6 o'clock, with date (weekday and day format)
             [(width * 0.49).toNumber(), (height * 0.76).toNumber()], // 12: Heart rate indicator at 6 o'clock with steps
-            [(width * 0.49).toNumber(), (height * 0.41).toNumber()], // 13: Calories in upper half, with notifications and battery
+            [(width * 0.49).toNumber(), (height * 0.39).toNumber()], // 13: Calories in upper half, with notifications and battery
             [(width * 0.49).toNumber(), (height * 0.35).toNumber()]  // 14: Calories in upper half, w/o notifications but with battery
         ] as Array< Array<Number> >;
     }
@@ -216,6 +218,12 @@ class Indicators {
     // The modern version uses a helper function to determine if and where each indicator is drawn.
     (:modern) public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
         var activityInfo = ActivityMonitor.getInfo();
+
+        // Helper - is the heart rate indicator at 6 o'clock?
+        _hrat6 =     :DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)
+                 and config.isEnabled(Config.I_HEART_RATE);
+        // Helper - is the (long) date at 6 o'clock?
+        _dtat6 = :DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY);
 
         // Draw the move bar (at a fixed position, so we don't need getIndicatorPosition() here)
         if (config.isEnabled(Config.I_MOVE_BAR)) {
@@ -389,28 +397,32 @@ class Indicators {
                 break;
             case :footsteps:
                 if (config.isEnabled(Config.I_STEPS)) {
-                    if (   :DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)
-                        or (    :DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)
-                               and config.isEnabled(Config.I_HEART_RATE))) {
-                        idx = _batteryDrawn or config.isEnabled(Config.I_CALORIES) ? 11 : 3;
+                    if (_hrat6 or _dtat6) {
+                        idx = config.isEnabled(Config.I_CALORIES) or _batteryDrawn ? 11 : 3;
                     } else {
-                        idx = 10;
+                        idx = config.isEnabled(Config.I_CALORIES) and _batteryDrawn and _iconsDrawn ? 11 : 10;
                     }
                 }
                 break;
             case :calories:
                 if (config.isEnabled(Config.I_CALORIES)) {
                     if (!_stepsDrawn) { // place calories where steps would usually be
-                        if (   :DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)
-                            or (    :DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)
-                                and config.isEnabled(Config.I_HEART_RATE))) {
+                        if (_hrat6 or _dtat6) {
                             idx = _batteryDrawn ? 11 : 3;
                         } else {
                             idx = 10;
                         }
-                    } else { // if steps are drawn, place calories in the upper half of the screen
+                    } else {
+                        // if steps are drawn, (mostly) place calories in the upper half of the screen.
+                        // Do not squeeze the calories in the upper half (13), if battery and icons are
+                        // on and only the steps are at the bottom. Instead, draw calories below steps 
+                        // at the bottom then (12).
                         if (_batteryDrawn) {
-                            idx = _iconsDrawn ? 13 : 14;
+                            if (_iconsDrawn) {
+                                idx = _hrat6 or _dtat6 ? 13 : 12;
+                            } else {
+                                idx = 14;
+                            }
                         } else {
                             idx = 3;
                         }
