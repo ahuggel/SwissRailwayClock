@@ -33,10 +33,10 @@ import Toybox.WatchUi;
 // used to set an alarm on the fr955 looks great and would allow developers to build
 // apps with a more consistent look and feel.
 class TimePicker extends WatchUi.Picker {
-    //! Constructor
+    // Constructor
     public function initialize(id as Config.Item) {
         var title = new WatchUi.Text({
-            :text=>$.config.getName(id),
+            :text=>config.getName(id),
             :font=>Graphics.FONT_SMALL,
             :locX=>WatchUi.LAYOUT_HALIGN_CENTER,
             :locY=>WatchUi.LAYOUT_VALIGN_BOTTOM, 
@@ -57,7 +57,7 @@ class TimePicker extends WatchUi.Picker {
         if (!is24Hour) { factories[3] = new AmPmFactory(); }
 
         var defaults = new Array<Number>[is24Hour ? 3 : 4];
-        var value = $.config.getValue(id);
+        var value = config.getValue(id);
         defaults[0] = (value / 60).toNumber();
         defaults[1] = 0;
         defaults[2] = value % 60;
@@ -152,7 +152,7 @@ class TimePickerDelegate extends WatchUi.PickerDelegate {
 
     public function onAccept(values as Array) as Boolean {
         var pm = 4 == values.size() and 1 == values[3] as Number ? 12 : 0;
-        $.config.setValue(_id, (values[0] as Number + pm) * 60 + values[2] as Number);
+        config.setValue(_id, (values[0] as Number + pm) * 60 + values[2] as Number);
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         return true;
     }

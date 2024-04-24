@@ -24,7 +24,7 @@ import Toybox.Math;
 import Toybox.System;
 import Toybox.WatchUi;
 
-//! Implements the Swiss Railway Clock watch face for modern watches, using layers
+// Implements the Swiss Railway Clock watch face for modern watches, using layers
 class ClockView extends WatchUi.WatchFace {
 
     // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the colors Array.
@@ -76,11 +76,11 @@ class ClockView extends WatchUi.WatchFace {
 
     private var _indicators as Indicators;
 
-    //! Constructor. Initialize the variables for this view.
+    // Constructor. Initialize the variables for this view.
     public function initialize() {
         WatchFace.initialize();
 
-        if ($.config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
+        if (config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
         var deviceSettings = System.getDeviceSettings();
         _screenShape = deviceSettings.screenShape;
         var width = deviceSettings.screenWidth;
@@ -129,8 +129,7 @@ class ClockView extends WatchUi.WatchFace {
         _indicators = new Indicators(width, height, _screenCenter, _clockRadius);
     }
 
-    //! Load resources and configure the layout of the watchface for this device
-    //! @param dc Device context
+    // Load resources and configure the layout of the watchface for this device
     public function onLayout(dc as Dc) as Void {
         // Load the custom font with the symbols
         if (Graphics has :FontReference) {
@@ -203,8 +202,8 @@ class ClockView extends WatchUi.WatchFace {
         //System.println("INFO: Secondhand coords: ("+s[2]+","+s[3]+") ("+s[4]+","+s[5]+") ("+s[6]+","+s[7]+") ("+s[8]+","+s[9]+")");
     }
 
-    //! Called when this View is brought to the foreground. Restore the state of this view and
-    //! prepare it to be shown. This includes loading resources into memory.
+    // Called when this View is brought to the foreground. Restore the state of this view and
+    // prepare it to be shown. This includes loading resources into memory.
     public function onShow() as Void {
         // Assuming onShow() is triggered after any settings change, force the watch face
         // to be re-drawn in the next call to onUpdate(). This is to immediately react to
@@ -212,14 +211,14 @@ class ClockView extends WatchUi.WatchFace {
         _lastDrawnMin = -1;
     }
 
-    //! This method is called when the device re-enters sleep mode
+    // This method is called when the device re-enters sleep mode
     public function onEnterSleep() as Void {
         isAwake = false;
         _lastDrawnMin = -1; // Force the watchface to be re-drawn
         WatchUi.requestUpdate();
     }
 
-    //! This method is called when the device exits sleep mode
+    // This method is called when the device exits sleep mode
     public function onExitSleep() as Void {
         isAwake = true;
         _lastDrawnMin = -1; // Force the watchface to be re-drawn
@@ -237,19 +236,17 @@ class ClockView extends WatchUi.WatchFace {
         colors[M_LIGHT][C_BACKGROUND] = Graphics.COLOR_BLUE; // Make the issue visible
     }
 
-    //! Handle the update event. This function is called
-    //! 1) every second when the device is awake,
-    //! 2) every full minute in low-power mode, and
-    //! 3) it's also triggered when the device goes in or out of low-power mode
-    //!    (from onEnterSleep() and onExitSleep()).
-    //!
-    //! In low-power mode, onPartialUpdate() is called every second, except on the full minute,
-    //! and the system enforces a power budget, which the code must not exceed.
-    //!
-    //! The watchface is redrawn every full minute and when the watch enters or exists sleep.
-    //! During sleep, onPartialUpdate deletes and redraws the second hand.
-    //!
-    //! @param dc Device context
+    // Handle the update event. This function is called
+    // 1) every second when the device is awake,
+    // 2) every full minute in low-power mode, and
+    // 3) it's also triggered when the device goes in or out of low-power mode
+    //    (from onEnterSleep() and onExitSleep()).
+    //
+    // In low-power mode, onPartialUpdate() is called every second, except on the full minute,
+    // and the system enforces a power budget, which the code must not exceed.
+    //
+    // The watchface is redrawn every full minute and when the watch enters or exists sleep.
+    // During sleep, onPartialUpdate deletes and redraws the second hand.
     public function onUpdate(dc as Dc) as Void {
         dc.clearClip(); // Still needed as the settings menu messes with the clip
 
@@ -280,11 +277,11 @@ class ClockView extends WatchUi.WatchFace {
             colorMode = setColorMode(deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
 
             // Note: Whether 3D effects are supported by the device is also ensured by getValue().
-            _show3dEffects = $.config.isEnabled($.Config.I_3D_EFFECTS) and M_LIGHT == colorMode;
+            _show3dEffects = config.isEnabled(Config.I_3D_EFFECTS) and M_LIGHT == colorMode;
             _secondShadowLayer.setVisible(_show3dEffects and isAwake);
 
             // Handle the setting to disable the second hand in sleep mode after some time
-            var secondsOption = $.config.getOption($.Config.I_HIDE_SECONDS);
+            var secondsOption = config.getOption(Config.I_HIDE_SECONDS);
             _hideSecondHand = :HideSecondsAlways == secondsOption 
                 or (:HideSecondsInDm == secondsOption and M_DARK == colorMode);
             _secondLayer.setVisible(_sleepTimer != 0 or !_hideSecondHand);
@@ -360,9 +357,8 @@ class ClockView extends WatchUi.WatchFace {
         }
     }
 
-    //! Handle the partial update event. This function is called every second when the device is
-    //! in low-power mode. See onUpdate() for the full story.
-    //! @param dc Device context
+    // Handle the partial update event. This function is called every second when the device is
+    // in low-power mode. See onUpdate() for the full story.
     public function onPartialUpdate(dc as Dc) as Void {
         isAwake = false; // To state the obvious. Workaround for an Enduro 2 firmware bug.
         if (_doWireHands !=  0) {
@@ -493,11 +489,11 @@ class ClockView extends WatchUi.WatchFace {
         }
     }
 
-    //! Rotate the four corner coordinates of a polygon used to draw a watch hand or a tick mark.
-    //! 0 degrees is at the 12 o'clock position, and increases in the clockwise direction.
-    //! @param shape Index of the shape
-    //! @param angle Rotation angle in radians
-    //! @return The rotated coordinates of the polygon (watch hand or tick mark)
+    // Rotate the four corner coordinates of a polygon used to draw a watch hand or a tick mark.
+    // 0 degrees is at the 12 o'clock position, and increases in the clockwise direction.
+    // Param shape: Index of the shape
+    // Param angle: Rotation angle in radians
+    // Returns the rotated coordinates of the polygon (watch hand or tick mark)
     private function rotateCoords(shape as Shape, angle as Float) as Array< Array<Number> > {
         var sin = Math.sin(angle);
         var cos = Math.cos(angle);
@@ -539,11 +535,11 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     private function setColorMode(doNotDisturb as Boolean, hour as Number, min as Number) as Number {
-        var darkMode = $.config.getOption($.Config.I_DARK_MODE);
+        var darkMode = config.getOption(Config.I_DARK_MODE);
         var colorMode = M_LIGHT;
         if (:DarkModeScheduled == darkMode) {
             var time = hour * 60 + min;
-            if (time >= $.config.getValue($.Config.I_DM_ON) or time < $.config.getValue($.Config.I_DM_OFF)) {
+            if (time >= config.getValue(Config.I_DM_ON) or time < config.getValue(Config.I_DM_OFF)) {
                 colorMode = M_DARK;
             }
         } else if (   :On == darkMode
@@ -552,7 +548,7 @@ class ClockView extends WatchUi.WatchFace {
         }
         // In dark mode, adjust text color based on the contrast setting
         if (M_DARK == colorMode) {
-            var foregroundColor = $.config.getValue($.Config.I_DM_CONTRAST);
+            var foregroundColor = config.getValue(Config.I_DM_CONTRAST);
             colors[M_DARK][C_FOREGROUND] = foregroundColor;
             if (Graphics.COLOR_WHITE == foregroundColor) {
                 colors[M_DARK][C_TEXT] = Graphics.COLOR_LT_GRAY;
@@ -569,7 +565,7 @@ class ClockView extends WatchUi.WatchFace {
 class ClockDelegate extends WatchUi.WatchFaceDelegate {
     private var _view as ClockView;
 
-    //! Constructor
+    // Constructor
     public function initialize(view as ClockView) {
         WatchFaceDelegate.initialize();
         _view = view;
@@ -586,7 +582,6 @@ class ClockDelegate extends WatchUi.WatchFaceDelegate {
     // the system will stop invoking onPartialUpdate each second, so we notify the
     // view here to let the rendering methods know they should not be rendering a
     // second hand.
-    // @param powerInfo Information about the power budget
     public function onPowerBudgetExceeded(powerInfo as WatchFacePowerInfo) as Void {
         System.println("Average execution time: " + powerInfo.executionTimeAverage);
         System.println("Allowed execution time: " + powerInfo.executionTimeLimit);

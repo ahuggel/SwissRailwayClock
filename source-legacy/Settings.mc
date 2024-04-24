@@ -24,7 +24,7 @@ import Toybox.Lang;
 import Toybox.System;
 import Toybox.WatchUi;
 
-//! Global variable that keeps track of the settings and makes them available to the app.
+// Global variable that keeps track of the settings and makes them available to the app.
 var config as Config = new Config();
 
 // Global helper function to load string resources, just to keep the code simpler and see only one compiler warning. 
@@ -33,7 +33,7 @@ function getStringResource(id as Symbol) as String {
     return WatchUi.loadResource(Rez.Strings[id] as Symbol) as String;
 }
 
-// This class maintains application settings and synchronises them to persistent storage.
+// This class maintains all application settings and synchronises them to persistent storage.
 // Having a Setting class (hierarchy) to model individual settings and an array of these for the entire
 // collection would be better design. As objects are expensive in Monkey C, that approach uses way too 
 // much memory though.
@@ -113,7 +113,7 @@ class Config {
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
 
-    //! Constructor
+    // Constructor
     public function initialize() {
         _hasBatteryInDays = (System.Stats has :batteryInDays);
         // Read the configuration values from persistent storage 
@@ -145,14 +145,14 @@ class Config {
 
     // Return a string resource for the setting (the name of the setting).
     public function getName(id as Item) as String {
-        return $.getStringResource(_itemSymbols[id as Number]);
+        return getStringResource(_itemSymbols[id as Number]);
     }
 
     // Return a string resource for the current value of the setting (the name of the option).
     public function getLabel(id as Item) as String {
         var label = getOption(id);
         if (label instanceof Lang.Symbol) {
-            label = $.getStringResource(getOption(id) as Symbol);
+            label = getStringResource(getOption(id) as Symbol);
         }
         return label;
     }
@@ -220,107 +220,107 @@ class Config {
     }
 } // class Config
 
-//! The app settings menu
+// The app settings menu
 class SettingsMenu extends WatchUi.Menu2 {
-    //! Constructor
+    // Constructor
     public function initialize() {
         Menu2.initialize({:title=>Rez.Strings.Settings});
-        buildMenu($.Config.I_ALL);
+        buildMenu(Config.I_ALL);
     }
 
     // Called when the menu is brought into the foreground
     public function onShow() as Void {
         Menu2.onShow();
         // Update sub labels in case the dark mode on or off time changed
-        var idx = findItemById($.Config.I_DM_ON);
+        var idx = findItemById(Config.I_DM_ON);
         if (-1 != idx) {
             var menuItem = getItem(idx) as MenuItem;
-            menuItem.setSubLabel($.config.getLabel($.Config.I_DM_ON));
+            menuItem.setSubLabel(config.getLabel(Config.I_DM_ON));
         }
-        idx = findItemById($.Config.I_DM_OFF);
+        idx = findItemById(Config.I_DM_OFF);
         if (-1 != idx) {
             var menuItem = getItem(idx) as MenuItem;
-            menuItem.setSubLabel($.config.getLabel($.Config.I_DM_OFF));
+            menuItem.setSubLabel(config.getLabel(Config.I_DM_OFF));
         }
     }
 
-    //! Build the menu from a given menu item onwards
+    // Build the menu from a given menu item onwards
     public function buildMenu(id as Config.Item) as Void {
         switch (id) {
-            case $.Config.I_ALL:
-                addMenuItem($.Config.I_BATTERY);
+            case Config.I_ALL:
+                addMenuItem(Config.I_BATTERY);
                 // Fallthrough
-            case $.Config.I_BATTERY:
+            case Config.I_BATTERY:
                 // Add menu items for the battery label options only if battery is not set to "Off"
-                if ($.config.isEnabled($.Config.I_BATTERY)) {
-                    addToggleMenuItem($.Config.I_BATTERY_PCT);
-                    if ($.config.hasBatteryInDays()) { 
-                        addToggleMenuItem($.Config.I_BATTERY_DAYS); 
+                if (config.isEnabled(Config.I_BATTERY)) {
+                    addToggleMenuItem(Config.I_BATTERY_PCT);
+                    if (config.hasBatteryInDays()) { 
+                        addToggleMenuItem(Config.I_BATTERY_DAYS); 
                     }
                 }
-                addMenuItem($.Config.I_DATE_DISPLAY);
-                addToggleMenuItem($.Config.I_ALARMS);
-                addToggleMenuItem($.Config.I_NOTIFICATIONS);
-                addToggleMenuItem($.Config.I_CONNECTED);
-                addToggleMenuItem($.Config.I_HEART_RATE);
-                addToggleMenuItem($.Config.I_RECOVERY_TIME);
-                addToggleMenuItem($.Config.I_STEPS);
-                addMenuItem($.Config.I_DARK_MODE);
+                addMenuItem(Config.I_DATE_DISPLAY);
+                addToggleMenuItem(Config.I_ALARMS);
+                addToggleMenuItem(Config.I_NOTIFICATIONS);
+                addToggleMenuItem(Config.I_CONNECTED);
+                addToggleMenuItem(Config.I_HEART_RATE);
+                addToggleMenuItem(Config.I_RECOVERY_TIME);
+                addToggleMenuItem(Config.I_STEPS);
+                addMenuItem(Config.I_DARK_MODE);
                 //Fallthrough
-            case $.Config.I_DARK_MODE:
+            case Config.I_DARK_MODE:
                 // Add menu items for the dark mode on and off times only if dark mode is set to "Scheduled"
-                if (:DarkModeScheduled == $.config.getOption($.Config.I_DARK_MODE)) {
-                    addMenuItem($.Config.I_DM_ON);
-                    addMenuItem($.Config.I_DM_OFF);
+                if (:DarkModeScheduled == config.getOption(Config.I_DARK_MODE)) {
+                    addMenuItem(Config.I_DM_ON);
+                    addMenuItem(Config.I_DM_OFF);
                 }
-                addMenuItem($.Config.I_HIDE_SECONDS);
-                Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.Done, Rez.Strings.DoneLabel, $.Config.I_DONE, {}));
+                addMenuItem(Config.I_HIDE_SECONDS);
+                Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.Done, Rez.Strings.DoneLabel, Config.I_DONE, {}));
                 break;
         }
     }
 
-    //! Delete the menu from a given menu item onwards
+    // Delete the menu from a given menu item onwards
     public function deleteMenu(id as Config.Item) as Void {
         switch (id) {
-            case $.Config.I_BATTERY:
-                deleteAnyItem($.Config.I_BATTERY_PCT);
-                deleteAnyItem($.Config.I_BATTERY_DAYS);
-                deleteAnyItem($.Config.I_DATE_DISPLAY);
-                deleteAnyItem($.Config.I_ALARMS);
-                deleteAnyItem($.Config.I_NOTIFICATIONS);
-                deleteAnyItem($.Config.I_CONNECTED);
-                deleteAnyItem($.Config.I_HEART_RATE);
-                deleteAnyItem($.Config.I_RECOVERY_TIME);
-                deleteAnyItem($.Config.I_STEPS);
-                deleteAnyItem($.Config.I_DARK_MODE);
+            case Config.I_BATTERY:
+                deleteAnyItem(Config.I_BATTERY_PCT);
+                deleteAnyItem(Config.I_BATTERY_DAYS);
+                deleteAnyItem(Config.I_DATE_DISPLAY);
+                deleteAnyItem(Config.I_ALARMS);
+                deleteAnyItem(Config.I_NOTIFICATIONS);
+                deleteAnyItem(Config.I_CONNECTED);
+                deleteAnyItem(Config.I_HEART_RATE);
+                deleteAnyItem(Config.I_RECOVERY_TIME);
+                deleteAnyItem(Config.I_STEPS);
+                deleteAnyItem(Config.I_DARK_MODE);
                 // Fallthrough
-            case $.Config.I_DARK_MODE:
+            case Config.I_DARK_MODE:
                 // Delete all dark mode and following menu items
-                deleteAnyItem($.Config.I_DM_ON);
-                deleteAnyItem($.Config.I_DM_OFF);
-                deleteAnyItem($.Config.I_HIDE_SECONDS);
-                deleteAnyItem($.Config.I_DONE);
+                deleteAnyItem(Config.I_DM_ON);
+                deleteAnyItem(Config.I_DM_OFF);
+                deleteAnyItem(Config.I_HIDE_SECONDS);
+                deleteAnyItem(Config.I_DONE);
                 break;
         }
     }
 
-    //! Add a MenuItem to the menu.
+    // Add a MenuItem to the menu.
     private function addMenuItem(item as Config.Item) as Void {
-        Menu2.addItem(new WatchUi.MenuItem($.config.getName(item), $.config.getLabel(item), item, {}));
+        Menu2.addItem(new WatchUi.MenuItem(config.getName(item), config.getLabel(item), item, {}));
     }
 
-    //! Add a ToggleMenuItem to the menu.
+    // Add a ToggleMenuItem to the menu.
     private function addToggleMenuItem(item as Config.Item) as Void {
         Menu2.addItem(new WatchUi.ToggleMenuItem(
-            $.config.getName(item), 
+            config.getName(item), 
             {:enabled=>Rez.Strings.On, :disabled=>Rez.Strings.Off},
             item, 
-            $.config.isEnabled(item), 
+            config.isEnabled(item), 
             {}
         ));
     }
 
-    //! Delete any menu item. Returns true if an item was deleted, else false
+    // Delete any menu item. Returns true if an item was deleted, else false
     private function deleteAnyItem(item as Config.Item) as Boolean {
         var idx = findItemById(item);
         var del = -1 != idx;
@@ -329,11 +329,11 @@ class SettingsMenu extends WatchUi.Menu2 {
     }
 } // class SettingsMenu
 
-//! Input handler for the app settings menu
+// Input handler for the app settings menu
 class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     private var _menu as SettingsMenu;
 
-    //! Constructor
+    // Constructor
     public function initialize(menu as SettingsMenu) {
         Menu2InputDelegate.initialize();
         _menu = menu;
@@ -346,16 +346,16 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     // Handle a menu item being selected
     public function onSelect(menuItem as MenuItem) as Void {
         var id = menuItem.getId() as Config.Item;
-        if ($.Config.I_DONE == id) {
+        if (Config.I_DONE == id) {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-        } else if (id >= $.Config.I_ALARMS) { // toggle items
+        } else if (id >= Config.I_ALARMS) { // toggle items
             // Toggle the two possible configuration values
-            $.config.setNext(id);
-        } else if (id < $.Config.I_DM_ON) { // list items
+            config.setNext(id);
+        } else if (id < Config.I_DM_ON) { // list items
             // Advance to the next option and show the selected option as the sub label
-            $.config.setNext(id);
-            menuItem.setSubLabel($.config.getLabel(id));
-            if ($.Config.I_BATTERY == id or $.Config.I_DARK_MODE == id) {
+            config.setNext(id);
+            menuItem.setSubLabel(config.getLabel(id));
+            if (Config.I_BATTERY == id or Config.I_DARK_MODE == id) {
                 // Delete all the following menu items, rebuild the menu with only the items required
                 _menu.deleteMenu(id);
                 _menu.buildMenu(id);
