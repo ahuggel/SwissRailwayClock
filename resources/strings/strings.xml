@@ -16,6 +16,8 @@
     <string id="DarkMode">Dark Mode</string>
     <string id="DmContrast">Contrast</string>
     <string id="HideSeconds">Seconds Disappear</string>
+    <string id="AccentColor">Seconds Color</string>
+    <string id="AccentCycle">Change Color</string>
     <string id="Shadows">3D Effects</string>
     <string id="DmOn">Turn On</string>
     <string id="DmOff">Turn Off</string>
@@ -40,6 +42,16 @@
     <string id="HideSecondsInDm">In Dark Mode</string>
     <string id="HideSecondsAlways">Always</string>
     <string id="HideSecondsNever">Never</string>
+    <string id="AccentRed">Red</string>
+    <string id="AccentYellow">Yellow</string>
+    <string id="AccentLtGreen">Light Green</string>
+    <string id="AccentGreen">Green</string>
+    <string id="AccentBlue">Blue</string>
+    <string id="AccentPurple">Purple</string>
+    <string id="AccentPink">Pink</string>
+    <string id="Hourly">Hourly</string>
+    <string id="EveryMinute">Every Minute</string>
+    <string id="EverySecond">Every Second</string>
     <string id="DoneLabel">Exit the Menu</string>
 
     <string id="DayUnit">d</string>

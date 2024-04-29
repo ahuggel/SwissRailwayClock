@@ -16,6 +16,8 @@
     <string id="DarkMode">Dunkelmodus</string>
     <string id="DmContrast">Kontrast</string>
     <string id="HideSeconds">Sekunden ausblenden</string>
+    <string id="AccentColor">Sekunden Farbe</string>
+    <string id="AccentCycle">Farbe wechseln</string>
     <string id="Shadows">3D Effekt</string>
     <string id="DmOn">Einschalten</string>
     <string id="DmOff">Ausschalten</string>
@@ -40,6 +42,16 @@
     <string id="HideSecondsInDm">Im Dunkelmodus</string>
     <string id="HideSecondsAlways">Immer</string>
     <string id="HideSecondsNever">Nie</string>
+    <string id="AccentRed">Rot</string>
+    <string id="AccentYellow">Gelb</string>
+    <string id="AccentLtGreen">Hellgrün</string>
+    <string id="AccentGreen">Grün</string>
+    <string id="AccentBlue">Blau</string>
+    <string id="AccentPurple">Purpur</string>
+    <string id="AccentPink">Pink</string>
+    <string id="Hourly">Stündlich</string>
+    <string id="EveryMinute">Jede Minute</string>
+    <string id="EverySecond">Jede Sekunde</string>
     <string id="DoneLabel">Menü verlassen</string>
 
     <string id="DayUnit">T</string>
