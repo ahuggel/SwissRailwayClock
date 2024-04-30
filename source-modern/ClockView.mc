@@ -27,21 +27,33 @@ import Toybox.WatchUi;
 // Implements the Swiss Railway Clock watch face for modern watches, using layers
 class ClockView extends WatchUi.WatchFace {
 
-    // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the colors Array.
     enum { M_LIGHT, M_DARK } // Color modes
-    enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
+    enum { C_FOREGROUND, C_BACKGROUND, C_TEXT } // Indexes into the color arrays
 
     // Things we want to access from the outside. By convention, write-access is only from within ClockView.
     static public var iconFont as FontResource?;
     static public var colorMode as Number = M_LIGHT;
     static public var colors as Array< Array<Number> > = [
-        [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED, Graphics.COLOR_DK_GRAY],
-        [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_DK_GRAY]
+        [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_DK_GRAY],
+        [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_DK_GRAY]
     ] as Array< Array<Number> >;
     static public var isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
 
     private const TWO_PI as Float = 2 * Math.PI;
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
+
+    // Colors for the second hand, in pairs with one color for each color mode
+    private var _accentColors as Array<Number> = [0xFF0000, 0xff0055, // red 
+                                                  0xffaa00, 0xffaa55, // orange
+                                                  0xffff00, 0xffff55, // yellow
+                                                  0x55ff00, 0x55ff00, // light green
+                                                  0x00AA00, 0x00aa55, // green
+                                                  0x00ffff, 0x55aaff, // light blue
+                                                  0x0000FF, 0x00AAFF, // blue
+                                                  0xaa00aa, 0xaa00ff, // purple
+                                                  0xff00aa, 0xff00aa  // pink
+    ] as Array<Number>;
+    private var _accentColor as Number = 0xFF0000;
 
     // List of watchface shapes, used as indexes. Review optimizations in calcSecondData() et al. before changing the Shape enum.
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
@@ -352,7 +364,15 @@ class ClockView extends WatchUi.WatchFace {
                 _secondShadowDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
                 _secondShadowDc.clear();
             }
-            // Draw the second hand and its shadow
+            // Determine the color of the second hand and draw it and its shadow
+            var aci = 0;
+            if (config.isEnabled(Config.I_ACCENT_CYCLE)) {
+                var cnt = [0, clockTime.hour, clockTime.min, clockTime.sec][config.getValue(Config.I_ACCENT_CYCLE)];
+                aci = cnt % (_accentColors.size() / 2);
+            } else {
+                aci = config.getValue(Config.I_ACCENT_COLOR);
+            }
+            _accentColor = _accentColors[M_LIGHT == colorMode ? 2 * aci : 2 * aci + 1];
             drawSecondHand(_secondDc, clockTime.sec);
         }
     }
@@ -424,7 +444,7 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         // Draw the second hand
-        dc.setColor(colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_RED /* colors[colorMode][C_SECONDS] */, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_accentColor, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(coords);
         dc.fillCircle(sd[0], sd[1], _secondCircleRadius);
     }

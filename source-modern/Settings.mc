@@ -44,6 +44,8 @@ class Config {
         I_DATE_DISPLAY, 
         I_DARK_MODE, 
         I_HIDE_SECONDS, 
+        I_ACCENT_COLOR,
+        I_ACCENT_CYCLE,
         I_DM_CONTRAST,
         I_DM_ON, // the first item that is not a list item
         I_DM_OFF, 
@@ -70,6 +72,8 @@ class Config {
         :DateDisplay, 
         :DarkMode, 
         :HideSeconds, 
+        :AccentColor, 
+        :AccentCycle, 
         :DmContrast, 
         :DmOn, 
         :DmOff,
@@ -94,6 +98,8 @@ class Config {
         "dd", // I_DATE_DISPLAY
         "dm", // I_DARK_MODE
         "hs", // I_HIDE_SECONDS
+        "ac", // I_ACCENT_COLOR
+        "ay", // I_ACCENT_CYCLE
         "dc", // I_DM_CONTRAST
         "dn", // I_DM_ON
         "df", // I_DM_OFF
@@ -117,6 +123,8 @@ class Config {
         [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay], // I_DATE_DISPLAY
         [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
         [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever], // I_HIDE_SECONDS
+        [:AccentRed, :AccentOrange, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentLtBlue, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
+        [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
         [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite] // I_DM_CONTRAST
      ] as Array< Array<Symbol> >;
 
@@ -313,6 +321,8 @@ class SettingsMenu extends WatchUi.Menu2 {
                     ));
                 }
                 addMenuItem(Config.I_HIDE_SECONDS);
+                addMenuItem(Config.I_ACCENT_COLOR);
+                addMenuItem(Config.I_ACCENT_CYCLE);
                 if (config.hasAlpha()) {
                     addToggleMenuItem(Config.I_3D_EFFECTS); 
                 }
@@ -344,6 +354,8 @@ class SettingsMenu extends WatchUi.Menu2 {
                 deleteAnyItem(Config.I_DM_OFF);
                 deleteAnyItem(Config.I_DM_CONTRAST);
                 deleteAnyItem(Config.I_HIDE_SECONDS);
+                deleteAnyItem(Config.I_ACCENT_COLOR);
+                deleteAnyItem(Config.I_ACCENT_CYCLE);
                 deleteAnyItem(Config.I_3D_EFFECTS);
                 deleteAnyItem(Config.I_DONE);
                 break;
