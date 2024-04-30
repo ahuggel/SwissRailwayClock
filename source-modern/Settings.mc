@@ -123,7 +123,7 @@ class Config {
         [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay], // I_DATE_DISPLAY
         [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
         [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever], // I_HIDE_SECONDS
-        [:AccentRed, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
+        [:AccentRed, :AccentOrange, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentLtBlue, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
         [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
         [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite] // I_DM_CONTRAST
      ] as Array< Array<Symbol> >;

@@ -43,9 +43,11 @@
     <string id="HideSecondsAlways">Always</string>
     <string id="HideSecondsNever">Never</string>
     <string id="AccentRed">Red</string>
+    <string id="AccentOrange">Orange</string>
     <string id="AccentYellow">Yellow</string>
     <string id="AccentLtGreen">Light Green</string>
     <string id="AccentGreen">Green</string>
+    <string id="AccentLtBlue">Light Blue</string>
     <string id="AccentBlue">Blue</string>
     <string id="AccentPurple">Purple</string>
     <string id="AccentPink">Pink</string>
