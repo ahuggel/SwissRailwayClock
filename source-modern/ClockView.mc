@@ -44,11 +44,11 @@ class ClockView extends WatchUi.WatchFace {
 
     // Colors for the second hand, in pairs with one color for each color mode
     private var _accentColors as Array<Number> = [0xFF0000, 0xff0055, // red 
-                                                  0xff5500, 0xffaa55, // orange
+                                                  0xff5500, 0xffaa00, // orange
                                                   0xffff00, 0xffff55, // yellow
                                                   0x55ff00, 0x55ff00, // light green
                                                   0x00AA00, 0x00aa55, // green
-                                                  0x00ffff, 0x55aaff, // light blue
+                                                  0x00ffff, 0x55ffff, // light blue
                                                   0x0000FF, 0x00AAFF, // blue
                                                   0xaa00aa, 0xaa00ff, // purple
                                                   0xff00aa, 0xff00aa  // pink
