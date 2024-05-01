@@ -348,7 +348,7 @@ class ClockView extends WatchUi.WatchFace {
             }
         } // if (_lastDrawnMin != clockTime.min)
 
-        if (isAwake or (_doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand))) {
+        if (isAwake or _doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand)) {
             // Draw the heart rate indicator, every time onUpdate() is called
             _indicators.drawHeartRate(_backgroundDc);
 

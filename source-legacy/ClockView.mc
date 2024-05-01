@@ -270,7 +270,7 @@ class ClockView extends WatchUi.WatchFace {
         // Output the offscreen buffer to the main display
         dc.drawBitmap(0, 0, _offscreenBuffer);
 
-        if (isAwake or (_doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand))) {
+        if (isAwake or _doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand)) {
             // Draw the second hand, directly on the screen
             drawSecondHand(dc, clockTime.sec); 
         }
