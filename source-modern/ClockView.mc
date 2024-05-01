@@ -347,12 +347,7 @@ class ClockView extends WatchUi.WatchFace {
             }
         } // if (_lastDrawnMin != clockTime.min)
 
-        var doIt = true;
-        if (!isAwake) {
-            if (!_doPartialUpdates) { doIt = false; }
-            else if (_hideSecondHand and 0 == _sleepTimer) { doIt = false; }
-        }
-        if (doIt) {
+        if (isAwake or (_doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand))) {
             // Draw the heart rate indicator, every time onUpdate() is called
             _indicators.drawHeartRate(_backgroundDc);
 
@@ -603,9 +598,6 @@ class ClockDelegate extends WatchUi.WatchFaceDelegate {
     // view here to let the rendering methods know they should not be rendering a
     // second hand.
     public function onPowerBudgetExceeded(powerInfo as WatchFacePowerInfo) as Void {
-        System.println("Average execution time: " + powerInfo.executionTimeAverage);
-        System.println("Allowed execution time: " + powerInfo.executionTimeLimit);
-
         _view.stopPartialUpdates();
     }
 }
