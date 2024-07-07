@@ -409,7 +409,7 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     // Draw the edges of a polygon
-    private function drawPolygon(dc as Dc, pts as Array< Array<Numeric> >) as Void {
+    private function drawPolygon(dc as Dc, pts as Array<Point2D>) as Void {
         var size = pts.size();
         for (var i = 0; i < size; i++) {
             var startPoint = pts[i];
@@ -423,14 +423,14 @@ class ClockView extends WatchUi.WatchFace {
     private function drawSecondHand(dc as Dc, second as Number) as Void {
         // Use the pre-calculated numbers for the current second
         var sd = _secondData[second];
-        var coords = [[sd[2], sd[3]], [sd[4], sd[5]], [sd[6], sd[7]], [sd[8], sd[9]]] as Array< Array<Number> >;
+        var coords = [[sd[2], sd[3]], [sd[4], sd[5]], [sd[6], sd[7]], [sd[8], sd[9]]];
 
         // Set the clipping region
         dc.setClip(sd[10], sd[11], sd[12], sd[13]);
 
         if (isAwake and _show3dEffects and 0 == _doWireHands) {
             // Set the clipping region of the shadow by moving the clipping region of the second hand
-            var sc = shadowCoords([[sd[0], sd[1]], [sd[10], sd[11]]] as Array< Array<Number> >, 9);
+            var sc = shadowCoords([[sd[0], sd[1]], [sd[10], sd[11]]], 9);
             _secondShadowDc.setClip(sc[1][0], sc[1][1], sd[12], sd[13]);
 
             // Draw the shadow of the second hand
@@ -510,7 +510,7 @@ class ClockView extends WatchUi.WatchFace {
     // Param shape: Index of the shape
     // Param angle: Rotation angle in radians
     // Returns the rotated coordinates of the polygon (watch hand or tick mark)
-    private function rotateCoords(shape as Shape, angle as Float) as Array< Array<Number> > {
+    private function rotateCoords(shape as Shape, angle as Float) as Array<Point2D> {
         var sin = Math.sin(angle);
         var cos = Math.cos(angle);
         // Optimized: Expanded the loop and avoid repeating the same operations (Thanks Inigo Tolosa for the tip!)
@@ -533,13 +533,13 @@ class ClockView extends WatchUi.WatchFace {
         var x3 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
         var y3 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
 
-        return [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
+        return [[x0, y0], [x1, y1], [x2, y2], [x3, y3]];
     }
 
     // TODO: move the shadow shapes by a percentage instead of a number of pixels
-    private function shadowCoords(coords as Array< Array<Number> >, len as Number) as Array< Array<Number> > {
+    private function shadowCoords(coords as Array<Point2D>, len as Number) as Array<Point2D> {
         var size = coords.size();
-        var result = new Array< Array<Number> >[size];
+        var result = new Array<Point2D>[size];
         // Direction to move points, clockwise from 12 o'clock
         var angle = 3 * Math.PI / 4;
         var dx = (Math.sin(angle) * len + 0.5).toNumber();

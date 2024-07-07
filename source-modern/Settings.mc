@@ -29,7 +29,7 @@ var config as Config = new Config();
 
 // Global helper function to load string resources, just to keep the code simpler and see only one compiler warning. 
 function getStringResource(id as Symbol) as String {
-    return WatchUi.loadResource(Rez.Strings[id] as Symbol) as String;
+    return WatchUi.loadResource(Rez.Strings[id] as ResourceId) as String;
 }
 
 // This class maintains all application settings and synchronises them to persistent storage.
@@ -453,6 +453,6 @@ class MenuIcon extends WatchUi.Drawable {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
         dc.setColor(_color, _color);
-        dc.fillPolygon([[0,0], [width, height], [width, 0]] as Array< Array<Number> >);
+        dc.fillPolygon([[0,0], [width, height], [width, 0]]);
     }
 }

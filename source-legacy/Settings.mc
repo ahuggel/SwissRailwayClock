@@ -30,7 +30,7 @@ var config as Config = new Config();
 // Global helper function to load string resources, just to keep the code simpler and see only one compiler warning. 
 // Decided not to cache the strings.
 function getStringResource(id as Symbol) as String {
-    return WatchUi.loadResource(Rez.Strings[id] as Symbol) as String;
+    return WatchUi.loadResource(Rez.Strings[id] as ResourceId) as String;
 }
 
 // This class maintains all application settings and synchronises them to persistent storage.

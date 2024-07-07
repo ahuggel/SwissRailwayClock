@@ -39,18 +39,18 @@ class SwissRailwayClockApp extends Application.AppBase {
 
     // Return the initial view and delegate of the application 
     // (WatchFaceDelegate is available since API Level 2.3.0 )
-    public function getInitialView() as Array<Views or InputDelegates>? {
+    public function getInitialView() as [ Views ] or [ Views, InputDelegates ] {
         var view = new ClockView();
         var delegate = new ClockDelegate(view);
-        return [view, delegate] as Array<Views or InputDelegates>;
+        return [view, delegate];
     }
 
     // Return the settings view and delegate
     // @return Array Pair [View, Delegate]
-    public function getSettingsView() as Array<Views or InputDelegates>? {
+    public function getSettingsView() as [ Views ] or [ Views, InputDelegates ] or Null {
         var view = new SettingsMenu();
         var delegate = new SettingsMenuDelegate(view);
-        return [view, delegate] as Array<Views or InputDelegates>;
+        return [view, delegate];
     }
 }
 

@@ -661,8 +661,8 @@ class Indicators {
         radius as Numeric, 
         width as Numeric, 
         angle as Numeric
-    ) as Array< Array<Number> > {
-        var pts = new Array< Array<Number> >[4];
+    ) as Array<Point2D> {
+        var pts = new Array<Point2D>[4];
         var r = (radius - width/2).toNumber();
         var beta = (180 - angle).toFloat() / 180.0 * Math.PI;
         var cos = Math.cos(beta);
