@@ -41,18 +41,18 @@ class Indicators {
     private var _batteryLevel as BatteryLevel;
     private var _batteryDrawn as Boolean = false;
     private var _iconsDrawn as Boolean = false;
+
     (:modern) private var _stepsDrawn as Boolean = false;
     (:modern) private var _hrat6 as Boolean = false;
     (:modern) private var _dtat6 as Boolean = false;
-
-    (:legacy) private var _width as Number;
-    (:legacy) private var _height as Number;
-    (:legacy) private var _phoneConnectedY as Number = 0;
-
     (:modern) private var _screenCenter as Array<Number>;
     (:modern) private var _clockRadius as Number;
     (:modern) private var _drawHeartRate as Number = -1;
     (:modern) private var _pos as Array< Array<Number> >; // Positions (x,y) of the indicators
+
+    (:legacy) private var _width as Number;
+    (:legacy) private var _height as Number;
+    (:legacy) private var _phoneConnectedY as Number = 0;
 
     // Constructor
     (:modern) public function initialize(
