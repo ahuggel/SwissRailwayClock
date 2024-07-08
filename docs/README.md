@@ -1,6 +1,6 @@
 ![image](https://raw.githubusercontent.com/ahuggel/SwissRailwayClock/main/docs/WatchFace.png)
 
-<img src="https://raw.githubusercontent.com/ahuggel/SwissRailwayClock/main/docs/configurable-clutter.gif" width="2120" height="768">
+![image](https://raw.githubusercontent.com/ahuggel/SwissRailwayClock/main/docs/configurable-clutter.gif)
 
 # Swiss Railway Clock - An analog watchface for Garmin smartwatches
 
