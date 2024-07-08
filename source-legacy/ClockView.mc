@@ -304,7 +304,7 @@ class ClockView extends WatchUi.WatchFace {
     private function drawSecondHand(dc as Dc, second as Number) as Void {
         // Use the pre-calculated numbers for the current second
         var sd = _secondData[second];
-        var coords = [[sd[2], sd[3]], [sd[4], sd[5]], [sd[6], sd[7]], [sd[8], sd[9]]] as Array< Array<Number> >;
+        var coords = [[sd[2], sd[3]], [sd[4], sd[5]], [sd[6], sd[7]], [sd[8], sd[9]]] as Array<Point2D>;
 
         // Set the clipping region
         dc.setClip(sd[10], sd[11], sd[12], sd[13]);
@@ -401,7 +401,7 @@ class ClockView extends WatchUi.WatchFace {
         var y2 = (_coords[36] * sin + _coords[37] * cos + offsetY).toNumber();
         var x3 = (_coords[38] * cos - _coords[39] * sin + offsetX).toNumber();
         var y3 = (_coords[38] * sin + _coords[39] * cos + offsetY).toNumber();
-        var coords = [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
+        var coords = [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array<Point2D>;
 
         // Set the clipping region
         var xx1 = x - _secondCircleRadius;
@@ -449,7 +449,7 @@ class ClockView extends WatchUi.WatchFace {
     // Param shape: Index of the shape
     // Param angle: Rotation angle in radians
     // Returns the rotated coordinates of the polygon (watch hand or tick mark)
-    private function rotateCoords(shape as Shape, angle as Float) as Array< Array<Number> > {
+    private function rotateCoords(shape as Shape, angle as Float) as Array<Point2D> {
         var sin = Math.sin(angle);
         var cos = Math.cos(angle);
         // Optimized: Expanded the loop and avoid repeating the same operations (Thanks Inigo Tolosa for the tip!)
@@ -472,7 +472,7 @@ class ClockView extends WatchUi.WatchFace {
         var x3 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
         var y3 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
 
-        return [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array< Array<Number> >;
+        return [[x0, y0], [x1, y1], [x2, y2], [x3, y3]];
     }
 
     private function setColorMode(doNotDisturb as Boolean, hour as Number, min as Number) as Number {

@@ -29,7 +29,7 @@ var config as Config = new Config();
 
 // Global helper function to load string resources, just to keep the code simpler and see only one compiler warning. 
 function getStringResource(id as Symbol) as String {
-    return WatchUi.loadResource(Rez.Strings[id] as Symbol) as String;
+    return WatchUi.loadResource(Rez.Strings[id] as ResourceId) as String;
 }
 
 // This class maintains all application settings and synchronises them to persistent storage.
@@ -171,7 +171,7 @@ class Config {
 
     // Return a string resource for the setting (the name of the setting).
     public function getName(id as Item) as String {
-        return getStringResource(_itemSymbols[id as Number]);
+        return getStringResource(_itemSymbols[id]);
     }
 
     // Return a string resource for the current value of the setting (the name of the option).
@@ -187,11 +187,11 @@ class Config {
     // or the value formatted as a time string.
     public function getOption(id as Item) as Symbol or String {
         var ret;
-        var value = _values[id as Number];
+        var value = _values[id];
         if (id >= I_ALARMS) { // toggle items
             ret = isEnabled(id) ? :On : :Off;            
         } else if (id < I_DM_ON) { // list items
-            var opts = _options[id as Number] as Array<Symbol>;
+            var opts = _options[id] as Array<Symbol>;
             ret = opts[value];
         } else { // if (I_DM_ON == id or I_DM_OFF == id) {
             var pm = "";
@@ -215,12 +215,12 @@ class Config {
         } else if (I_HIDE_SECONDS == id) {
             disabled = 2;
         }
-        return disabled != _values[id as Number];
+        return disabled != _values[id];
     }
 
     // Return the current value of the specified setting.
     public function getValue(id as Item) as Number {
-        var value = _values[id as Number];
+        var value = _values[id];
         if (I_DM_CONTRAST == id) {
             value = ([Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>)[value];
         }
@@ -231,17 +231,17 @@ class Config {
     public function setNext(id as Item) as Void {
         var d = 2; // toggle items have two options
         if (id < I_DM_ON) { // for list items get the number of options
-            d = _options[id as Number].size();
+            d = _options[id].size();
         }
-        var value = (_values[id as Number] + 1) % d;
-        _values[id as Number] = value;
-        Storage.setValue(_itemLabels[id as Number], value);
+        var value = (_values[id] + 1) % d;
+        _values[id] = value;
+        Storage.setValue(_itemLabels[id], value);
     }
 
     // Set the value of a setting. Only used for I_DM_ON and I_DM_OFF.
     public function setValue(id as Item, value as Number) as Void {
-        _values[id as Number] = value;
-        Storage.setValue(_itemLabels[id as Number], value);
+        _values[id] = value;
+        Storage.setValue(_itemLabels[id], value);
     }
 
     // Returns true if the device supports an alpha channel, false if not.
@@ -453,6 +453,6 @@ class MenuIcon extends WatchUi.Drawable {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
         dc.setColor(_color, _color);
-        dc.fillPolygon([[0,0], [width, height], [width, 0]] as Array< Array<Number> >);
+        dc.fillPolygon([[0,0], [width, height], [width, 0]]);
     }
 }

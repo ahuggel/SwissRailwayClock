@@ -41,18 +41,18 @@ class Indicators {
     private var _batteryLevel as BatteryLevel;
     private var _batteryDrawn as Boolean = false;
     private var _iconsDrawn as Boolean = false;
+
     (:modern) private var _stepsDrawn as Boolean = false;
     (:modern) private var _hrat6 as Boolean = false;
     (:modern) private var _dtat6 as Boolean = false;
-
-    (:legacy) private var _width as Number;
-    (:legacy) private var _height as Number;
-    (:legacy) private var _phoneConnectedY as Number = 0;
-
     (:modern) private var _screenCenter as Array<Number>;
     (:modern) private var _clockRadius as Number;
     (:modern) private var _drawHeartRate as Number = -1;
     (:modern) private var _pos as Array< Array<Number> >; // Positions (x,y) of the indicators
+
+    (:legacy) private var _width as Number;
+    (:legacy) private var _height as Number;
+    (:legacy) private var _phoneConnectedY as Number = 0;
 
     // Constructor
     (:modern) public function initialize(
@@ -661,8 +661,8 @@ class Indicators {
         radius as Numeric, 
         width as Numeric, 
         angle as Numeric
-    ) as Array< Array<Number> > {
-        var pts = new Array< Array<Number> >[4];
+    ) as Array<Point2D> {
+        var pts = new Array<Point2D>[4];
         var r = (radius - width/2).toNumber();
         var beta = (180 - angle).toFloat() / 180.0 * Math.PI;
         var cos = Math.cos(beta);
