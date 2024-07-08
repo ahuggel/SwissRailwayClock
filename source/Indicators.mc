@@ -41,7 +41,7 @@ class Indicators {
     private var _batteryLevel as BatteryLevel;
     private var _batteryDrawn as Boolean = false;
     private var _iconsDrawn as Boolean = false;
-    private var _stepsDrawn as Boolean = false;
+    (:modern) private var _stepsDrawn as Boolean = false;
     (:modern) private var _hrat6 as Boolean = false;
     (:modern) private var _dtat6 as Boolean = false;
 
