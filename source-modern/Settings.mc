@@ -129,7 +129,7 @@ class Config {
      ] as Array< Array<Symbol> >;
 
     // Default values for toggle items, each bit is one. I_ALARMS, I_CONNECTED and I_3D_EFFECTS are on by default.
-    private var _defaults as Number = 0x8280; // 0b00 1000 0010 1000 0000
+    private var _defaults as Number = 0x105; // 0b0001 0000 0101
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
@@ -144,7 +144,7 @@ class Config {
             var value = Storage.getValue(_itemLabels[id]) as Number;
             if (id >= I_ALARMS) { // toggle items
                 if (null == value) { 
-                    value = (_defaults & (1 << id)) >> id;
+                    value = (_defaults & (1 << (id - I_ALARMS))) >> (id - I_ALARMS);
                 }
                 // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
                 if (I_BATTERY_DAYS == id and !_hasBatteryInDays) { 

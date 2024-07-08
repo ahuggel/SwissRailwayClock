@@ -108,7 +108,8 @@ class Config {
         [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever] // I_HIDE_SECONDS
      ] as Array< Array<Symbol> >;
 
-    private var _defaults as Number = 0x0140; // 0b00 0001 0100 0000 default values for toggle items, each bit is one
+    // Default values for toggle items, each bit is one. I_ALARMS, I_CONNECTED are on by default.
+    private var _defaults as Number = 0x05; // 0b0000 0101
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
@@ -121,7 +122,7 @@ class Config {
             var value = Storage.getValue(_itemLabels[id]) as Number;
             if (id >= I_ALARMS) { // toggle items
                 if (null == value) { 
-                    value = (_defaults & (1 << id)) >> id;
+                    value = (_defaults & (1 << (id - I_ALARMS))) >> (id - I_ALARMS);
                 }
                 // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
                 if (I_BATTERY_DAYS == id and !_hasBatteryInDays) { 
