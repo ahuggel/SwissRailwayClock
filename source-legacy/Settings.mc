@@ -53,6 +53,7 @@ class Config {
         I_HEART_RATE,
         I_RECOVERY_TIME,
         I_STEPS,
+        I_CALORIES,
         I_BATTERY_PCT, 
         I_BATTERY_DAYS, 
         I_SIZE, 
@@ -75,6 +76,7 @@ class Config {
         :HeartRate,
         :RecoveryTime,
         :Steps,
+        :Calories,
         :BatteryPct, 
         :BatteryDays
     ] as Array<Symbol>;
@@ -95,6 +97,7 @@ class Config {
         "hr", // I_HEART_RATE
         "rt", // I_RECOVERY_TIME
         "st", // I_STEPS
+        "ca", // I_CALORIES
         "bp", // I_BATTERY_PCT
         "bd"  // I_BATTERY_DAYS
     ] as Array<String>;
@@ -266,6 +269,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 addToggleMenuItem(Config.I_HEART_RATE);
                 addToggleMenuItem(Config.I_RECOVERY_TIME);
                 addToggleMenuItem(Config.I_STEPS);
+                addToggleMenuItem(Config.I_CALORIES);
                 addMenuItem(Config.I_DARK_MODE);
                 //Fallthrough
             case Config.I_DARK_MODE:
@@ -293,6 +297,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 deleteAnyItem(Config.I_HEART_RATE);
                 deleteAnyItem(Config.I_RECOVERY_TIME);
                 deleteAnyItem(Config.I_STEPS);
+                deleteAnyItem(Config.I_CALORIES);
                 deleteAnyItem(Config.I_DARK_MODE);
                 // Fallthrough
             case Config.I_DARK_MODE:
