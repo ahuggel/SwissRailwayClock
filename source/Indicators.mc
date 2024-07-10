@@ -194,10 +194,12 @@ class Indicators {
         // Draw the recovery time indicator
         if (config.isEnabled(Config.I_RECOVERY_TIME)) { 
             if (ActivityMonitor.Info has :timeToRecovery) {
-                drawRecoveryTime(
+                drawIndicator(
                     dc,
                     (_width * 0.23).toNumber(),
                     (_height * 0.50).toNumber(),
+                    "R",
+                    false,
                     activityInfo.timeToRecovery
                 );
             }
@@ -230,6 +232,7 @@ class Indicators {
                 (_width * w).toNumber(),
                 (_height * h).toNumber(),
                 "F",
+                true,
                 activityInfo.steps // since API Level 1.0.0
             );
         }
@@ -267,6 +270,7 @@ class Indicators {
                 (_width * w).toNumber(),
                 (_height * h).toNumber(),
                 "C",
+                true,
                 activityInfo.calories // since API Level 1.0.0
             );
         }
@@ -362,10 +366,12 @@ class Indicators {
         idx = getIndicatorPosition(:recoveryTime);
         if (-1 != idx) {
             if (ActivityMonitor.Info has :timeToRecovery) {
-                drawRecoveryTime(
+                drawIndicator(
                     dc,
                     _pos[idx][0],
                     _pos[idx][1],
+                    "R",
+                    false,
                     activityInfo.timeToRecovery
                 );
             }
@@ -380,6 +386,7 @@ class Indicators {
                 _pos[idx][0],
                 _pos[idx][1],
                 "F",
+                true,
                 activityInfo.steps // since API Level 1.0.0
             );
         }
@@ -392,6 +399,7 @@ class Indicators {
                 _pos[idx][0],
                 _pos[idx][1],
                 "C",
+                true,
                 activityInfo.calories // since API Level 1.0.0
             );
         }
@@ -564,7 +572,7 @@ class Indicators {
             }
         }
         var ret = false;
-        if (!(icons as String).equals("")) { // Why does the typechecker not know that icons is a String??
+        if (!icons.equals("")) {
             dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(xpos, ypos, ClockView.iconFont as FontResource, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
             ret = true;
@@ -593,47 +601,13 @@ class Indicators {
         return ret;
     }
 
-    // Draw the recovery time, return true if it was drawn
-    private function drawRecoveryTime(
-        dc as Dc,
-        xpos as Number, 
-        ypos as Number,
-        timeToRecovery as Number?
-    ) as Boolean {
-        var ret = false;
-        if (timeToRecovery != null and timeToRecovery > 0) {
-            //timeToRecovery = 85;
-            //timeToRecovery = 123;
-            var font = Graphics.FONT_TINY;
-            var fontHeight = Graphics.getFontHeight(font);
-            var width = (fontHeight * 2.1).toNumber(); // Indicator width
-            var rt = timeToRecovery.format("%d");
-            dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(
-                timeToRecovery > 99 ? xpos + width*10/32 : xpos + width*4/32, 
-                ypos, 
-                font, 
-                rt,
-                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
-            );
-            dc.setColor(ClockView.colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(
-                timeToRecovery > 99 ? xpos + width*23/32 : xpos + width*17/32, ypos - 1, 
-                ClockView.iconFont as FontResource, 
-                "R" as String, 
-                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
-            );
-            ret = true;
-        }
-        return ret;
-    }
-
-    // Draw a simple indicator, return true if it was drawn. Used for steps and calories.
+    // Draw a simple indicator, return true if it was drawn. Used for recovery time, steps and calories.
     private function drawIndicator(
         dc as Dc,
         xpos as Number, 
         ypos as Number,
         icon as String,
+        iconLeft as Boolean,
         value as Number?
     ) as Boolean {
         var ret = false;
@@ -644,23 +618,22 @@ class Indicators {
             var font = Graphics.FONT_TINY;
             var fontHeight = Graphics.getFontHeight(font);
             var width = (fontHeight * 2.1).toNumber(); // Indicator width
-            var rt = value.format("%d");
+            var xposText = xpos;
+            var xposIcon = xpos;
+            var textAlign = Graphics.TEXT_JUSTIFY_VCENTER;
+            if (iconLeft) {
+                xposText -= value > 999 ? value > 9999 ? width*9/32 : width*6/32 : width*3/32;
+                xposIcon -= value > 999 ? value > 9999 ? width*22/32 : width*19/32 : width*16/32;
+                textAlign |= Graphics.TEXT_JUSTIFY_LEFT;
+            } else {
+                xposText += value > 99 ? width*10/32 : width*4/32;
+                xposIcon += value > 99 ? width*23/32 : width*17/32;
+                textAlign |= Graphics.TEXT_JUSTIFY_RIGHT;
+            }
             dc.setColor(ClockView.colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(
-                value > 999 ? value > 9999 ? xpos - width*22/32 : xpos - width*19/32 : xpos - width*16/32,
-                ypos - 1, 
-                ClockView.iconFont as FontResource, 
-                icon as String, 
-                Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
-            );
+            dc.drawText(xposIcon, ypos - 1, ClockView.iconFont as FontResource, icon as String, textAlign);
             dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(
-                value > 999 ? value > 9999 ? xpos - width*9/32 : xpos - width*6/32 : xpos - width*3/32, 
-                ypos, 
-                font, 
-                rt,
-                Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
-            );
+            dc.drawText(xposText, ypos, font, value.format("%d"), textAlign);
             ret = true;
         }
         return ret;
