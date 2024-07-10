@@ -41,8 +41,8 @@ class Indicators {
     private var _batteryLevel as BatteryLevel;
     private var _batteryDrawn as Boolean = false;
     private var _iconsDrawn as Boolean = false;
+    private var _stepsDrawn as Boolean = false;
 
-    (:modern) private var _stepsDrawn as Boolean = false;
     (:modern) private var _hrat6 as Boolean = false;
     (:modern) private var _dtat6 as Boolean = false;
     (:modern) private var _screenCenter as Array<Number>;
@@ -111,7 +111,7 @@ class Indicators {
             _iconsDrawn = drawIcons(
                 dc,
                 w2, 
-                (_height * 0.18).toNumber(), 
+                (_height * 0.165).toNumber(), // idx = 5
                 deviceSettings.alarmCount,
                 deviceSettings.notificationCount
             );
@@ -120,7 +120,7 @@ class Indicators {
         // Draw the battery level indicator
         _batteryDrawn = false;
         if (config.isEnabled(Config.I_BATTERY)) {
-            var h = _iconsDrawn ? 0.32 : 0.25;
+            var h = _iconsDrawn ? 0.30 : 0.25; // idx = 3 : 4
             _batteryDrawn = _batteryLevel.draw(
                 dc,
                 w2, 
@@ -141,7 +141,16 @@ class Indicators {
                 Graphics.TEXT_JUSTIFY_CENTER
             );
         } else if (:DateDisplayWeekdayAndDay == dateDisplay) {
-            var h = (config.isEnabled(Config.I_STEPS) and _batteryDrawn) ? 0.69 : 0.65; // idx = 9 : 8
+            var h = 0.65; // idx = 8
+            if (config.isEnabled(Config.I_STEPS)) {
+                if (_batteryDrawn or config.isEnabled(Config.I_CALORIES)) {
+                    h = 0.69; // idx = 9
+                } // else idx = 8
+            } else {
+                if (_batteryDrawn and config.isEnabled(Config.I_CALORIES)) {
+                    h = 0.69; // idx = 9
+                } // else idx = 8
+            }
             dc.drawText(
                 w2, 
                 (_height * h).toNumber(), 
@@ -174,7 +183,11 @@ class Indicators {
                     h = 0.75;
                 }
             }
-            drawHeartRate2(dc, (_width * w).toNumber(), (_height * h).toNumber());
+            drawHeartRate2(
+                dc, 
+                (_width * w).toNumber(), 
+                (_height * h).toNumber()
+            );
         }
 
         // Draw the recovery time indicator
@@ -189,27 +202,72 @@ class Indicators {
             }
         }
 
+        // Helper - is the heart rate indicator at 6 o'clock?
+        var hrat6 =     :DateDisplayDayOnly == dateDisplay
+                    and config.isEnabled(Config.I_HEART_RATE);
+        // Helper - is the (long) date at 6 o'clock?
+        var dtat6 = :DateDisplayWeekdayAndDay == dateDisplay;
+
         // Draw the steps indicator
+        _stepsDrawn = false;
         if (config.isEnabled(Config.I_STEPS)) {
             var w = 0.49; // idx = 10, 11
-            var h = 0.70;
-            if (:DateDisplayWeekdayAndDay == dateDisplay) {
-                if (_batteryDrawn) {
+            var h = 0.70; // idx = 10
+            if (hrat6 or dtat6) {
+                if (config.isEnabled(Config.I_CALORIES) or _batteryDrawn) {
                     h = 0.65; // idx = 11
                 } else {
                     w = 0.50; // idx = 3
-                    h = 0.32; // idx = 3
+                    h = 0.30;
                 }
-            } else if (    :DateDisplayDayOnly == dateDisplay
-                       and config.isEnabled(Config.I_HEART_RATE)) {
-                h = 0.65; // idx = 11
+            } else {
+                if (config.isEnabled(Config.I_CALORIES) and _batteryDrawn and _iconsDrawn) {
+                    h = 0.65; // idx = 11
+                } // else idx = 10
             }
-            drawIndicator(
+            _stepsDrawn = drawIndicator(
                 dc,
                 (_width * w).toNumber(),
                 (_height * h).toNumber(),
                 "F",
                 activityInfo.steps // since API Level 1.0.0
+            );
+        }
+
+        // Draw the calories indicator
+        if (config.isEnabled(Config.I_CALORIES)) {
+            var w = 0.50; // idx = 3
+            var h = 0.30;
+            if (!_stepsDrawn) { // place calories where steps would usually be
+                if (hrat6 or dtat6) {
+                    if (_batteryDrawn) {
+                        w = 0.49; // idx = 11
+                        h = 0.65;
+                    } // else idx = 3
+                } else {
+                    w = 0.49; // idx = 10
+                    h = 0.70;
+                }
+            } else {
+                // if steps are drawn, (mostly) place calories in the upper half of the screen.
+                // Do not squeeze the calories in the upper half (13), if battery and icons are
+                // on and only the steps are at the bottom. Instead, draw calories below steps 
+                // at the bottom then (12).
+                if (_batteryDrawn) {
+                    w = 0.49; // idx = 12, 13, 14
+                    if (_iconsDrawn) {
+                        h = hrat6 or dtat6 ? 0.39 : 0.76; // idx = 13 : 12
+                    } else {
+                        h = 0.35; // idx = 14
+                    }
+                } // else idx = 3
+            }
+            drawIndicator(
+                dc,
+                (_width * w).toNumber(),
+                (_height * h).toNumber(),
+                "C",
+                activityInfo.calories // since API Level 1.0.0
             );
         }
     }
