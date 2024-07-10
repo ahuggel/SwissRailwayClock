@@ -39,10 +39,10 @@ import Toybox.WatchUi;
 // memory usage.
 class Indicators {
     private var _batteryLevel as BatteryLevel;
-    private var _batteryDrawn as Boolean = false;
-    private var _iconsDrawn as Boolean = false;
-    private var _stepsDrawn as Boolean = false;
 
+    (:modern) private var _batteryDrawn as Boolean = false;
+    (:modern) private var _iconsDrawn as Boolean = false;
+    (:modern) private var _stepsDrawn as Boolean = false;
     (:modern) private var _hrat6 as Boolean = false;
     (:modern) private var _dtat6 as Boolean = false;
     (:modern) private var _screenCenter as Array<Number>;
@@ -104,11 +104,13 @@ class Indicators {
     (:legacy) public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
         var activityInfo = ActivityMonitor.getInfo();
         var w2 = (_width * 0.50).toNumber();
+        var iconsDrawn = false;
+        var batteryDrawn = false;
+        var stepsDrawn = false;
 
         // Draw alarm and notification indicators
-        _iconsDrawn = false;
         if (config.isEnabled(Config.I_ALARMS) or config.isEnabled(Config.I_NOTIFICATIONS)) {
-            _iconsDrawn = drawIcons(
+            iconsDrawn = drawIcons(
                 dc,
                 w2, 
                 (_height * 0.165).toNumber(), // idx = 5
@@ -118,10 +120,9 @@ class Indicators {
         }
 
         // Draw the battery level indicator
-        _batteryDrawn = false;
         if (config.isEnabled(Config.I_BATTERY)) {
-            var h = _iconsDrawn ? 0.30 : 0.25; // idx = 3 : 4
-            _batteryDrawn = _batteryLevel.draw(
+            var h = iconsDrawn ? 0.30 : 0.25; // idx = 3 : 4
+            batteryDrawn = _batteryLevel.draw(
                 dc,
                 w2, 
                 (_height * h).toNumber()
@@ -143,11 +144,11 @@ class Indicators {
         } else if (:DateDisplayWeekdayAndDay == dateDisplay) {
             var h = 0.65; // idx = 8
             if (config.isEnabled(Config.I_STEPS)) {
-                if (_batteryDrawn or config.isEnabled(Config.I_CALORIES)) {
+                if (batteryDrawn or config.isEnabled(Config.I_CALORIES)) {
                     h = 0.69; // idx = 9
                 } // else idx = 8
             } else {
-                if (_batteryDrawn and config.isEnabled(Config.I_CALORIES)) {
+                if (batteryDrawn and config.isEnabled(Config.I_CALORIES)) {
                     h = 0.69; // idx = 9
                 } // else idx = 8
             }
@@ -209,23 +210,22 @@ class Indicators {
         var dtat6 = :DateDisplayWeekdayAndDay == dateDisplay;
 
         // Draw the steps indicator
-        _stepsDrawn = false;
         if (config.isEnabled(Config.I_STEPS)) {
             var w = 0.49; // idx = 10, 11
             var h = 0.70; // idx = 10
             if (hrat6 or dtat6) {
-                if (config.isEnabled(Config.I_CALORIES) or _batteryDrawn) {
+                if (config.isEnabled(Config.I_CALORIES) or batteryDrawn) {
                     h = 0.65; // idx = 11
                 } else {
                     w = 0.50; // idx = 3
                     h = 0.30;
                 }
             } else {
-                if (config.isEnabled(Config.I_CALORIES) and _batteryDrawn and _iconsDrawn) {
+                if (config.isEnabled(Config.I_CALORIES) and batteryDrawn and iconsDrawn) {
                     h = 0.65; // idx = 11
                 } // else idx = 10
             }
-            _stepsDrawn = drawIndicator(
+            stepsDrawn = drawIndicator(
                 dc,
                 (_width * w).toNumber(),
                 (_height * h).toNumber(),
@@ -238,9 +238,9 @@ class Indicators {
         if (config.isEnabled(Config.I_CALORIES)) {
             var w = 0.50; // idx = 3
             var h = 0.30;
-            if (!_stepsDrawn) { // place calories where steps would usually be
+            if (!stepsDrawn) { // place calories where steps would usually be
                 if (hrat6 or dtat6) {
-                    if (_batteryDrawn) {
+                    if (batteryDrawn) {
                         w = 0.49; // idx = 11
                         h = 0.65;
                     } // else idx = 3
@@ -253,9 +253,9 @@ class Indicators {
                 // Do not squeeze the calories in the upper half (13), if battery and icons are
                 // on and only the steps are at the bottom. Instead, draw calories below steps 
                 // at the bottom then (12).
-                if (_batteryDrawn) {
+                if (batteryDrawn) {
                     w = 0.49; // idx = 12, 13, 14
-                    if (_iconsDrawn) {
+                    if (iconsDrawn) {
                         h = hrat6 or dtat6 ? 0.39 : 0.76; // idx = 13 : 12
                     } else {
                         h = 0.35; // idx = 14
