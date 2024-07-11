@@ -364,7 +364,7 @@ class ClockView extends WatchUi.WatchFace {
             var aci = 0;
             if (config.isEnabled(Config.I_ACCENT_CYCLE)) {
                 var cnt = [0, clockTime.hour, clockTime.min, clockTime.sec][config.getValue(Config.I_ACCENT_CYCLE)];
-                aci = cnt % (_accentColors.size() / 2);
+                aci = cnt % (_accentColors.size() / 2) * 2;
             } else {
                 aci = config.getValue(Config.I_ACCENT_COLOR) * 2;
             }
