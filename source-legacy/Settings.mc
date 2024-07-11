@@ -45,6 +45,8 @@ class Config {
         I_DATE_DISPLAY, 
         I_DARK_MODE, 
         I_HIDE_SECONDS, 
+        I_ACCENT_COLOR,
+        I_ACCENT_CYCLE,
         I_DM_ON, // the first item that is not a list item
         I_DM_OFF, 
         I_ALARMS, // the first toggle item (see _defaults)
@@ -68,6 +70,8 @@ class Config {
         :DateDisplay, 
         :DarkMode, 
         :HideSeconds, 
+        :AccentColor, 
+        :AccentCycle, 
         :DmOn, 
         :DmOff,
         :Alarms,
@@ -89,6 +93,8 @@ class Config {
         "dd", // I_DATE_DISPLAY
         "dm", // I_DARK_MODE
         "hs", // I_HIDE_SECONDS
+        "ac", // I_ACCENT_COLOR
+        "ay", // I_ACCENT_CYCLE
         "dn", // I_DM_ON
         "df", // I_DM_OFF
         "al", // I_ALARMS
@@ -108,7 +114,9 @@ class Config {
         [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern, :BatteryHybrid], // I_BATTERY
         [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay], // I_DATE_DISPLAY
         [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
-        [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever] // I_HIDE_SECONDS
+        [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever], // I_HIDE_SECONDS
+        [:AccentRed, :AccentOrange, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentLtBlue, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
+        [:Off, :Hourly, :EveryMinute, :EverySecond] // I_ACCENT_CYCLE
      ] as Array< Array<Symbol> >;
 
     // Default values for toggle items, each bit is one. I_ALARMS, I_CONNECTED are on by default.
@@ -279,6 +287,8 @@ class SettingsMenu extends WatchUi.Menu2 {
                     addMenuItem(Config.I_DM_OFF);
                 }
                 addMenuItem(Config.I_HIDE_SECONDS);
+                addMenuItem(Config.I_ACCENT_COLOR);
+                addMenuItem(Config.I_ACCENT_CYCLE);
                 Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.Done, Rez.Strings.DoneLabel, Config.I_DONE, {}));
                 break;
         }
@@ -305,6 +315,8 @@ class SettingsMenu extends WatchUi.Menu2 {
                 deleteAnyItem(Config.I_DM_ON);
                 deleteAnyItem(Config.I_DM_OFF);
                 deleteAnyItem(Config.I_HIDE_SECONDS);
+                deleteAnyItem(Config.I_ACCENT_COLOR);
+                deleteAnyItem(Config.I_ACCENT_CYCLE);
                 deleteAnyItem(Config.I_DONE);
                 break;
         }

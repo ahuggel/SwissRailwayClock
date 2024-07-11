@@ -45,6 +45,20 @@ class ClockView extends WatchUi.WatchFace {
     private const TWO_PI as Float = 2 * Math.PI;
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
 
+    // Colors for the second hand, in pairs with one color for each color mode
+    private var _accentColors as Array<Number> = [
+        0xFF0000, 0xff0055, // red 
+        0xff5500, 0xffaa00, // orange
+        0xffff00, 0xffff55, // yellow
+        0x55ff00, 0x55ff00, // light green
+        0x00AA00, 0x00aa55, // green
+        0x00ffff, 0x55ffff, // light blue
+        0x0000FF, 0x00AAFF, // blue
+        0xaa00aa, 0xaa00ff, // purple
+        0xff00aa, 0xff00aa  // pink
+    ] as Array<Number>;
+    private var _accentColor as Number = 0xFF0000;
+
     // List of watchface shapes, used as indexes. Review optimizations in drawSecondHand() and calcSecondData() before changing the Shape enum.
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
     // A 2 dimensional array for the geometry of the watchface shapes - because the initialisation is more intuitive that way
@@ -271,7 +285,15 @@ class ClockView extends WatchUi.WatchFace {
         dc.drawBitmap(0, 0, _offscreenBuffer);
 
         if (isAwake or _doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand)) {
-            // Draw the second hand, directly on the screen
+            // Determine the color of the second hand and draw it, directly on the screen
+            var aci = 0;
+            if (config.isEnabled(Config.I_ACCENT_CYCLE)) {
+                var cnt = [0, clockTime.hour, clockTime.min, clockTime.sec][config.getValue(Config.I_ACCENT_CYCLE)];
+                aci = cnt % (_accentColors.size() / 2);
+            } else {
+                aci = config.getValue(Config.I_ACCENT_COLOR) * 2;
+            }
+            _accentColor = _accentColors[M_LIGHT == colorMode ? aci : aci + 1];
             drawSecondHand(dc, clockTime.sec); 
         }
     }
@@ -310,7 +332,7 @@ class ClockView extends WatchUi.WatchFace {
         dc.setClip(sd[10], sd[11], sd[12], sd[13]);
 
         // Draw the second hand
-        dc.setColor(colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_RED /* colors[colorMode][C_SECONDS] */, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_accentColor, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(coords);
         dc.fillCircle(sd[0], sd[1], _secondCircleRadius);
     }
@@ -434,7 +456,7 @@ class ClockView extends WatchUi.WatchFace {
         dc.setClip(minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4);
 
         // Finally, draw the second hand
-        dc.setColor(colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_RED /* colors[colorMode][C_SECONDS] */, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_accentColor, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(coords);
         dc.fillCircle(x, y, _secondCircleRadius);
     }
