@@ -29,7 +29,6 @@
     <string id="BatteryModernWarnings">Modern Warnings</string>
     <string id="BatteryClassic">Classic</string>
     <string id="BatteryModern">Modern</string>
-    <string id="BatteryHybrid">Hybrid</string>
     <string id="BatteryPct">Battery Percentage</string>
     <string id="BatteryDays">Battery Days</string>
     <string id="DateDisplayDayOnly">Day Only</string>

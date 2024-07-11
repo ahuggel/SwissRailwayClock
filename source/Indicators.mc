@@ -767,17 +767,15 @@ class BatteryLevel {
         if (level < warnLevel / 2) { color = ClockView.M_LIGHT == ClockView.colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_YELLOW; }
         if (level < warnLevel / 4) { color = Graphics.COLOR_RED; }
 
-        // level \ Setting   Classic ClassicWarnings Hybrid Modern ModernWarnings
-        // < warnLevel          C          C           M      M          M       
-        // >= warnLevel         C          -           C      M          -       
+        // level \ Setting   Classic ClassicWarnings Modern ModernWarnings
+        // < warnLevel          C          C           M          M       
+        // >= warnLevel         C          -           M          -       
         if (   :BatteryClassic == batterySetting 
-            or (level < warnLevel and :BatteryClassicWarnings == batterySetting)
-            or (level >= warnLevel and :BatteryHybrid == batterySetting)) {
+            or (level < warnLevel and :BatteryClassicWarnings == batterySetting)) {
             drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, ClockView.colorMode, color);
             ret = true;
         } else if (   :BatteryModern == batterySetting
-                   or (level < warnLevel and :BatteryModernWarnings == batterySetting)
-                   or (level < warnLevel and :BatteryHybrid == batterySetting)) {
+                   or (level < warnLevel and :BatteryModernWarnings == batterySetting)) {
             drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, color);
             ret = true;
         }
