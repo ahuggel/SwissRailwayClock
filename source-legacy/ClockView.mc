@@ -31,29 +31,28 @@ class ClockView extends WatchUi.WatchFace {
 
     // Review optimizations in ClockView.drawSecondHand() before changing the following enums or the colors Array.
     enum { M_LIGHT, M_DARK } // Color modes
-    enum { C_FOREGROUND, C_BACKGROUND, C_SECONDS, C_TEXT } // Indexes into the color arrays
+    enum { C_FOREGROUND, C_BACKGROUND, C_TEXT } // Indexes into the color arrays
 
     // Things we want to access from the outside. By convention, write-access is only from within ClockView.
     static public var iconFont as FontResource?;
     static public var colorMode as Number = M_LIGHT;
     static public var colors as Array< Array<Number> > = [
-        [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_RED, Graphics.COLOR_DK_GRAY],
-        [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, Graphics.COLOR_DK_GRAY]
+        [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_DK_GRAY],
+        [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_DK_GRAY]
     ] as Array< Array<Number> >;
     static public var isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
 
     private const TWO_PI as Float = 2 * Math.PI;
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
+
     private var _accentColor as Number = 0xFF0000;
 
     // List of watchface shapes, used as indexes. Review optimizations in drawSecondHand() and calcSecondData() before changing the Shape enum.
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
-    // A 2 dimensional array for the geometry of the watchface shapes - because the initialisation is more intuitive that way
-    private var _shapes as Array< Array<Float> > = new Array< Array<Float> >[S_SIZE];
+    // A 1 dimensional array for the shape coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
+    private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
     private var _secondCircleRadius as Number = 0; // Radius of the second hand circle
     private var _secondCircleCenter as Array<Number> = new Array<Number>[2]; // Center of the second hand circle
-    // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
-    private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
 
     // Cache for all numbers required to draw the second hand. These are pre-calculated in onLayout().
     (:performance)
@@ -111,6 +110,9 @@ class ClockView extends WatchUi.WatchFace {
             iconFont = WatchUi.loadResource(Rez.Fonts.Icons) as FontResource;
         }
 
+        // A 2 dimensional array for the geometry of the watchface shapes - because the initialisation is more intuitive that way
+        var shapes = new Array< Array<Float> >[S_SIZE];
+
         // Geometry of the hands and tick marks of the clock, as percentages of the diameter of the
         // clock face. Each of these shapes is a polygon (trapezoid), defined by
         // - its height (length),
@@ -122,33 +124,33 @@ class ClockView extends WatchUi.WatchFace {
         // See docs/1508_CHD151_foto_b.jpg for the original design. The numbers used here deviate from 
         // that only slightly.
         //                          height, width1, width2, radius
-        _shapes[S_BIGTICKMARK]   = [  12.0,    3.5,    3.5,   36.5];	
-        _shapes[S_SMALLTICKMARK] = [   3.5,    1.4,    1.4,   45.0];
-        _shapes[S_HOURHAND]      = [  44.0,    6.3,    5.1,  -12.0];
-        _shapes[S_MINUTEHAND]    = [  57.8,    5.2,    3.7,  -12.0];
-        _shapes[S_SECONDHAND]    = [  47.9,    1.4,    1.4,  -16.5];
+        shapes[S_BIGTICKMARK]   = [  12.0,    3.5,    3.5,   36.5];	
+        shapes[S_SMALLTICKMARK] = [   3.5,    1.4,    1.4,   45.0];
+        shapes[S_HOURHAND]      = [  44.0,    6.3,    5.1,  -12.0];
+        shapes[S_MINUTEHAND]    = [  57.8,    5.2,    3.7,  -12.0];
+        shapes[S_SECONDHAND]    = [  47.9,    1.4,    1.4,  -16.5];
 
         // Convert the clock geometry data to pixels
         for (var s = 0; s < S_SIZE; s++) {
             for (var i = 0; i < 4; i++) {
-                _shapes[s][i] = Math.round(_shapes[s][i] * _clockRadius / 50.0);
+                shapes[s][i] = Math.round(shapes[s][i] * _clockRadius / 50.0);
             }
         }
 
         // Update any indicator positions, which depend on the watchface shapes
-        _indicators.updatePos(_shapes[S_BIGTICKMARK][0], _shapes[S_BIGTICKMARK][3]);
+        _indicators.updatePos(shapes[S_BIGTICKMARK][0], shapes[S_BIGTICKMARK][3]);
 
         // Map out the coordinates of all the shapes. Doing that only once reduces processing time.
         for (var s = 0; s < S_SIZE; s++) {
             var idx = s * 8;
-            _coords[idx]   = -(_shapes[s][1] / 2 + 0.5).toNumber();
-            _coords[idx+1] = -(_shapes[s][3] + 0.5).toNumber();
-            _coords[idx+2] = -(_shapes[s][2] / 2 + 0.5).toNumber();
-            _coords[idx+3] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
-            _coords[idx+4] =  (_shapes[s][2] / 2 + 0.5).toNumber();
-            _coords[idx+5] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
-            _coords[idx+6] =  (_shapes[s][1] / 2 + 0.5).toNumber();
-            _coords[idx+7] = -(_shapes[s][3] + 0.5).toNumber();
+            _coords[idx]   = -(shapes[s][1] / 2 + 0.5).toNumber();
+            _coords[idx+1] = -(shapes[s][3] + 0.5).toNumber();
+            _coords[idx+2] = -(shapes[s][2] / 2 + 0.5).toNumber();
+            _coords[idx+3] = -(shapes[s][3] + shapes[s][0] + 0.5).toNumber();
+            _coords[idx+4] =  (shapes[s][2] / 2 + 0.5).toNumber();
+            _coords[idx+5] = -(shapes[s][3] + shapes[s][0] + 0.5).toNumber();
+            _coords[idx+6] =  (shapes[s][1] / 2 + 0.5).toNumber();
+            _coords[idx+7] = -(shapes[s][3] + 0.5).toNumber();
         }
 
         // The radius of the second hand circle in pixels, calculated from the percentage of the clock face diameter
@@ -281,6 +283,7 @@ class ClockView extends WatchUi.WatchFace {
                 aci = config.getValue(Config.I_ACCENT_COLOR) * 2;
             }
             _accentColor = [
+                // Colors for the second hand, in pairs with one color for each color mode
                 0xFF0000, 0xff0055, // red 
                 0xff5500, 0xffaa00, // orange
                 0xffff00, 0xffff55, // yellow
