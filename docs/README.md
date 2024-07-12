@@ -1,4 +1,5 @@
 # Swiss Railway Clock - An analog watchface for Garmin smartwatches
+
 ![image](WatchFace.png)
 ![image](configurable-clutter.gif)
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a [second hand] in both high- and low-power mode;
