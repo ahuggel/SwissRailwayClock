@@ -1,7 +1,9 @@
+![image](WatchFace.png)
+
+![image](configurable-clutter.gif)
+
 # Swiss Railway Clock - An analog watchface for Garmin smartwatches
 
-![image](WatchFace.png)
-![image](configurable-clutter.gif)
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a [second hand] in both high- and low-power mode;
 - The operation differs from the original Swiss railway clock in that the second hand updates only every second and it does not pause at 12 o'clock. There is also an option to make the second hand disappear in low-power mode, after about 30s;
 - On-device settings allow the configuration of battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a [Move Bar] and some other options. The "Configurable Clutter" clip above shows most of them. In addition, an accent color (the color of the second hand) can also be configured. The menu implements three different types of menu items as well as a basic time picker;
