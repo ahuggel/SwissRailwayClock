@@ -1,6 +1,6 @@
 ![image](WatchFace.png)
 
-![image](configurable-clutter.gif)
+![image](configurable-clutter-temp.png)
 
 # Swiss Railway Clock - An analog watchface for Garmin smartwatches
 
