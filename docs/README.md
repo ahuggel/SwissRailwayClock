@@ -1,6 +1,5 @@
-![image](WatchFace.png)
-
 # Swiss Railway Clock - An analog watchface for Garmin smartwatches
+![image](WatchFace.png)
 ![image](configurable-clutter.gif)
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a [second hand] in both high- and low-power mode;
 - The operation differs from the original Swiss railway clock in that the second hand updates only every second and it does not pause at 12 o'clock. There is also an option to make the second hand disappear in low-power mode, after about 30s;
