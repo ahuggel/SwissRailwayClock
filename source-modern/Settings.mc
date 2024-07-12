@@ -49,7 +49,7 @@ class Config {
         I_DM_CONTRAST,
         I_DM_ON, // the first item that is not a list item
         I_DM_OFF, 
-        I_ALARMS, // the first toggle item (see _defaults)
+        I_ALARMS, // the first toggle item (see defaults)
         I_NOTIFICATIONS,
         I_CONNECTED,
         I_HEART_RATE,
@@ -119,7 +119,7 @@ class Config {
     // Options for list items. One array of symbols for each of the them. These inner arrays are accessed
     // using Item enums, so list items need to be the first ones in the Item enum and in the same order.
     private var _options as Array< Array<Symbol> > = [
-        [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern, :BatteryHybrid], // I_BATTERY
+        [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern], // I_BATTERY
         [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay], // I_DATE_DISPLAY
         [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
         [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever], // I_HIDE_SECONDS
@@ -128,15 +128,15 @@ class Config {
         [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite] // I_DM_CONTRAST
      ] as Array< Array<Symbol> >;
 
-    // Default values for toggle items, each bit is one. I_ALARMS, I_CONNECTED and I_3D_EFFECTS are on by default.
-    private var _defaults as Number = 0x105; // 0b0001 0000 0101
-
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
 
     // Constructor
     public function initialize() {
+        // Default values for toggle items, each bit is one. I_ALARMS, I_CONNECTED and I_3D_EFFECTS are on by default.
+        var defaults = 0x105; // 0b0001 0000 0101
+
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasBatteryInDays = (System.Stats has :batteryInDays);
         // Read the configuration values from persistent storage 
@@ -144,7 +144,7 @@ class Config {
             var value = Storage.getValue(_itemLabels[id]) as Number;
             if (id >= I_ALARMS) { // toggle items
                 if (null == value) { 
-                    value = (_defaults & (1 << (id - I_ALARMS))) >> (id - I_ALARMS);
+                    value = (defaults & (1 << (id - I_ALARMS))) >> (id - I_ALARMS);
                 }
                 // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
                 if (I_BATTERY_DAYS == id and !_hasBatteryInDays) { 
@@ -178,7 +178,7 @@ class Config {
     public function getLabel(id as Item) as String {
         var label = getOption(id);
         if (label instanceof Lang.Symbol) {
-            label = getStringResource(getOption(id) as Symbol);
+            label = getStringResource(label);
         }
         return label;
     }

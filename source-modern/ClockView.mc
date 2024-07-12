@@ -42,28 +42,14 @@ class ClockView extends WatchUi.WatchFace {
     private const TWO_PI as Float = 2 * Math.PI;
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
 
-    // Colors for the second hand, in pairs with one color for each color mode
-    private var _accentColors as Array<Number> = [
-        0xFF0000, 0xff0055, // red 
-        0xff5500, 0xffaa00, // orange
-        0xffff00, 0xffff55, // yellow
-        0x55ff00, 0x55ff00, // light green
-        0x00AA00, 0x00aa55, // green
-        0x00ffff, 0x55ffff, // light blue
-        0x0000FF, 0x00AAFF, // blue
-        0xaa00aa, 0xaa00ff, // purple
-        0xff00aa, 0xff00aa  // pink
-    ] as Array<Number>;
     private var _accentColor as Number = 0xFF0000;
 
     // List of watchface shapes, used as indexes. Review optimizations in calcSecondData() et al. before changing the Shape enum.
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
-    // A 2 dimensional array for the geometry of the watchface shapes - because the initialisation is more intuitive that way
-    private var _shapes as Array< Array<Float> > = new Array< Array<Float> >[S_SIZE];
-    private var _secondCircleRadius as Number = 0; // Radius of the second hand circle
-    private var _secondCircleCenter as Array<Number> = new Array<Number>[2]; // Center of the second hand circle
     // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
+    private var _secondCircleRadius as Number = 0; // Radius of the second hand circle
+    private var _secondCircleCenter as Array<Number> = new Array<Number>[2]; // Center of the second hand circle
 
     // Cache for all numbers required to draw the second hand. These are pre-calculated in onLayout().
     private var _secondData as Array< Array<Number> > = new Array< Array<Number> >[60];
@@ -152,6 +138,9 @@ class ClockView extends WatchUi.WatchFace {
             iconFont = WatchUi.loadResource(Rez.Fonts.Icons) as FontResource;
         }
 
+        // A 2 dimensional array for the geometry of the watchface shapes - because the initialisation is more intuitive that way
+        var shapes = new Array< Array<Float> >[S_SIZE];
+
         // Geometry of the hands and tick marks of the clock, as percentages of the diameter of the
         // clock face. Each of these shapes is a polygon (trapezoid), defined by
         // - its height (length),
@@ -163,33 +152,33 @@ class ClockView extends WatchUi.WatchFace {
         // See docs/1508_CHD151_foto_b.jpg for the original design. The numbers used here deviate from 
         // that only slightly.
         //                          height, width1, width2, radius
-        _shapes[S_BIGTICKMARK]   = [  12.0,    3.5,    3.5,   36.5];	
-        _shapes[S_SMALLTICKMARK] = [   3.5,    1.4,    1.4,   45.0];
-        _shapes[S_HOURHAND]      = [  44.0,    6.3,    5.1,  -12.0];
-        _shapes[S_MINUTEHAND]    = [  57.8,    5.2,    3.7,  -12.0];
-        _shapes[S_SECONDHAND]    = [  47.9,    1.4,    1.4,  -16.5];
+        shapes[S_BIGTICKMARK]   = [  12.0,    3.5,    3.5,   36.5];	
+        shapes[S_SMALLTICKMARK] = [   3.5,    1.4,    1.4,   45.0];
+        shapes[S_HOURHAND]      = [  44.0,    6.3,    5.1,  -12.0];
+        shapes[S_MINUTEHAND]    = [  57.8,    5.2,    3.7,  -12.0];
+        shapes[S_SECONDHAND]    = [  47.9,    1.4,    1.4,  -16.5];
 
         // Convert the clock geometry data to pixels
         for (var s = 0; s < S_SIZE; s++) {
             for (var i = 0; i < 4; i++) {
-                _shapes[s][i] = Math.round(_shapes[s][i] * _clockRadius / 50.0);
+                shapes[s][i] = Math.round(shapes[s][i] * _clockRadius / 50.0);
             }
         }
 
         // Update any indicator positions, which depend on the watchface shapes
-        _indicators.updatePos(dc.getWidth(), dc.getHeight(), _shapes[S_BIGTICKMARK][0], _shapes[S_BIGTICKMARK][3]);
+        _indicators.updatePos(dc.getWidth(), dc.getHeight(), shapes[S_BIGTICKMARK][0], shapes[S_BIGTICKMARK][3]);
 
         // Map out the coordinates of all the shapes. Doing that only once reduces processing time.
         for (var s = 0; s < S_SIZE; s++) {
             var idx = s * 8;
-            _coords[idx]   = -(_shapes[s][1] / 2 + 0.5).toNumber();
-            _coords[idx+1] = -(_shapes[s][3] + 0.5).toNumber();
-            _coords[idx+2] = -(_shapes[s][2] / 2 + 0.5).toNumber();
-            _coords[idx+3] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
-            _coords[idx+4] =  (_shapes[s][2] / 2 + 0.5).toNumber();
-            _coords[idx+5] = -(_shapes[s][3] + _shapes[s][0] + 0.5).toNumber();
-            _coords[idx+6] =  (_shapes[s][1] / 2 + 0.5).toNumber();
-            _coords[idx+7] = -(_shapes[s][3] + 0.5).toNumber();
+            _coords[idx]   = -(shapes[s][1] / 2 + 0.5).toNumber();
+            _coords[idx+1] = -(shapes[s][3] + 0.5).toNumber();
+            _coords[idx+2] = -(shapes[s][2] / 2 + 0.5).toNumber();
+            _coords[idx+3] = -(shapes[s][3] + shapes[s][0] + 0.5).toNumber();
+            _coords[idx+4] =  (shapes[s][2] / 2 + 0.5).toNumber();
+            _coords[idx+5] = -(shapes[s][3] + shapes[s][0] + 0.5).toNumber();
+            _coords[idx+6] =  (shapes[s][1] / 2 + 0.5).toNumber();
+            _coords[idx+7] = -(shapes[s][3] + 0.5).toNumber();
         }
         //System.println("("+_coords[S_SECONDHAND*8+2]+","+_coords[S_SECONDHAND*8+3]+") ("+_coords[S_SECONDHAND*8+4]+","+_coords[S_SECONDHAND*8+5]+")");
         if (_clockRadius >= 130 and 0 == (_coords[S_SECONDHAND*8+4] - _coords[S_SECONDHAND*8+2]) % 2) {
@@ -364,11 +353,22 @@ class ClockView extends WatchUi.WatchFace {
             var aci = 0;
             if (config.isEnabled(Config.I_ACCENT_CYCLE)) {
                 var cnt = [0, clockTime.hour, clockTime.min, clockTime.sec][config.getValue(Config.I_ACCENT_CYCLE)];
-                aci = cnt % (_accentColors.size() / 2);
+                aci = cnt % 9 /*(accentColors.size() / 2)*/ * 2;
             } else {
                 aci = config.getValue(Config.I_ACCENT_COLOR) * 2;
             }
-            _accentColor = _accentColors[M_LIGHT == colorMode ? aci : aci + 1];
+            _accentColor = [
+                // Colors for the second hand, in pairs with one color for each color mode
+                0xFF0000, 0xff0055, // red 
+                0xff5500, 0xffaa00, // orange
+                0xffff00, 0xffff55, // yellow
+                0x55ff00, 0x55ff00, // light green
+                0x00AA00, 0x00aa55, // green
+                0x00ffff, 0x55ffff, // light blue
+                0x0000FF, 0x00AAFF, // blue
+                0xaa00aa, 0xaa00ff, // purple
+                0xff00aa, 0xff00aa  // pink
+            ][M_LIGHT == colorMode ? aci : aci + 1];
             drawSecondHand(_secondDc, clockTime.sec);
         }
     }

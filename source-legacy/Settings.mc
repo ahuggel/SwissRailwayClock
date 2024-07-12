@@ -45,9 +45,11 @@ class Config {
         I_DATE_DISPLAY, 
         I_DARK_MODE, 
         I_HIDE_SECONDS, 
+        I_ACCENT_COLOR,
+        I_ACCENT_CYCLE,
         I_DM_ON, // the first item that is not a list item
         I_DM_OFF, 
-        I_ALARMS, // the first toggle item (see _defaults)
+        I_ALARMS, // the first toggle item (see defaults)
         I_NOTIFICATIONS,
         I_CONNECTED,
         I_HEART_RATE,
@@ -68,6 +70,8 @@ class Config {
         :DateDisplay, 
         :DarkMode, 
         :HideSeconds, 
+        :AccentColor, 
+        :AccentCycle, 
         :DmOn, 
         :DmOff,
         :Alarms,
@@ -89,6 +93,8 @@ class Config {
         "dd", // I_DATE_DISPLAY
         "dm", // I_DARK_MODE
         "hs", // I_HIDE_SECONDS
+        "ac", // I_ACCENT_COLOR
+        "ay", // I_ACCENT_CYCLE
         "dn", // I_DM_ON
         "df", // I_DM_OFF
         "al", // I_ALARMS
@@ -105,30 +111,30 @@ class Config {
     // Options for list items. One array of symbols for each of the them. These inner arrays are accessed
     // using Item enums, so list items need to be the first ones in the Item enum and in the same order.
     private var _options as Array< Array<Symbol> > = [
-        [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern, :BatteryHybrid], // I_BATTERY
+        [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern], // I_BATTERY
         [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay], // I_DATE_DISPLAY
         [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
-        [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever] // I_HIDE_SECONDS
+        [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever], // I_HIDE_SECONDS
+        [:AccentRed, :AccentOrange, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentLtBlue, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
+        [:Off, :Hourly, :EveryMinute, :EverySecond] // I_ACCENT_CYCLE
      ] as Array< Array<Symbol> >;
 
-    // Default values for toggle items, each bit is one. I_ALARMS, I_CONNECTED are on by default.
-    private var _defaults as Number = 0x05; // 0b0000 0101
-
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
-    private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
 
     // Constructor
     public function initialize() {
-        _hasBatteryInDays = (System.Stats has :batteryInDays);
+        // Default values for toggle items, each bit is one. I_ALARMS, I_CONNECTED are on by default.
+        var defaults = 0x05; // 0b0000 0101
+
         // Read the configuration values from persistent storage 
         for (var id = 0; id < I_SIZE; id++) {
             var value = Storage.getValue(_itemLabels[id]) as Number;
             if (id >= I_ALARMS) { // toggle items
                 if (null == value) { 
-                    value = (_defaults & (1 << (id - I_ALARMS))) >> (id - I_ALARMS);
+                    value = (defaults & (1 << (id - I_ALARMS))) >> (id - I_ALARMS);
                 }
                 // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
-                if (I_BATTERY_DAYS == id and !_hasBatteryInDays) { 
+                if (I_BATTERY_DAYS == id and !(System.Stats has :batteryInDays)) { 
                     value = 0;
                 }
             } else if (id < I_DM_ON) { // list items
@@ -156,7 +162,7 @@ class Config {
     public function getLabel(id as Item) as String {
         var label = getOption(id);
         if (label instanceof Lang.Symbol) {
-            label = getStringResource(getOption(id) as Symbol);
+            label = getStringResource(label);
         }
         return label;
     }
@@ -217,11 +223,6 @@ class Config {
         _values[id] = value;
         Storage.setValue(_itemLabels[id], value);
     }
-
-    // Returns true if the device provides battery in days estimates, false if not.
-    public function hasBatteryInDays() as Boolean {
-        return _hasBatteryInDays;
-    }
 } // class Config
 
 // The app settings menu
@@ -258,7 +259,7 @@ class SettingsMenu extends WatchUi.Menu2 {
                 // Add menu items for the battery label options only if battery is not set to "Off"
                 if (config.isEnabled(Config.I_BATTERY)) {
                     addToggleMenuItem(Config.I_BATTERY_PCT);
-                    if (config.hasBatteryInDays()) { 
+                    if (System.Stats has :batteryInDays) { 
                         addToggleMenuItem(Config.I_BATTERY_DAYS); 
                     }
                 }
@@ -279,6 +280,8 @@ class SettingsMenu extends WatchUi.Menu2 {
                     addMenuItem(Config.I_DM_OFF);
                 }
                 addMenuItem(Config.I_HIDE_SECONDS);
+                addMenuItem(Config.I_ACCENT_COLOR);
+                addMenuItem(Config.I_ACCENT_CYCLE);
                 Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.Done, Rez.Strings.DoneLabel, Config.I_DONE, {}));
                 break;
         }
@@ -305,6 +308,8 @@ class SettingsMenu extends WatchUi.Menu2 {
                 deleteAnyItem(Config.I_DM_ON);
                 deleteAnyItem(Config.I_DM_OFF);
                 deleteAnyItem(Config.I_HIDE_SECONDS);
+                deleteAnyItem(Config.I_ACCENT_COLOR);
+                deleteAnyItem(Config.I_ACCENT_CYCLE);
                 deleteAnyItem(Config.I_DONE);
                 break;
         }

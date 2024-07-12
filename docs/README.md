@@ -1,16 +1,16 @@
 ![image](WatchFace.png)
 
-![image](configurable-clutter-temp.png)
+![image](configurable-clutter.gif)
 
 # Swiss Railway Clock - An analog watchface for Garmin smartwatches
 
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a [second hand] in both high- and low-power mode;
 - The operation differs from the original Swiss railway clock in that the second hand updates only every second and it does not pause at 12 o'clock. There is also an option to make the second hand disappear in low-power mode, after about 30s;
-- On-device settings allow the configuration of battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a [Move Bar] and some other options (see the picture with all the "configurable clutter" above). The menu implements three different types of menu items as well as a basic time picker;
-- Symbols for active alarms, phone connection and notifications, as well as the heart rate and recovery time indicators use icons from a [custom font];
+- On-device settings allow the configuration of battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a [Move Bar] and some other options. The "Configurable Clutter" clip above shows most of them. In addition, an accent color (the color of the second hand) can also be configured. The menu implements three different types of menu items as well as a basic time picker;
+- Symbols for active alarms, phone connection and notifications, as well as the various indicators use icons from a [custom font];
 - On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955 and fēnix 7 series and the Enduro 2);
 - A global settings class synchronises the selected options to persistent storage and makes them available across the app;
-- The program has been upgraded to compile exclusively with SDK 7, i.e., it is not backward compatible with older SDKs (due to type changes in Monkey C). It still compiles with a single warning with the compiler type checking level set to "Strict";
+- The program has been upgraded to compile exclusively with SDK 7 (due to type changes in Monkey C, it is not backward compatible with older SDKs). It still compiles with a single warning with the compiler type checking level set to "Strict";
 - Newer ("Modern") watches with support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. Older ("Legacy") devices without layer support or insufficient memory use a buffered bitmap. The distinction is made using [Jungle file build instructions]. ```minApiLevel``` is set to 3.2.0 as that's the minimum level required for on-device settings. Devices with [AMOLED] displays are not supported.
 - Memory usage on legacy devices is now really close to the limit. I highly recommend using the [Prettier Monkey C] extension for Visual Studio Code to optimize the generated program as much as possible. (From my experience, memory usage of the optimized program is reduced by 2-4%.)
 
