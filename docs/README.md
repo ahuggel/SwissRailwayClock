@@ -26,6 +26,7 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | Darth Vader™ | legacysagadarthvader | Modern |
 | Descent™ Mk2 / Descent™ Mk2i | descentmk2 | Legacy |
 | Descent™ Mk2 S | descentmk2s | Legacy |
+| Enduro™ 3 | enduro3 | Modern |
 | fēnix® 5 Plus | fenix5plus | Legacy |
 | fēnix® 5S Plus | fenix5splus | Legacy |
 | fēnix® 5X Plus | fenix5xplus | Legacy |
@@ -42,6 +43,8 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | fēnix® 7X / tactix® 7 / quatix® 7X Solar / Enduro™ 2 | fenix7x | Modern |
 | fēnix® 7X PRO | fenix7xpro | Modern |
 | fēnix® 7X Pro - Solar Edition (no Wi-Fi) | fenix7xpronowifi | Modern |
+| fēnix® 8 Solar 47mm | fenix8solar47mm | Modern |
+| fēnix® 8 Solar 51mm | fenix8solar51mm | Modern |
 | First Avenger | legacyherofirstavenger | Modern |
 | Forerunner® 245 | fr245 | Legacy |
 | Forerunner® 245 Music | fr245m | Legacy |
