@@ -41,6 +41,7 @@
             <iq:product id="fr255m"/>
             <iq:product id="fr255s"/>
             <iq:product id="fr255sm"/>
+            <iq:product id="fr265"/>
             <iq:product id="fr645m"/>
             <iq:product id="fr745"/>
             <iq:product id="fr945"/>
@@ -61,9 +62,12 @@
             <iq:product id="marqgolfer"/>
             <iq:product id="venu"/>
             <iq:product id="venu2"/>
+            <iq:product id="venu2plus"/>
+            <iq:product id="venu3s"/>
             <iq:product id="vivoactive3m"/>
             <iq:product id="vivoactive4"/>
             <iq:product id="vivoactive4s"/>
+            <iq:product id="vivoactive5"/>
         </iq:products>
         <!--
             Use "Monkey C: Edit Permissions" from the Visual Studio Code command

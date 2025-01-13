@@ -106,10 +106,17 @@ vivoactive4.excludeAnnotations = legacy
 vivoactive4s.sourcePath = $(vivoactive4s.sourcePath);source-modern
 vivoactive4s.excludeAnnotations = legacy
 
-# AMOLED devices are not supported. They're here just so I can try them out on the sim.
-fr965.sourcePath = $(fr965.sourcePath);source-modern
-fr965.excludeAnnotations = legacy
+# AMOLED devices are based on the modern architecture of newer watches. They have their
+# own code to deal with the limited supported color schemes and burn-in protection requirements.
+fr265.sourcePath = $(fr265.sourcePath);source-amoled
+fr265.excludeAnnotations = legacy
 venu.sourcePath = $(venu.sourcePath);source-legacy
-venu.excludeAnnotations = legacy
-venu2.sourcePath = $(venu2.sourcePath);source-modern
+venu.excludeAnnotations = memory;modern
+venu2.sourcePath = $(venu2.sourcePath);source-amoled
 venu2.excludeAnnotations = legacy
+venu2plus.sourcePath = $(venu2plus.sourcePath);source-amoled
+venu2plus.excludeAnnotations = legacy
+venu3s.sourcePath = $(venu3s.sourcePath);source-amoled
+venu3s.excludeAnnotations = legacy
+vivoactive5.sourcePath = $(vivoactive5.sourcePath);source-amoled
+vivoactive5.excludeAnnotations = legacy
