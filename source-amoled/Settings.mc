@@ -44,7 +44,6 @@ class Config {
         I_BATTERY, 
         I_DATE_DISPLAY, 
         I_DARK_MODE, 
-        I_HIDE_SECONDS, 
         I_ACCENT_COLOR,
         I_ACCENT_CYCLE,
         I_DM_CONTRAST,
@@ -58,7 +57,6 @@ class Config {
         I_STEPS,
         I_CALORIES,
         I_MOVE_BAR,
-        I_3D_EFFECTS, 
         I_BATTERY_PCT, 
         I_BATTERY_DAYS, 
         I_SIZE, 
@@ -72,7 +70,6 @@ class Config {
         :Battery, 
         :DateDisplay, 
         :DarkMode, 
-        :HideSeconds, 
         :AccentColor, 
         :AccentCycle, 
         :DmContrast, 
@@ -86,7 +83,6 @@ class Config {
         :Steps,
         :Calories,
         :MoveBar,
-        :Shadows, 
         :BatteryPct, 
         :BatteryDays
     ] as Array<Symbol>;
@@ -98,7 +94,6 @@ class Config {
         "ba", // I_BATTERY
         "dd", // I_DATE_DISPLAY
         "dm", // I_DARK_MODE
-        "hs", // I_HIDE_SECONDS
         "ac", // I_ACCENT_COLOR
         "ay", // I_ACCENT_CYCLE
         "dc", // I_DM_CONTRAST
@@ -112,7 +107,6 @@ class Config {
         "st", // I_STEPS
         "ca", // I_CALORIES
         "mb", // I_MOVE_BAR
-        "3d", // I_3D_EFFECTS
         "bp", // I_BATTERY_PCT
         "bd"  // I_BATTERY_DAYS
     ] as Array<String>;
@@ -123,21 +117,20 @@ class Config {
         [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern], // I_BATTERY
         [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay], // I_DATE_DISPLAY
         [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
-        [:HideSecondsInDm, :HideSecondsAlways, :HideSecondsNever], // I_HIDE_SECONDS
         [:AccentRed, :AccentOrange, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentLtBlue, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
         [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
         [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite] // I_DM_CONTRAST
      ] as Array< Array<Symbol> >;
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
-    private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
+    private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the wire hands
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
     private var _hasTimeToRecovery as Boolean; // Indicates if the device provides recovery time
 
     // Constructor
     public function initialize() {
-        // Default values for toggle items, each bit is one. I_ALARMS, I_CONNECTED and I_3D_EFFECTS are on by default.
-        var defaults = 0x105; // 0b0001 0000 0101
+        // Default values for toggle items, each bit is one. I_ALARMS and I_CONNECTED are on by default.
+        var defaults = 0x005; // 0b000 0000 0101
 
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasBatteryInDays = (System.Stats has :batteryInDays);
@@ -155,9 +148,6 @@ class Config {
                 }
                 if (I_RECOVERY_TIME == id and !_hasTimeToRecovery) {
                     value = 0;
-                }
-                if (I_3D_EFFECTS == id and !_hasAlpha) { 
-                    value = 0; 
                 }
             } else if (id < I_DM_ON) { // list items
                 if (null == value) { 
@@ -218,8 +208,6 @@ class Config {
         var disabled = 0; // value when the setting is disabled
         if (I_DARK_MODE == id) {
             disabled = 1;
-        } else if (I_HIDE_SECONDS == id) {
-            disabled = 2;
         }
         return disabled != _values[id];
     }
@@ -333,12 +321,8 @@ class SettingsMenu extends WatchUi.Menu2 {
                         {}
                     ));
                 }
-                addMenuItem(Config.I_HIDE_SECONDS);
                 addMenuItem(Config.I_ACCENT_COLOR);
                 addMenuItem(Config.I_ACCENT_CYCLE);
-                if (config.hasAlpha()) {
-                    addToggleMenuItem(Config.I_3D_EFFECTS); 
-                }
                 Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.Done, Rez.Strings.DoneLabel, Config.I_DONE, {}));
                 break;
         }
@@ -366,10 +350,8 @@ class SettingsMenu extends WatchUi.Menu2 {
                 deleteAnyItem(Config.I_DM_ON);
                 deleteAnyItem(Config.I_DM_OFF);
                 deleteAnyItem(Config.I_DM_CONTRAST);
-                deleteAnyItem(Config.I_HIDE_SECONDS);
                 deleteAnyItem(Config.I_ACCENT_COLOR);
                 deleteAnyItem(Config.I_ACCENT_CYCLE);
-                deleteAnyItem(Config.I_3D_EFFECTS);
                 deleteAnyItem(Config.I_DONE);
                 break;
         }
