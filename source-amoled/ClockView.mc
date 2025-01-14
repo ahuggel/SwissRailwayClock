@@ -38,7 +38,7 @@ class ClockView extends WatchUi.WatchFace {
     private const TWO_PI as Float = 2 * Math.PI;
 
     private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
-    private var _accentColor as Number = 0xFF0000;
+    private var _accentColor as Number = 0xff0055;
 
     // List of watchface shapes, used as indexes. Review optimizations in calcSecondData() et al. before changing the Shape enum.
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
@@ -302,22 +302,22 @@ class ClockView extends WatchUi.WatchFace {
             var aci = 0;
             if (config.isEnabled(Config.I_ACCENT_CYCLE)) {
                 var cnt = [0, clockTime.hour, clockTime.min, clockTime.sec][config.getValue(Config.I_ACCENT_CYCLE)];
-                aci = cnt % 9 /*(accentColors.size() / 2)*/ * 2;
+                aci = cnt % 9;
             } else {
-                aci = config.getValue(Config.I_ACCENT_COLOR) * 2;
+                aci = config.getValue(Config.I_ACCENT_COLOR);
             }
             _accentColor = [
-                // Colors for the second hand, in pairs with one color for each color mode
-                0xFF0000, 0xff0055, // red 
-                0xff5500, 0xffaa00, // orange
-                0xffff00, 0xffff55, // yellow
-                0x55ff00, 0x55ff00, // light green
-                0x00AA00, 0x00aa55, // green
-                0x00ffff, 0x55ffff, // light blue
-                0x0000FF, 0x00AAFF, // blue
-                0xaa00aa, 0xaa00ff, // purple
-                0xff00aa, 0xff00aa  // pink
-            ][M_LIGHT == colorMode ? aci : aci + 1];
+                // Colors for the second hand
+                0xff0055, // red 
+                0xffaa00, // orange
+                0xffff55, // yellow
+                0x55ff00, // light green
+                0x00aa55, // green
+                0x55ffff, // light blue
+                0x00AAFF, // blue
+                0xaa00ff, // purple
+                0xff00aa  // pink
+            ][aci];
             drawSecondHand(_secondDc, clockTime.sec);
         }
     }
