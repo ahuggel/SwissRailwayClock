@@ -101,7 +101,7 @@ class Indicators {
     }
 
     // Draw all indicators. The legacy version checks settings and determines positions within this function as well.
-    (:legacy) public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
+    (:legacy) public function draw(dc as Dc, deviceSettings as DeviceSettings, isAwake as Boolean) as Void {
         var activityInfo = ActivityMonitor.getInfo();
         var w2 = (_width * 0.50).toNumber();
         var iconsDrawn = false;
@@ -187,7 +187,8 @@ class Indicators {
             drawHeartRate2(
                 dc, 
                 (_width * w).toNumber(), 
-                (_height * h).toNumber()
+                (_height * h).toNumber(),
+                isAwake
             );
         }
 
@@ -278,7 +279,7 @@ class Indicators {
 
     // Draw all the indicators, which are updated once a minute (all except the heart rate).
     // The modern version uses a helper function to determine if and where each indicator is drawn.
-    (:modern) public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
+    (:modern) public function draw(dc as Dc, deviceSettings as DeviceSettings, isAwake as Boolean) as Void {
         var activityInfo = ActivityMonitor.getInfo();
 
         // Helper - is the heart rate indicator at 6 o'clock?
@@ -408,8 +409,8 @@ class Indicators {
 
     // Draw the heart rate if it is available, return true if it was drawn.
     // Modern devices call this every few seconds, also in low-power mode.
-    (:modern) public function drawHeartRate(dc as Dc) as Boolean {
-        return -1 == _drawHeartRate ? false : drawHeartRate2(dc, _pos[_drawHeartRate][0], _pos[_drawHeartRate][1]);
+    (:modern) public function drawHeartRate(dc as Dc, isAwake as Boolean) as Boolean {
+        return -1 == _drawHeartRate ? false : drawHeartRate2(dc, _pos[_drawHeartRate][0], _pos[_drawHeartRate][1], isAwake);
     }
 
     // Determine if a given indicator should be shown and its position on the screen. 
@@ -506,7 +507,7 @@ class Indicators {
     // Draw the heart rate if it is available, return true if it was drawn.
     // This private function is used by both, the legacy and modern code.
     // Note: Sets and clears the clipping region of the device context.
-    private function drawHeartRate2(dc as Dc, xpos as Number, ypos as Number) as Boolean {
+    private function drawHeartRate2(dc as Dc, xpos as Number, ypos as Number, isAwake as Boolean) as Boolean {
         var ret = false;
         var heartRate = null;
         var activityInfo = Activity.getActivityInfo();
@@ -536,7 +537,7 @@ class Indicators {
             dc.drawText(
                 heartRate > 99 ? xpos - width*2/16 - 1 : xpos, ypos - 1, 
                 ClockView.iconFont as FontResource, 
-                ClockView.isAwake ? "H" : "I" as String, 
+                isAwake ? "H" : "I" as String, 
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
             );
             dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);

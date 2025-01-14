@@ -27,17 +27,17 @@ import Toybox.WatchUi;
 // Implements the Swiss Railway Clock watch face for modern watches, using layers
 class ClockView extends WatchUi.WatchFace {
 
-    enum { M_LIGHT, M_DARK } // Color modes TODO: remove
+    enum { M_LIGHT, M_DARK } // Color modes
     enum { C_FOREGROUND, C_BACKGROUND, C_TEXT } // Indexes into the colors array
 
     // Things we want to access from the outside. By convention, write-access is only from within ClockView.
     static public var iconFont as FontResource?;
     static public var colorMode as Number = M_DARK; // TODO: cannot be removed easily, as visible from outside ClockView
     static public var colors as Array<Number> = new Array<Number>[3]; // Foreground, background and text colors, see setColors()
-    static public var isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
 
     private const TWO_PI as Float = 2 * Math.PI;
 
+    private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
     private var _accentColor as Number = 0xFF0000;
 
     // List of watchface shapes, used as indexes. Review optimizations in calcSecondData() et al. before changing the Shape enum.
@@ -200,14 +200,14 @@ class ClockView extends WatchUi.WatchFace {
 
     // This method is called when the device re-enters sleep mode
     public function onEnterSleep() as Void {
-        isAwake = false;
+        _isAwake = false;
         _lastDrawnMin = -1; // Force the watchface to be re-drawn
         WatchUi.requestUpdate();
     }
 
     // This method is called when the device exits sleep mode
     public function onExitSleep() as Void {
-        isAwake = true;
+        _isAwake = true;
         _lastDrawnMin = -1; // Force the watchface to be re-drawn
         WatchUi.requestUpdate();
     }
@@ -270,8 +270,8 @@ class ClockView extends WatchUi.WatchFace {
             }
 
             // Draw the indicators (those which are updated every minute) on the background layer
-            _indicators.draw(_backgroundDc, deviceSettings);
-            _indicators.drawHeartRate(_backgroundDc);
+            _indicators.draw(_backgroundDc, deviceSettings, _isAwake);
+            _indicators.drawHeartRate(_backgroundDc, _isAwake);
 
             // Clear the layer used for the hour and minute hands
             _hourMinuteDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
@@ -293,8 +293,8 @@ class ClockView extends WatchUi.WatchFace {
             }
         } // if (_lastDrawnMin != clockTime.min)
 
-        _secondLayer.setVisible(isAwake);
-        if (isAwake) {
+        _secondLayer.setVisible(_isAwake);
+        if (_isAwake) {
             // Clear the clip of the second layer to delete the second hand
             _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
             _secondDc.clear();
@@ -333,7 +333,7 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     // Draw the second hand for the given second and set the clipping region.
-    // This function is performance critical (when !isAwake) and has been optimized to use only pre-calculated numbers.
+    // This function is performance critical (when !_isAwake) and has been optimized to use only pre-calculated numbers.
     private function drawSecondHand(dc as Dc, second as Number) as Void {
         // Use the pre-calculated numbers for the current second
         var sd = _secondData[second];
@@ -440,7 +440,7 @@ class ClockView extends WatchUi.WatchFace {
     }
 
     private function setColors(doNotDisturb as Boolean, hour as Number, min as Number) as Void {
-        if (isAwake) {
+        if (_isAwake) {
             var colorMode = M_LIGHT;
             colors = [Graphics.COLOR_WHITE, Graphics.COLOR_BLACK, Graphics.COLOR_LT_GRAY];
             var darkMode = config.getOption(Config.I_DARK_MODE);
@@ -465,7 +465,7 @@ class ClockView extends WatchUi.WatchFace {
                     colors[C_TEXT] = Graphics.COLOR_DK_GRAY;
                 }
             }
-        } else { // !isAwake
+        } else { // !_isAwake
             colors = [Graphics.COLOR_DK_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_DK_GRAY];
         }
     }

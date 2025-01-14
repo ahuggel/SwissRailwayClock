@@ -37,11 +37,11 @@ class ClockView extends WatchUi.WatchFace {
     static public var iconFont as FontResource?;
     static public var colorMode as Number = M_LIGHT;
     static public var colors as Array<Number> = new Array<Number>[3]; // Foreground, background and text colors, see setColors()
-    static public var isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
 
     private const TWO_PI as Float = 2 * Math.PI;
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
 
+    private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
     private var _accentColor as Number = 0xFF0000;
 
     // List of watchface shapes, used as indexes. Review optimizations in drawSecondHand() and calcSecondData() before changing the Shape enum.
@@ -172,14 +172,14 @@ class ClockView extends WatchUi.WatchFace {
 
     // This method is called when the device re-enters sleep mode
     public function onEnterSleep() as Void {
-        isAwake = false;
+        _isAwake = false;
         _lastDrawnMin = -1; // Force the watchface to be re-drawn
         WatchUi.requestUpdate();
     }
 
     // This method is called when the device exits sleep mode
     public function onExitSleep() as Void {
-        isAwake = true;
+        _isAwake = true;
         _lastDrawnMin = -1; // Force the watchface to be re-drawn
         WatchUi.requestUpdate();
     }
@@ -214,7 +214,7 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         // Update the low-power mode timer
-        if (isAwake) { 
+        if (_isAwake) { 
             _sleepTimer = SECOND_HAND_TIMER; // Reset the timer
         } else if (_sleepTimer > 0) {
             _sleepTimer--;
@@ -258,7 +258,7 @@ class ClockView extends WatchUi.WatchFace {
             }
 
             // Draw the indicators
-            _indicators.draw(targetDc, deviceSettings);
+            _indicators.draw(targetDc, deviceSettings, _isAwake);
 
             // Draw the hour and minute hands
             var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
@@ -270,7 +270,7 @@ class ClockView extends WatchUi.WatchFace {
         // Output the offscreen buffer to the main display
         dc.drawBitmap(0, 0, _offscreenBuffer);
 
-        if (isAwake or _doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand)) {
+        if (_isAwake or _doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand)) {
             // Determine the color of the second hand and draw it, directly on the screen
             var aci = 0;
             if (config.isEnabled(Config.I_ACCENT_CYCLE)) {
@@ -298,7 +298,7 @@ class ClockView extends WatchUi.WatchFace {
     // Handle the partial update event. This function is called every second when the device is
     // in low-power mode. See onUpdate() for the full story.
     public function onPartialUpdate(dc as Dc) as Void {
-        isAwake = false; // To state the obvious. Workaround for an Enduro 2 firmware bug.
+        _isAwake = false; // To state the obvious. Workaround for an Enduro 2 firmware bug.
 
         if (_sleepTimer > 0) { 
             _sleepTimer--; 
