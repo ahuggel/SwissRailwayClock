@@ -131,7 +131,7 @@ class Indicators {
 
         // Draw the date string
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
-        dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
         var dateDisplay = config.getOption(Config.I_DATE_DISPLAY);
         if (:DateDisplayDayOnly == dateDisplay) {
             dc.drawText(
@@ -319,7 +319,7 @@ class Indicators {
 
         // Draw the date string
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
-        dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
         idx = getIndicatorPosition(:longDate);
         if (-1 != idx) {
             dc.drawText(
@@ -366,15 +366,16 @@ class Indicators {
         idx = getIndicatorPosition(:recoveryTime);
         if (-1 != idx) {
             if (ActivityMonitor.Info has :timeToRecovery) {
+                System.println("ActivityMonitor.Info has :timeToRecovery");
                 drawIndicator(
                     dc,
                     _pos[idx][0],
                     _pos[idx][1],
                     "R",
                     false,
-                    activityInfo.timeToRecovery
+                    19 // activityInfo.timeToRecovery
                 );
-            }
+            } else { System.println("ActivityMonitor.Info does not have :timeToRecovery"); }
         }
 
         // Draw the steps indicator
@@ -526,7 +527,7 @@ class Indicators {
             var width = (fontHeight * 2.1).toNumber(); // Indicator width
             var hr = heartRate.format("%d");
 
-            var bgColor = ClockView.colors[ClockView.colorMode][ClockView.C_BACKGROUND];
+            var bgColor = ClockView.colors[ClockView.C_BACKGROUND];
             dc.setClip(xpos - width*0.48, ypos - fontHeight*0.38, width, fontHeight*0.85);
             dc.setColor(Graphics.COLOR_TRANSPARENT, bgColor);
             dc.clear();
@@ -538,7 +539,7 @@ class Indicators {
                 ClockView.isAwake ? "H" : "I" as String, 
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
             );
-            dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+            dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
                 xpos + width/2, 
                 ypos,
@@ -573,7 +574,7 @@ class Indicators {
         }
         var ret = false;
         if (!icons.equals("")) {
-            dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+            dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(xpos, ypos, ClockView.iconFont as FontResource, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
             ret = true;
         }
@@ -589,7 +590,7 @@ class Indicators {
     ) as Boolean {
         var ret = false;
         var iconColor = Graphics.COLOR_BLUE;
-        var fgColor = ClockView.colors[ClockView.colorMode][ClockView.C_FOREGROUND];
+        var fgColor = ClockView.colors[ClockView.C_FOREGROUND];
         if (Graphics.COLOR_LT_GRAY == fgColor or Graphics.COLOR_WHITE == fgColor) {
             iconColor = Graphics.COLOR_DK_BLUE;
         }
@@ -632,7 +633,7 @@ class Indicators {
             }
             dc.setColor(ClockView.colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
             dc.drawText(xposIcon, ypos - 1, ClockView.iconFont as FontResource, icon as String, textAlign);
-            dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+            dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(xposText, ypos, font, value.format("%d"), textAlign);
             ret = true;
         }
@@ -663,7 +664,7 @@ class Indicators {
                 dc.drawArc(x, y, radius, Graphics.ARC_CLOCKWISE, angle, angle-bar);
 
                 var color = (1 == i or 3 == i) ? ClockView.C_FOREGROUND : ClockView.C_BACKGROUND;
-        		dc.setColor(ClockView.colors[ClockView.colorMode][color], Graphics.COLOR_TRANSPARENT);
+        		dc.setColor(ClockView.colors[color], Graphics.COLOR_TRANSPARENT);
                 dc.setPenWidth(1);
                 dc.fillPolygon(arrowPoints(x, y, radius, width, angle));
 
@@ -808,8 +809,7 @@ class BatteryLevel {
         // Draw the battery shape
         var x = xpos - _cWidth/2 + _cT1;
         var y = ypos - _cT3;
-        var frameColor = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY] as Array<Number>;
-        dc.setColor(frameColor[colorMode], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(_cPw);
         dc.drawRoundedRectangle(x, y, _cWidth, _cHeight, _cPw);
         dc.setPenWidth(1);
@@ -843,7 +843,7 @@ class BatteryLevel {
     ) as Void {
         var font = Graphics.FONT_XTINY;
         y += 1; // Looks better aligned on the actual device (fr955) like this
-        dc.setColor(ClockView.colors[ClockView.colorMode][ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
         if (config.isEnabled(Config.I_BATTERY_PCT)) {
             var str = (level + 0.5).toNumber() + "% ";
             dc.drawText(x1, y - Graphics.getFontHeight(font)/2, font, str, Graphics.TEXT_JUSTIFY_RIGHT);
