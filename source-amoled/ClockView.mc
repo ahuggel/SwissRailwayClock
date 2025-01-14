@@ -245,7 +245,7 @@ class ClockView extends WatchUi.WatchFace {
 
             var deviceSettings = System.getDeviceSettings();
 
-            // Set the colors
+            // Set the colors and color mode based on the relevant settings
             setColors(deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
 
             // Draw the background
@@ -454,9 +454,9 @@ class ClockView extends WatchUi.WatchFace {
                 colorMode = M_DARK;
             }
 
-            // In dark mode, adjust text color based on the contrast setting
             if (M_DARK == colorMode) {
                 colors = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_DK_GRAY];
+                // In dark mode, adjust text color based on the contrast setting
                 var foregroundColor = config.getValue(Config.I_DM_CONTRAST);
                 colors[C_FOREGROUND] = foregroundColor;
                 if (Graphics.COLOR_WHITE == foregroundColor) {
