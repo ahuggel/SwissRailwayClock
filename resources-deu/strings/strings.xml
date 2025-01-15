@@ -14,7 +14,9 @@
     <string id="Calories">Kalorien</string>
     <string id="MoveBar">Inaktivitätsstatus</string>
     <string id="DarkMode">Dunkelmodus</string>
+    <string id="Dimmer">Dimmer</string>
     <string id="DmContrast">Kontrast</string>
+    <string id="DimmerLevel">Stufe</string>
     <string id="HideSeconds">Sekunden ausblenden</string>
     <string id="AccentColor">Sekunden Farbe</string>
     <string id="AccentCycle">Farbe wechseln</string>
@@ -38,6 +40,8 @@
     <string id="DmContrastLtGray">Hellgrau</string>
     <string id="DmContrastDkGray">Dunkelgrau</string>
     <string id="DmContrastWhite">Weiss</string>
+    <string id="DimmerLevelMedium">Mittel</string>
+    <string id="DimmerLevelDark">Dunkel</string>
     <string id="HideSecondsInDm">Im Dunkelmodus</string>
     <string id="HideSecondsAlways">Immer</string>
     <string id="HideSecondsNever">Nie</string>

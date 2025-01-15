@@ -24,7 +24,7 @@ import Toybox.Math;
 import Toybox.System;
 import Toybox.WatchUi;
 
-// Implements the Swiss Railway Clock watch face for modern watches, using layers
+// Implements the Swiss Railway Clock watch face for modern watches with an AMOLED display, using layers
 class ClockView extends WatchUi.WatchFace {
 
     enum { M_LIGHT, M_DARK } // Color modes
@@ -32,14 +32,13 @@ class ClockView extends WatchUi.WatchFace {
 
     // Things we want to access from the outside. By convention, write-access is only from within ClockView.
     static public var iconFont as FontResource?;
-    static public var colorMode as Number = M_LIGHT;
+    static public var colorMode as Number = M_DARK; // TODO: cannot be removed easily, as visible from outside ClockView
     static public var colors as Array<Number> = new Array<Number>[3]; // Foreground, background and text colors, see setColors()
 
     private const TWO_PI as Float = 2 * Math.PI;
-    private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
 
     private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
-    private var _accentColor as Number = 0xFF0000;
+    private var _accentColor as Number = 0xff0055;
 
     // List of watchface shapes, used as indexes. Review optimizations in calcSecondData() et al. before changing the Shape enum.
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
@@ -52,23 +51,17 @@ class ClockView extends WatchUi.WatchFace {
     private var _secondData as Array< Array<Number> > = new Array< Array<Number> >[60];
 
     private var _lastDrawnMin as Number = -1; // Minute when the watch face was last completely re-drawn
-    private var _doPartialUpdates as Boolean = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
     private var _doWireHands as Number = 0; // Number of seconds to show the minute and hour hands was wire hands after press
-    private var _sleepTimer as Number = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
-    private var _hideSecondHand as Boolean = false;
-    private var _show3dEffects as Boolean = false;
-    private var _shadowColor as Number = 0;
+    private var _wireHandsColor as Number = 0;
 
     private var _screenShape as Number;
     private var _screenCenter as Array<Number>;
     private var _clockRadius as Number;
 
     private var _secondLayer as Layer;
-    private var _secondShadowLayer as Layer;
     private var _backgroundDc as Dc;
     private var _hourMinuteDc as Dc;
     private var _secondDc as Dc;
-    private var _secondShadowDc as Dc;
 
     private var _indicators as Indicators;
 
@@ -76,7 +69,7 @@ class ClockView extends WatchUi.WatchFace {
     public function initialize() {
         WatchFace.initialize();
 
-        if (config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
+        if (config.hasAlpha()) { _wireHandsColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
         var deviceSettings = System.getDeviceSettings();
         _screenShape = deviceSettings.screenShape;
         var width = deviceSettings.screenWidth;
@@ -87,13 +80,10 @@ class ClockView extends WatchUi.WatchFace {
         // Instead of a buffered bitmap, this version uses multiple layers (since API Level 3.1.0):
         //
         // 1) A background layer with the tick marks and any indicators.
-        // 2) A full screen layer just for the shadow of the second hand (when 3d effects are on)
-        // 3) Another full screen layer for the hour and minute hands.
-        // 4) A dedicated layer for the second hand.
+        // 2) A full screen layer for the hour and minute hands.
+        // 3) A dedicated layer for the second hand.
         //
-        // Using layers is elegant and makes it possible to draw some indicators even in low-power
-        // mode, e.g., the heart rate is updated every second in high-power mode and every 10 seconds
-        // in low power mode.
+        // Using layers is elegant.
         // On the other hand, this architecture requires more memory and is only feasible on CIQ 4
         // devices, i.e., on devices with a graphics pool, and on a few older models which have
         // more memory.
@@ -107,20 +97,16 @@ class ClockView extends WatchUi.WatchFace {
         var backgroundLayer = new WatchUi.Layer(opts);
         var hourMinuteLayer = new WatchUi.Layer(opts);
         _secondLayer = new WatchUi.Layer(opts);
-        _secondShadowLayer = new WatchUi.Layer(opts);
 
         addLayer(backgroundLayer);
-        addLayer(_secondShadowLayer);
         addLayer(hourMinuteLayer);
         addLayer(_secondLayer);
         _backgroundDc = backgroundLayer.getDc() as Dc;
         _hourMinuteDc = hourMinuteLayer.getDc() as Dc;
         _secondDc = _secondLayer.getDc() as Dc;
-        _secondShadowDc = _secondShadowLayer.getDc() as Dc;
         _backgroundDc.setAntiAlias(true); // Graphics.Dc has :setAntiAlias since API Level 3.2.0
         _hourMinuteDc.setAntiAlias(true);
         _secondDc.setAntiAlias(true);
-        _secondShadowDc.setAntiAlias(true);
 
         _indicators = new Indicators(width, height, _screenCenter, _clockRadius);
     }
@@ -230,31 +216,16 @@ class ClockView extends WatchUi.WatchFace {
         WatchUi.requestUpdate();
     }
 
-    public function stopPartialUpdates() as Void {
-        _doPartialUpdates = false;
-        colors[C_BACKGROUND] = Graphics.COLOR_BLUE; // Make the issue visible
-    }
-
     // Handle the update event. This function is called
     // 1) every second when the device is awake,
     // 2) every full minute in low-power mode, and
     // 3) it's also triggered when the device goes in or out of low-power mode
     //    (from onEnterSleep() and onExitSleep()).
     //
-    // In low-power mode, onPartialUpdate() is called every second, except on the full minute,
-    // and the system enforces a power budget, which the code must not exceed.
-    //
     // The watchface is redrawn every full minute and when the watch enters or exists sleep.
-    // During sleep, onPartialUpdate deletes and redraws the second hand.
+    // During sleep, the second hand is not drawn.
     public function onUpdate(dc as Dc) as Void {
         dc.clearClip(); // Still needed as the settings menu messes with the clip
-
-        // Update the low-power mode timer
-        if (_isAwake) { 
-            _sleepTimer = SECOND_HAND_TIMER; // Reset the timer
-        } else if (_sleepTimer != 0) {
-            _sleepTimer -= 1;
-        }
 
         // Update the wire hands timer
         if (_doWireHands != 0) {
@@ -273,17 +244,7 @@ class ClockView extends WatchUi.WatchFace {
             var deviceSettings = System.getDeviceSettings();
 
             // Set the colors and color mode based on the relevant settings
-            colorMode = setColors(deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
-
-            // Note: Whether 3D effects are supported by the device is also ensured by getValue().
-            _show3dEffects = config.isEnabled(Config.I_3D_EFFECTS) and M_LIGHT == colorMode;
-            _secondShadowLayer.setVisible(_show3dEffects and _isAwake);
-
-            // Handle the setting to disable the second hand in sleep mode after some time
-            var secondsOption = config.getOption(Config.I_HIDE_SECONDS);
-            _hideSecondHand = :HideSecondsAlways == secondsOption 
-                or (:HideSecondsInDm == secondsOption and M_DARK == colorMode);
-            _secondLayer.setVisible(_sleepTimer != 0 or !_hideSecondHand);
+            setColors(deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
 
             // Draw the background
             if (System.SCREEN_SHAPE_ROUND == _screenShape) {
@@ -308,100 +269,54 @@ class ClockView extends WatchUi.WatchFace {
 
             // Draw the indicators (those which are updated every minute) on the background layer
             _indicators.draw(_backgroundDc, deviceSettings, _isAwake);
+            _indicators.drawHeartRate(_backgroundDc, _isAwake);
 
             // Clear the layer used for the hour and minute hands
             _hourMinuteDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
             _hourMinuteDc.clear();
 
-            // Draw the hour and minute hands and their shadows
+            // Draw the hour and minute hands
             var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
             var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
             var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
-            if (_isAwake and _show3dEffects and 0 == _doWireHands) {
-                _hourMinuteDc.setFill(_shadowColor);
-                _hourMinuteDc.fillPolygon(shadowCoords(hourHandCoords, 7));
-                _hourMinuteDc.fillPolygon(shadowCoords(minuteHandCoords, 8));
-            }
             if (0 == _doWireHands) {
                 _hourMinuteDc.setColor(colors[C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
                 _hourMinuteDc.fillPolygon(hourHandCoords);
                 _hourMinuteDc.fillPolygon(minuteHandCoords);
             } else {
-                _hourMinuteDc.setStroke(_shadowColor);
+                _hourMinuteDc.setStroke(_wireHandsColor);
                 _hourMinuteDc.setPenWidth(3); // TODO: Should be a percentage of the clock radius
                 drawPolygon(_hourMinuteDc, hourHandCoords);
                 drawPolygon(_hourMinuteDc, minuteHandCoords);
             }
         } // if (_lastDrawnMin != clockTime.min)
 
-        if (_isAwake or _doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand)) {
-            // Draw the heart rate indicator, every time onUpdate() is called
-            _indicators.drawHeartRate(_backgroundDc, _isAwake);
-
+        _secondLayer.setVisible(_isAwake);
+        if (_isAwake) {
             // Clear the clip of the second layer to delete the second hand
             _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
             _secondDc.clear();
-            if (_isAwake and _show3dEffects) {
-                // Clear the clip of the second hand shadow layer to delete the shadow
-                _secondShadowDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
-                _secondShadowDc.clear();
-            }
-            // Determine the color of the second hand and draw it and its shadow
+            // Determine the color of the second hand and draw it
             var aci = 0;
             if (config.isEnabled(Config.I_ACCENT_CYCLE)) {
                 var cnt = [0, clockTime.hour, clockTime.min, clockTime.sec][config.getValue(Config.I_ACCENT_CYCLE)];
-                aci = cnt % 9 /*(accentColors.size() / 2)*/ * 2;
+                aci = cnt % 9;
             } else {
-                aci = config.getValue(Config.I_ACCENT_COLOR) * 2;
+                aci = config.getValue(Config.I_ACCENT_COLOR);
             }
             _accentColor = [
-                // Colors for the second hand, in pairs with one color for each color mode
-                0xFF0000, 0xff0055, // red 
-                0xff5500, 0xffaa00, // orange
-                0xffff00, 0xffff55, // yellow
-                0x55ff00, 0x55ff00, // light green
-                0x00AA00, 0x00aa55, // green
-                0x00ffff, 0x55ffff, // light blue
-                0x0000FF, 0x00AAFF, // blue
-                0xaa00aa, 0xaa00ff, // purple
-                0xff00aa, 0xff00aa  // pink
-            ][M_LIGHT == colorMode ? aci : aci + 1];
+                // Colors for the second hand
+                0xff0055, // red 
+                0xffaa00, // orange
+                0xffff55, // yellow
+                0x55ff00, // light green
+                0x00aa55, // green
+                0x55ffff, // light blue
+                0x00AAFF, // blue
+                0xaa00ff, // purple
+                0xff00aa  // pink
+            ][aci];
             drawSecondHand(_secondDc, clockTime.sec);
-        }
-    }
-
-    // Handle the partial update event. This function is called every second when the device is
-    // in low-power mode. See onUpdate() for the full story.
-    public function onPartialUpdate(dc as Dc) as Void {
-        _isAwake = false; // To state the obvious. Workaround for an Enduro 2 firmware bug.
-        if (_doWireHands !=  0) {
-            _doWireHands -= 1;
-            if (0 == _doWireHands) {
-                _lastDrawnMin = -1;
-                WatchUi.requestUpdate();
-            }
-        }
-        if (_sleepTimer != 0) { 
-            _sleepTimer -= 1;
-            if (0 == _sleepTimer and _hideSecondHand) {
-                // Delete the second hand for the last time
-                _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
-                _secondDc.clear();
-                _secondLayer.setVisible(false);
-            }
-        }
-        if (_sleepTimer != 0 or !_hideSecondHand) {
-            var second = System.getClockTime().sec;
-
-            // Continue to draw the heart rate indicator every 10 seconds in onPartialUpdate()
-            if (0 == second % 10) {
-                _indicators.drawHeartRate(_backgroundDc, _isAwake);
-            }
-
-            // Clear the clip of the second layer to delete the second hand, then re-draw it
-            _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
-            _secondDc.clear();
-            drawSecondHand(_secondDc, second);
         }
     }
 
@@ -415,7 +330,7 @@ class ClockView extends WatchUi.WatchFace {
         }
     }
 
-    // Draw the second hand for the given second, including a shadow, if required, and set the clipping region.
+    // Draw the second hand for the given second and set the clipping region.
     // This function is performance critical (when !_isAwake) and has been optimized to use only pre-calculated numbers.
     private function drawSecondHand(dc as Dc, second as Number) as Void {
         // Use the pre-calculated numbers for the current second
@@ -424,17 +339,6 @@ class ClockView extends WatchUi.WatchFace {
 
         // Set the clipping region
         dc.setClip(sd[10], sd[11], sd[12], sd[13]);
-
-        if (_isAwake and _show3dEffects and 0 == _doWireHands) {
-            // Set the clipping region of the shadow by moving the clipping region of the second hand
-            var sc = shadowCoords([[sd[0], sd[1]], [sd[10], sd[11]]], 9);
-            _secondShadowDc.setClip(sc[1][0], sc[1][1], sd[12], sd[13]);
-
-            // Draw the shadow of the second hand
-            _secondShadowDc.setFill(_shadowColor);
-            _secondShadowDc.fillPolygon(shadowCoords(coords, 9));
-            _secondShadowDc.fillCircle(sc[0][0], sc[0][1], _secondCircleRadius);
-        }
 
         // Draw the second hand
         dc.setColor(_accentColor, Graphics.COLOR_TRANSPARENT);
@@ -533,45 +437,35 @@ class ClockView extends WatchUi.WatchFace {
         return [[x0, y0], [x1, y1], [x2, y2], [x3, y3]];
     }
 
-    // TODO: move the shadow shapes by a percentage instead of a number of pixels
-    private function shadowCoords(coords as Array<Point2D>, len as Number) as Array<Point2D> {
-        var size = coords.size();
-        var result = new Array<Point2D>[size];
-        // Direction to move points, clockwise from 12 o'clock
-        var angle = 3 * Math.PI / 4;
-        var dx = (Math.sin(angle) * len + 0.5).toNumber();
-        var dy = (-Math.cos(angle) * len + 0.5).toNumber();
-        for (var i = 0; i < size; i++) {
-            result[i] = [coords[i][0] + dx, coords[i][1] + dy];
-        }
-        return result;
-    }
-
-    private function setColors(doNotDisturb as Boolean, hour as Number, min as Number) as Number {
-        var colorMode = M_LIGHT;
-        colors = [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_DK_GRAY];
-        var darkMode = config.getOption(Config.I_DARK_MODE);
-        if (:DarkModeScheduled == darkMode) {
-            var time = hour * 60 + min;
-            if (time >= config.getValue(Config.I_DM_ON) or time < config.getValue(Config.I_DM_OFF)) {
+    private function setColors(doNotDisturb as Boolean, hour as Number, min as Number) as Void {
+        if (_isAwake) {
+            var colorMode = M_LIGHT;
+            colors = [Graphics.COLOR_WHITE, Graphics.COLOR_BLACK, Graphics.COLOR_LT_GRAY];
+            var darkMode = config.getOption(Config.I_DARK_MODE);
+            if (:DarkModeScheduled == darkMode) {
+                var time = hour * 60 + min;
+                if (time >= config.getValue(Config.I_DM_ON) or time < config.getValue(Config.I_DM_OFF)) {
+                    colorMode = M_DARK;
+                }
+            } else if (   :On == darkMode
+                       or (:DarkModeInDnD == darkMode and doNotDisturb)) {
                 colorMode = M_DARK;
             }
-        } else if (   :On == darkMode
-                   or (:DarkModeInDnD == darkMode and doNotDisturb)) {
-            colorMode = M_DARK;
-        }
-        if (M_DARK == colorMode) {
-            colors = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_DK_GRAY];
-            // In dark mode, adjust text color based on the contrast setting
-            var foregroundColor = config.getValue(Config.I_DM_CONTRAST);
-            colors[C_FOREGROUND] = foregroundColor;
-            if (Graphics.COLOR_WHITE == foregroundColor) {
-                colors[C_TEXT] = Graphics.COLOR_LT_GRAY;
-            } else { // Graphics.COLOR_LT_GRAY or Graphics.COLOR_DK_GRAY
-                colors[C_TEXT] = Graphics.COLOR_DK_GRAY;
+
+            if (M_DARK == colorMode) {
+                colors = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_DK_GRAY];
+                // In dark mode, adjust text color based on the contrast (dimmer) setting
+                var foregroundColor = config.getValue(Config.I_DM_CONTRAST);
+                colors[C_FOREGROUND] = foregroundColor;
+                if (Graphics.COLOR_WHITE == foregroundColor) {
+                    colors[C_TEXT] = Graphics.COLOR_LT_GRAY;
+                } else { // Graphics.COLOR_LT_GRAY or Graphics.COLOR_DK_GRAY
+                    colors[C_TEXT] = Graphics.COLOR_DK_GRAY;
+                }
             }
+        } else { // !_isAwake
+            colors = [Graphics.COLOR_DK_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_DK_GRAY];
         }
-        return colorMode;
     }
 
 } // class ClockView
@@ -590,15 +484,6 @@ class ClockDelegate extends WatchUi.WatchFaceDelegate {
     public function onPress(clickEvent as ClickEvent) as Boolean {
         _view.startWireHands();
         return true;
-    }
-
-    // The onPowerBudgetExceeded callback is called by the system if the
-    // onPartialUpdate method exceeds the allowed power budget. If this occurs,
-    // the system will stop invoking onPartialUpdate each second, so we notify the
-    // view here to let the rendering methods know they should not be rendering a
-    // second hand.
-    public function onPowerBudgetExceeded(powerInfo as WatchFacePowerInfo) as Void {
-        _view.stopPartialUpdates();
     }
 }
 
