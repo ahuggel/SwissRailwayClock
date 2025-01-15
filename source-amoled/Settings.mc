@@ -69,7 +69,7 @@ class Config {
 	private var _itemSymbols as Array<Symbol> = [
         :Battery, 
         :DateDisplay, 
-        :DarkMode, 
+        :Dimmer, 
         :AccentColor, 
         :AccentCycle, 
         :DmContrast, 
@@ -119,7 +119,7 @@ class Config {
         [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
         [:AccentRed, :AccentOrange, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentLtBlue, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
         [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
-        [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite] // I_DM_CONTRAST
+        [:DmContrastLtGray, :DmContrastDkGray] // I_DM_CONTRAST
      ] as Array< Array<Symbol> >;
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
@@ -216,7 +216,7 @@ class Config {
     public function getValue(id as Item) as Number {
         var value = _values[id];
         if (I_DM_CONTRAST == id) {
-            value = ([Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>)[value];
+            value = ([Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY] as Array<Number>)[value];
         }
         return value;
     }
