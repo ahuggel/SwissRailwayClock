@@ -765,20 +765,21 @@ class BatteryLevel {
             warnLevel = level / levelInDays * 6.0; // If the device has battery in days, use 6 days
  */
         }
-        var color = Graphics.COLOR_GREEN;
-        if (level < warnLevel / 2) { color = ClockView.M_LIGHT == ClockView.colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_YELLOW; }
-        if (level < warnLevel / 4) { color = Graphics.COLOR_RED; }
+        var levelColor = Graphics.COLOR_GREEN;
+        if (level < warnLevel / 2) { levelColor = ClockView.M_LIGHT == ClockView.colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_YELLOW; }
+        if (level < warnLevel / 4) { levelColor = Graphics.COLOR_RED; }
 
         // level \ Setting   Classic ClassicWarnings Modern ModernWarnings
         // < warnLevel          C          C           M          M       
         // >= warnLevel         C          -           M          -       
         if (   :BatteryClassic == batterySetting 
             or (level < warnLevel and :BatteryClassicWarnings == batterySetting)) {
-            drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, ClockView.colorMode, color);
+            var frameColor = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY] as Array<Number>;
+            drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, frameColor[ClockView.colorMode], levelColor, ClockView.colors[ClockView.C_TEXT]);
             ret = true;
         } else if (   :BatteryModern == batterySetting
                    or (level < warnLevel and :BatteryModernWarnings == batterySetting)) {
-            drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, color);
+            drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, levelColor, ClockView.colors[ClockView.C_TEXT]);
             ret = true;
         }
         return ret;
@@ -791,11 +792,12 @@ class BatteryLevel {
         ypos as Number, 
         level as Float, 
         levelInDays as Float, 
-        color as Number
+        levelColor as Number,
+        textColor as Number
     ) as Void {
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(levelColor, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(xpos, ypos, _mRadius);
-        drawBatteryLabels(dc, xpos - _mRadius, xpos + _mRadius, ypos, level, levelInDays);
+        drawBatteryLabels(dc, xpos - _mRadius, xpos + _mRadius, ypos, level, levelInDays, textColor);
     }
 
     private function drawClassicBatteryIndicator(
@@ -804,20 +806,21 @@ class BatteryLevel {
         ypos as Number, 
         level as Float, 
         levelInDays as Float, 
-        colorMode as Number,
-        color as Number
+        frameColor as Number,
+        levelColor as Number,
+        textColor as Number
     ) as Void {
         // Draw the battery shape
         var x = xpos - _cWidth/2 + _cT1;
         var y = ypos - _cT3;
-        dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(frameColor, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(_cPw);
         dc.drawRoundedRectangle(x, y, _cWidth, _cHeight, _cPw);
         dc.setPenWidth(1);
         dc.fillRoundedRectangle(x + _cWidth + _cT1 + _cTs, y + _cT3 - _cCh/2, _cCw, _cCh, (_cCw-1)/2);
 
         // Draw battery level segments according to the battery level
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(levelColor, Graphics.COLOR_TRANSPARENT);
         var xb = x + _cT2;
         var yb = y + _cT2;
         var lv = (level + 0.5).toNumber();
@@ -830,7 +833,7 @@ class BatteryLevel {
             dc.fillRectangle(xb + fb*(_cBw+_cTs), yb, bl, _cBh);
         }
 
-        drawBatteryLabels(dc, x - _cPw, x + _cWidth + _cT1 + _cCw, ypos, level, levelInDays);
+        drawBatteryLabels(dc, x - _cPw, x + _cWidth + _cT1 + _cCw, ypos, level, levelInDays, textColor);
     }
 
     // Draw battery labels for percentage and days depending on the settings
@@ -840,11 +843,12 @@ class BatteryLevel {
         x2 as Number, 
         y as Number, 
         level as Float, 
-        levelInDays as Float
+        levelInDays as Float,
+        textColor as Number
     ) as Void {
         var font = Graphics.FONT_XTINY;
         y += 1; // Looks better aligned on the actual device (fr955) like this
-        dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
         if (config.isEnabled(Config.I_BATTERY_PCT)) {
             var str = (level + 0.5).toNumber() + "% ";
             dc.drawText(x1, y - Graphics.getFontHeight(font)/2, font, str, Graphics.TEXT_JUSTIFY_RIGHT);
