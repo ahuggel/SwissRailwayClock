@@ -4,29 +4,40 @@
 
 # Swiss Railway Clock - An analog watchface for Garmin smartwatches
 
-- This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a [second hand] in both high- and low-power mode;
+- This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a [second hand] in both high- and low-power mode on watches with a MIP display;
 - The operation differs from the original Swiss railway clock in that the second hand ticks like that of a quartz watch, rather than sweeps, and it does not pause at 12 o'clock. There is also a battery saving option to make the second hand disappear in low-power mode, after about 30s;
 - On-device settings allow the configuration of battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a [Move Bar] and some other options. The "Configurable Clutter" clip above shows most of them. In addition, an accent color (the color of the second hand) can also be configured. The menu implements three different types of menu items as well as a basic time picker;
+- On watches with an AMOLED display, the watchface has been adapted to the inherent peculiarities of this display type: The background is always black and dark mode just works as a dimmer. Always-on (low-power) mode uses the darkest dimmer setting and has no second hand;
+- On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955, fēnix 7 and 8 series, Enduro 2 and 3 and all AMOLED watches);
 - Symbols for active alarms, phone connection and notifications, as well as the various indicators use icons from a [custom font];
-- On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955, fēnix 7 and 8 series and Enduro 2 and 3);
 - A global settings class synchronises the selected options to persistent storage and makes them available across the app;
+- Newer ("Modern") watches with support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. The code for newer watches with an [AMOLED] display is also based on this modern architecture. Older ("Legacy") devices without layer support or insufficient memory use a buffered bitmap. The distinction is made using [Jungle file build instructions]. ```minApiLevel``` is set to 3.2.0 as that's the minimum level required for on-device settings;
 - The program has been upgraded to compile exclusively with SDK 7 (due to type changes in Monkey C, it is not backward compatible with older SDKs). It still compiles with a single warning with the compiler type checking level set to "Strict";
-- Newer ("Modern") watches with support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. Older ("Legacy") devices without layer support or insufficient memory use a buffered bitmap. The distinction is made using [Jungle file build instructions]. ```minApiLevel``` is set to 3.2.0 as that's the minimum level required for on-device settings. Devices with [AMOLED] displays are not supported.
 - Memory usage on legacy devices is now really close to the limit. I highly recommend using the [Prettier Monkey C] extension for Visual Studio Code to optimize the generated program as much as possible. (From my experience, memory usage of the optimized program is reduced by 2-4%.)
 
 This program reflects the progress of my ongoing journey to learn [Monkey C] and the Garmin [Connect IQ ecosystem] to create an analog watchface. I am making it available in the hope that others will find it useful to grasp the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
 
 ## Compatible devices
 
-The Architecture column shows for each of the [compatible devices], if it supports the layer based implementation (Modern) or uses a buffered bitmap (Legacy).
+The Architecture column shows for each of the [compatible devices], if it supports the layer based implementation (Modern), the modern architecture for watches with an AMOLED display (Amoled), or uses a buffered bitmap (Legacy).
 
 | Device name | Label | Architecture |
 | ----------- | ----- | ------------ |
+| Approach® S70 42mm | approachs7042mm | Amoled |
+| Approach® S70 47mm | approachs7047mm | Amoled |
 | Captain Marvel | legacyherocaptainmarvel | Modern |
+| D2™ Air X10 | d2airx10 | Amoled |
+| D2™ Mach 1 | d2mach1 | Amoled |
 | Darth Vader™ | legacysagadarthvader | Modern |
 | Descent™ Mk2 / Descent™ Mk2i | descentmk2 | Legacy |
 | Descent™ Mk2 S | descentmk2s | Legacy |
+| Descent™ Mk3 43mm / Mk3i 43mm | descentmk343mm | Amoled |
+| Descent™ Mk3i 51mm | descentmk351mm | Amoled |
 | Enduro™ 3 | enduro3 | Modern |
+| epix™ (Gen 2) / quatix® 7 Sapphire | epix2 | Amoled |
+| epix™ Pro (Gen 2) 42mm | epix2pro42mm | Amoled |
+| epix™ Pro (Gen 2) 47mm / quatix® 7 Pro | epix2pro47mm | Amoled |
+| epix™ Pro (Gen 2) 51mm / D2™ Mach 1 Pro / tactix® 7 – AMOLED Edition | epix2pro51mm | Amoled |
 | fēnix® 5 Plus | fenix5plus | Legacy |
 | fēnix® 5S Plus | fenix5splus | Legacy |
 | fēnix® 5X Plus | fenix5xplus | Legacy |
@@ -43,20 +54,29 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | fēnix® 7X / tactix® 7 / quatix® 7X Solar / Enduro™ 2 | fenix7x | Modern |
 | fēnix® 7X PRO | fenix7xpro | Modern |
 | fēnix® 7X Pro - Solar Edition (no Wi-Fi) | fenix7xpronowifi | Modern |
+| fēnix® 8 43mm | fenix843mm | Amoled |
+| fēnix® 8 47mm / 51mm | fenix847mm | Amoled |
 | fēnix® 8 Solar 47mm | fenix8solar47mm | Modern |
 | fēnix® 8 Solar 51mm | fenix8solar51mm | Modern |
+| fēnix® E | fenixe | Amoled |
 | First Avenger | legacyherofirstavenger | Modern |
+| Forerunner® 165 | fr165 | Amoled |
+| Forerunner® 165 Music | fr165m | Amoled |
 | Forerunner® 245 | fr245 | Legacy |
 | Forerunner® 245 Music | fr245m | Legacy |
 | Forerunner® 255 | fr255 | Modern |
 | Forerunner® 255 Music | fr255m | Modern |
 | Forerunner® 255s | fr255s | Modern |
 | Forerunner® 255s Music | fr255sm | Modern |
+| Forerunner® 265 | fr265 | Amoled |
 | Forerunner® 645 Music | fr645m | Legacy |
 | Forerunner® 745 | fr745 | Legacy |
 | Forerunner® 945 | fr945 | Legacy |
 | Forerunner® 945 LTE | fr945lte | Legacy |
 | Forerunner® 955 / Solar | fr955 | Modern |
+| Forerunner® 965 | fr965 | Amoled |
+| Instinct® 3 AMOLED 45mm | instinct3amoled45mm | Amoled |
+| Instinct® 3 AMOLED 50mm | instinct3amoled50mm | Amoled |
 | MARQ® Adventurer | marqadventurer | Legacy |
 | MARQ® Athlete | marqathlete | Legacy |
 | MARQ® Aviator | marqaviator | Legacy |
@@ -64,11 +84,18 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | MARQ® Commander | marqcommander | Legacy |
 | MARQ® Driver | marqdriver | Legacy |
 | MARQ® Expedition | marqexpedition | Legacy |
+| MARQ® (Gen 2) Athlete / Adventurer / Captain / Golfer / Carbon Edition / Commander - Carbon Edition | marq2 | Amoled |
+| MARQ® (Gen 2) Aviator | marq2aviator | Amoled |
 | MARQ® Golfer | marqgolfer | Legacy |
 | Rey™ | legacysagarey | Modern |
+| Venu® 2 Plus | venu2plus | Amoled |
+| Venu® 2 | venu2 | Amoled |
+| Venu® 3 | venu3 | Amoled |
+| Venu® 3S | venu3s | Amoled |
 | vívoactive® 3 Music | vivoactive3m | Legacy |
 | vívoactive® 4 | vivoactive4 | Modern |
 | vívoactive® 4S | vivoactive4s | Modern |
+| vívoactive® 5 | vivoactive5 | Amoled |
 
 ## Credits
 
