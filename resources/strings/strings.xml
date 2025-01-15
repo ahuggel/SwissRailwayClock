@@ -16,6 +16,7 @@
     <string id="DarkMode">Dark Mode</string>
     <string id="Dimmer">Dimmer</string>
     <string id="DmContrast">Contrast</string>
+    <string id="DimmerLevel">Level</string>
     <string id="HideSeconds">Seconds Disappear</string>
     <string id="AccentColor">Seconds Color</string>
     <string id="AccentCycle">Change Color</string>
@@ -39,6 +40,8 @@
     <string id="DmContrastLtGray">Light Gray</string>
     <string id="DmContrastDkGray">Dark Gray</string>
     <string id="DmContrastWhite">White</string>
+    <string id="DimmerLevelMedium">Medium</string>
+    <string id="DimmerLevelDark">Dark</string>
     <string id="HideSecondsInDm">In Dark Mode</string>
     <string id="HideSecondsAlways">Always</string>
     <string id="HideSecondsNever">Never</string>
