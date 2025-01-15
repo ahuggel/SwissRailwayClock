@@ -24,7 +24,7 @@ import Toybox.Math;
 import Toybox.System;
 import Toybox.WatchUi;
 
-// Implements the Swiss Railway Clock watch face for modern watches, using layers
+// Implements the Swiss Railway Clock watch face for modern watches with an AMOLED display, using layers
 class ClockView extends WatchUi.WatchFace {
 
     enum { M_LIGHT, M_DARK } // Color modes
@@ -80,12 +80,10 @@ class ClockView extends WatchUi.WatchFace {
         // Instead of a buffered bitmap, this version uses multiple layers (since API Level 3.1.0):
         //
         // 1) A background layer with the tick marks and any indicators.
-        // 2) Another full screen layer for the hour and minute hands.
+        // 2) A full screen layer for the hour and minute hands.
         // 3) A dedicated layer for the second hand.
         //
-        // Using layers is elegant and makes it possible to draw some indicators even in low-power
-        // mode, e.g., the heart rate is updated every second in high-power mode and every 10 seconds
-        // in low power mode.
+        // Using layers is elegant.
         // On the other hand, this architecture requires more memory and is only feasible on CIQ 4
         // devices, i.e., on devices with a graphics pool, and on a few older models which have
         // more memory.
@@ -456,7 +454,7 @@ class ClockView extends WatchUi.WatchFace {
 
             if (M_DARK == colorMode) {
                 colors = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_DK_GRAY];
-                // In dark mode, adjust text color based on the contrast setting
+                // In dark mode, adjust text color based on the contrast (dimmer) setting
                 var foregroundColor = config.getValue(Config.I_DM_CONTRAST);
                 colors[C_FOREGROUND] = foregroundColor;
                 if (Graphics.COLOR_WHITE == foregroundColor) {
