@@ -367,16 +367,15 @@ class Indicators {
         idx = getIndicatorPosition(:recoveryTime);
         if (-1 != idx) {
             if (ActivityMonitor.Info has :timeToRecovery) {
-                System.println("ActivityMonitor.Info has :timeToRecovery");
                 drawIndicator(
                     dc,
                     _pos[idx][0],
                     _pos[idx][1],
                     "R",
                     false,
-                    19 // activityInfo.timeToRecovery
+                    activityInfo.timeToRecovery
                 );
-            } else { System.println("ActivityMonitor.Info does not have :timeToRecovery"); }
+            }
         }
 
         // Draw the steps indicator
