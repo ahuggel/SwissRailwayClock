@@ -106,17 +106,61 @@ vivoactive4.excludeAnnotations = legacy
 vivoactive4s.sourcePath = $(vivoactive4s.sourcePath);source-modern
 vivoactive4s.excludeAnnotations = legacy
 
-# AMOLED devices are based on the modern architecture of newer watches. They have their
-# own code to deal with the limited supported color schemes and burn-in protection requirements.
-fr265.sourcePath = $(fr265.sourcePath);source-amoled
-fr265.excludeAnnotations = legacy
-venu.sourcePath = $(venu.sourcePath);source-legacy
-venu.excludeAnnotations = memory;modern
-venu2.sourcePath = $(venu2.sourcePath);source-amoled
-venu2.excludeAnnotations = legacy
-venu2plus.sourcePath = $(venu2plus.sourcePath);source-amoled
-venu2plus.excludeAnnotations = legacy
+# Support for AMOLED devices is based on the modern architecture of newer watches. 
+# They have their own code to deal with their inherent properties (only black 
+# background, no second hand in low-power mode) and burn-in protection requirements.
+# Round 390x390 displays
+approachs7042mm.sourcePath = $(approachs7042mm.sourcePath);source-amoled
+approachs7042mm.excludeAnnotations = legacy
+descentmk343mm.sourcePath = $(descentmk343mm.sourcePath);source-amoled
+descentmk343mm.excludeAnnotations = legacy
+epix2pro42mm.sourcePath = $(epix2pro42mm.sourcePath);source-amoled
+epix2pro42mm.excludeAnnotations = legacy
+fr165.sourcePath = $(fr165.sourcePath);source-amoled
+fr165.excludeAnnotations = legacy
+fr165m.sourcePath = $(fr165m.sourcePath);source-amoled
+fr165m.excludeAnnotations = legacy
+instinct3amoled45mm.sourcePath = $(instinct3amoled45mm.sourcePath);source-amoled
+instinct3amoled45mm.excludeAnnotations = legacy
+marq2.sourcePath = $(marq2.sourcePath);source-amoled
+marq2.excludeAnnotations = legacy
+marq2aviator.sourcePath = $(marq2aviator.sourcePath);source-amoled
+marq2aviator.excludeAnnotations = legacy
 venu3s.sourcePath = $(venu3s.sourcePath);source-amoled
 venu3s.excludeAnnotations = legacy
 vivoactive5.sourcePath = $(vivoactive5.sourcePath);source-amoled
 vivoactive5.excludeAnnotations = legacy
+# Round 416x416 displays
+d2airx10.sourcePath = $(d2airx10.sourcePath);source-amoled
+d2airx10.excludeAnnotations = legacy
+d2mach1.sourcePath = $(d2mach1.sourcePath);source-amoled
+d2mach1.excludeAnnotations = legacy
+epix2.sourcePath = $(epix2.sourcePath);source-amoled
+epix2.excludeAnnotations = legacy
+epix2pro47mm.sourcePath = $(epix2pro47mm.sourcePath);source-amoled
+epix2pro47mm.excludeAnnotations = legacy
+fenix843mm.sourcePath = $(fenix843mm.sourcePath);source-amoled
+fenix843mm.excludeAnnotations = legacy
+fenixe.sourcePath = $(fenixe.sourcePath);source-amoled
+fenixe.excludeAnnotations = legacy
+fr265.sourcePath = $(fr265.sourcePath);source-amoled
+fr265.excludeAnnotations = legacy
+instinct3amoled50mm.sourcePath = $(instinct3amoled50mm.sourcePath);source-amoled
+instinct3amoled50mm.excludeAnnotations = legacy
+venu2.sourcePath = $(venu2.sourcePath);source-amoled
+venu2.excludeAnnotations = legacy
+venu2plus.sourcePath = $(venu2plus.sourcePath);source-amoled
+venu2plus.excludeAnnotations = legacy
+# Round 454x454 displays
+approachs7047mm.sourcePath = $(approachs7047mm.sourcePath);source-amoled
+approachs7047mm.excludeAnnotations = legacy
+descentmk351mm.sourcePath = $(descentmk351mm.sourcePath);source-amoled
+descentmk351mm.excludeAnnotations = legacy
+epix2pro51mm.sourcePath = $(epix2pro51mm.sourcePath);source-amoled
+epix2pro51mm.excludeAnnotations = legacy
+fenix847mm.sourcePath = $(fenix847mm.sourcePath);source-amoled
+fenix847mm.excludeAnnotations = legacy
+fr965.sourcePath = $(fr965.sourcePath);source-amoled
+fr965.excludeAnnotations = legacy
+venu3.sourcePath = $(venu3.sourcePath);source-amoled
+venu3.excludeAnnotations = legacy
