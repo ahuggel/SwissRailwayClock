@@ -38,6 +38,25 @@ function getStringResource(id as Symbol) as String {
 // collection would be better design. As objects are expensive in Monkey C, that approach uses way too 
 // much memory though.
 class Config {
+    // Color configuration
+    enum ColorMode { M_LIGHT, M_DARK } // Color modes
+    // Indexes into the colors array
+    enum Color {
+        C_FOREGROUND, 
+        C_BACKGROUND, 
+        C_TEXT, 
+        C_INDICATOR, 
+        C_HEART_RATE, 
+        C_PHONECONN, 
+        C_MOVE_BAR,
+        C_BATTERY_FRAME,
+        C_BATTERY_LEVEL_OK,
+        C_BATTERY_LEVEL_WARN,
+        C_BATTERY_LEVEL_ALERT,
+        C_SIZE
+    }
+    public var colors as Array<Number> = new Array<Number>[C_SIZE]; // see setColors()
+
     // Configuration item identifiers. Used throughout the app to refer to individual settings.
     // The last one must be I_SIZE, it is used like size(), those after I_SIZE are hacks
     enum Item {
@@ -129,6 +148,15 @@ class Config {
 
     // Constructor
     public function initialize() {
+        // Colors that are static for Amoled watches
+        colors[C_BACKGROUND] = Graphics.COLOR_BLACK;
+        colors[C_INDICATOR] = Graphics.COLOR_BLUE;
+        colors[C_HEART_RATE] = Graphics.COLOR_RED;
+        colors[C_MOVE_BAR] = Graphics.COLOR_DK_BLUE;
+        colors[C_BATTERY_LEVEL_OK] = Graphics.COLOR_GREEN;
+        colors[C_BATTERY_LEVEL_WARN] = Graphics.COLOR_YELLOW;
+        colors[C_BATTERY_LEVEL_ALERT] = Graphics.COLOR_RED;
+
         // Default values for toggle items, each bit is one. I_ALARMS and I_CONNECTED are on by default.
         var defaults = 0x005; // 0b000 0000 0101
 
@@ -251,6 +279,89 @@ class Config {
     // Returns true if the device provides recovery time, false if not.
     public function hasTimeToRecovery() as Boolean {
         return _hasTimeToRecovery;
+    }
+
+    // Determine the colors to use
+    public function setColors(isAwake as Boolean, doNotDisturb as Boolean, hour as Number, min as Number) as Void {        
+        // Determine if dark/dimmer mode is on
+        var colorMode = M_LIGHT;
+        var darkMode = getOption(I_DARK_MODE);
+        if (:DarkModeScheduled == darkMode) {
+            var time = hour * 60 + min;
+            if (time >= getValue(I_DM_ON) or time < getValue(I_DM_OFF)) {
+                colorMode = M_DARK;
+            }
+        } else if (   :On == darkMode
+                   or (:DarkModeInDnD == darkMode and doNotDisturb)) {
+            colorMode = M_DARK;
+        }
+
+        // The background color is always black for Amoled watches
+
+        // Foreground and text colors
+        if (isAwake) {
+            colors[C_FOREGROUND] = Graphics.COLOR_WHITE;
+            colors[C_TEXT] = Graphics.COLOR_LT_GRAY;
+
+            if (M_LIGHT == colorMode) {
+                colors[C_FOREGROUND] = Graphics.COLOR_WHITE;
+                colors[C_TEXT] = Graphics.COLOR_LT_GRAY;
+            } else {
+                // In dark mode, set foreground and text colors based on the contrast (dimmer) setting
+                var foregroundColor = getValue(I_DM_CONTRAST);
+                colors[C_FOREGROUND] = foregroundColor;
+                if (Graphics.COLOR_WHITE == foregroundColor) {
+                    colors[C_TEXT] = Graphics.COLOR_LT_GRAY;
+                } else { // Graphics.COLOR_LT_GRAY or Graphics.COLOR_DK_GRAY
+                    colors[C_TEXT] = Graphics.COLOR_DK_GRAY;
+                }
+            }
+        } else { // !isAwake
+            colors[C_FOREGROUND] = Graphics.COLOR_DK_GRAY;
+            colors[C_TEXT] = Graphics.COLOR_DK_GRAY;
+        }
+
+        // Indicator icon color is always (light) blue for Amoled watches
+        // colors[C_INDICATOR] = Graphics.COLOR_BLACK == colors[C_BACKGROUND] ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE;
+
+        // Heart rate indicator color is always red
+
+        // Phone connected icon color         
+        colors[C_PHONECONN] = /*   Graphics.COLOR_BLACK == colors[C_FOREGROUND] 
+                              or */Graphics.COLOR_DK_GRAY == colors[C_FOREGROUND] ?
+                              Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE;
+
+        // Move bar color is always dark blue for Amoled watches
+        //colors[C_MOVE_BAR] = [Graphics.COLOR_BLUE, Graphics.COLOR_DK_BLUE][colorMode];
+
+        // Battery level indicator colors
+        colors[C_BATTERY_FRAME] = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY][colorMode];
+        if (!isAwake) {
+            colors[C_BATTERY_FRAME] = Graphics.COLOR_DK_GRAY;
+        }
+        //colors[C_BATTERY_LEVEL_WARN] = [Graphics.COLOR_YELLOW, Graphics.COLOR_ORANGE][colorMode];
+    }
+
+    // Determine the accent color for the second hand and return it
+    public function getAccentColor(hour as Number, min as Number, sec as Number) as Number {
+        var aci = 0;
+        if (isEnabled(I_ACCENT_CYCLE)) {
+            aci = [0, hour, min, sec][getValue(I_ACCENT_CYCLE)] % 9;
+        } else {
+            aci = getValue(I_ACCENT_COLOR);
+        }
+        return [
+            // Colors for the second hand
+            0xff0055, // red 
+            0xffaa00, // orange
+            0xffff55, // yellow
+            0x55ff00, // light green
+            0x00aa55, // green
+            0x55ffff, // light blue
+            0x00AAFF, // blue
+            0xaa00ff, // purple
+            0xff00aa  // pink
+            ][aci];
     }
 } // class Config
 

@@ -131,7 +131,7 @@ class Indicators {
 
         // Draw the date string
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
-        dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
         var dateDisplay = config.getOption(Config.I_DATE_DISPLAY);
         if (:DateDisplayDayOnly == dateDisplay) {
             dc.drawText(
@@ -320,7 +320,7 @@ class Indicators {
 
         // Draw the date string
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
-        dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
         idx = getIndicatorPosition(:longDate);
         if (-1 != idx) {
             dc.drawText(
@@ -527,19 +527,18 @@ class Indicators {
             var width = (fontHeight * 2.1).toNumber(); // Indicator width
             var hr = heartRate.format("%d");
 
-            var bgColor = ClockView.colors[ClockView.C_BACKGROUND];
             dc.setClip(xpos - width*0.48, ypos - fontHeight*0.38, width, fontHeight*0.85);
-            dc.setColor(Graphics.COLOR_TRANSPARENT, bgColor);
+            dc.setColor(Graphics.COLOR_TRANSPARENT, config.colors[Config.C_BACKGROUND]);
             dc.clear();
             dc.clearClip();
-            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(config.colors[Config.C_HEART_RATE], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
                 heartRate > 99 ? xpos - width*2/16 - 1 : xpos, ypos - 1, 
                 ClockView.iconFont as FontResource, 
                 isAwake ? "H" : "I" as String, 
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
             );
-            dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+            dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
                 xpos + width/2, 
                 ypos,
@@ -574,7 +573,7 @@ class Indicators {
         }
         var ret = false;
         if (!icons.equals("")) {
-            dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+            dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(xpos, ypos, ClockView.iconFont as FontResource, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
             ret = true;
         }
@@ -589,13 +588,8 @@ class Indicators {
         phoneConnected as Boolean
     ) as Boolean {
         var ret = false;
-        var iconColor = Graphics.COLOR_BLUE;
-        var fgColor = ClockView.colors[ClockView.C_FOREGROUND];
-        if (Graphics.COLOR_LT_GRAY == fgColor or Graphics.COLOR_WHITE == fgColor) {
-            iconColor = Graphics.COLOR_DK_BLUE;
-        }
         if (phoneConnected) {
-            dc.setColor(iconColor, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(config.colors[Config.C_PHONECONN], Graphics.COLOR_TRANSPARENT);
             dc.drawText(xpos, ypos, ClockView.iconFont as FontResource, "B" as String, Graphics.TEXT_JUSTIFY_CENTER);
             ret = true;
         }
@@ -631,9 +625,9 @@ class Indicators {
                 xposIcon += value > 99 ? width*23/32 : width*17/32;
                 textAlign |= Graphics.TEXT_JUSTIFY_RIGHT;
             }
-            dc.setColor(ClockView.colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(config.colors[Config.C_INDICATOR], Graphics.COLOR_TRANSPARENT);
             dc.drawText(xposIcon, ypos - 1, ClockView.iconFont as FontResource, icon as String, textAlign);
-            dc.setColor(ClockView.colors[ClockView.C_TEXT], Graphics.COLOR_TRANSPARENT);
+            dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(xposText, ypos, font, value.format("%d"), textAlign);
             ret = true;
         }
@@ -659,12 +653,12 @@ class Indicators {
             var bar = 0;
             for (var i = 1; i <= moveBarLevel; i++) {
                 bar = i == 1 ? 36 : 18; // bar length in degrees
-        	    dc.setColor(ClockView.colorMode ? Graphics.COLOR_DK_BLUE : Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
+        	    dc.setColor(config.colors[Config.C_MOVE_BAR], Graphics.COLOR_TRANSPARENT);
                 dc.setPenWidth(width);
                 dc.drawArc(x, y, radius, Graphics.ARC_CLOCKWISE, angle, angle-bar);
 
-                var color = (1 == i or 3 == i) ? ClockView.C_FOREGROUND : ClockView.C_BACKGROUND;
-        		dc.setColor(ClockView.colors[color], Graphics.COLOR_TRANSPARENT);
+                var color = (1 == i or 3 == i) ? Config.C_FOREGROUND : Config.C_BACKGROUND;
+        		dc.setColor(config.colors[color], Graphics.COLOR_TRANSPARENT);
                 dc.setPenWidth(1);
                 dc.fillPolygon(arrowPoints(x, y, radius, width, angle));
 
@@ -672,8 +666,7 @@ class Indicators {
             }
             // Draw the arrow tips in a second loop, so they are drawn over the background color arrow tails 
             angle = 152;
-        	dc.setColor(ClockView.colorMode ? Graphics.COLOR_DK_BLUE : Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
-//          dc.setColor(ClockView.colorMode ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE, Graphics.COLOR_TRANSPARENT);
+        	dc.setColor(config.colors[Config.C_MOVE_BAR], Graphics.COLOR_TRANSPARENT);
             for (var i = 1; i <= moveBarLevel; i++) {
                 bar = i == 1 ? 36 : 18; // bar length in degrees
                 dc.setPenWidth(1);
@@ -764,21 +757,20 @@ class BatteryLevel {
             warnLevel = level / levelInDays * 6.0; // If the device has battery in days, use 6 days
  */
         }
-        var levelColor = Graphics.COLOR_GREEN;
-        if (level < warnLevel / 2) { levelColor = ClockView.M_LIGHT == ClockView.colorMode ? Graphics.COLOR_ORANGE : Graphics.COLOR_YELLOW; }
-        if (level < warnLevel / 4) { levelColor = Graphics.COLOR_RED; }
+        var levelColor = config.colors[Config.C_BATTERY_LEVEL_OK];
+        if (level < warnLevel / 2) { levelColor = config.colors[Config.C_BATTERY_LEVEL_WARN]; }
+        if (level < warnLevel / 4) { levelColor = config.colors[Config.C_BATTERY_LEVEL_ALERT]; }
 
         // level \ Setting   Classic ClassicWarnings Modern ModernWarnings
         // < warnLevel          C          C           M          M       
         // >= warnLevel         C          -           M          -       
         if (   :BatteryClassic == batterySetting 
             or (level < warnLevel and :BatteryClassicWarnings == batterySetting)) {
-            var frameColor = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY] as Array<Number>;
-            drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, frameColor[ClockView.colorMode], levelColor, ClockView.colors[ClockView.C_TEXT]);
+            drawClassicBatteryIndicator(dc, xpos, ypos, level, levelInDays, levelColor);
             ret = true;
         } else if (   :BatteryModern == batterySetting
                    or (level < warnLevel and :BatteryModernWarnings == batterySetting)) {
-            drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, levelColor, ClockView.colors[ClockView.C_TEXT]);
+            drawModernBatteryIndicator(dc, xpos, ypos, level, levelInDays, levelColor);
             ret = true;
         }
         return ret;
@@ -791,12 +783,11 @@ class BatteryLevel {
         ypos as Number, 
         level as Float, 
         levelInDays as Float, 
-        levelColor as Number,
-        textColor as Number
+        levelColor as Number
     ) as Void {
         dc.setColor(levelColor, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(xpos, ypos, _mRadius);
-        drawBatteryLabels(dc, xpos - _mRadius, xpos + _mRadius, ypos, level, levelInDays, textColor);
+        drawBatteryLabels(dc, xpos - _mRadius, xpos + _mRadius, ypos, level, levelInDays);
     }
 
     private function drawClassicBatteryIndicator(
@@ -805,14 +796,12 @@ class BatteryLevel {
         ypos as Number, 
         level as Float, 
         levelInDays as Float, 
-        frameColor as Number,
-        levelColor as Number,
-        textColor as Number
+        levelColor as Number
     ) as Void {
         // Draw the battery shape
         var x = xpos - _cWidth/2 + _cT1;
         var y = ypos - _cT3;
-        dc.setColor(frameColor, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(config.colors[Config.C_BATTERY_FRAME], Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(_cPw);
         dc.drawRoundedRectangle(x, y, _cWidth, _cHeight, _cPw);
         dc.setPenWidth(1);
@@ -832,7 +821,7 @@ class BatteryLevel {
             dc.fillRectangle(xb + fb*(_cBw+_cTs), yb, bl, _cBh);
         }
 
-        drawBatteryLabels(dc, x - _cPw, x + _cWidth + _cT1 + _cCw, ypos, level, levelInDays, textColor);
+        drawBatteryLabels(dc, x - _cPw, x + _cWidth + _cT1 + _cCw, ypos, level, levelInDays);
     }
 
     // Draw battery labels for percentage and days depending on the settings
@@ -842,12 +831,11 @@ class BatteryLevel {
         x2 as Number, 
         y as Number, 
         level as Float, 
-        levelInDays as Float,
-        textColor as Number
+        levelInDays as Float
     ) as Void {
         var font = Graphics.FONT_XTINY;
         y += 1; // Looks better aligned on the actual device (fr955) like this
-        dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
         if (config.isEnabled(Config.I_BATTERY_PCT)) {
             var str = (level + 0.5).toNumber() + "% ";
             dc.drawText(x1, y - Graphics.getFontHeight(font)/2, font, str, Graphics.TEXT_JUSTIFY_RIGHT);
