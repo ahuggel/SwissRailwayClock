@@ -54,8 +54,8 @@ class Config {
         C_BATTERY_LEVEL_WARN,
         C_BATTERY_LEVEL_ALERT
     }
-    // Colors. Read access is directly through the public variable (to save a getColor() call), 
-    // write access only via setColors(). Static colors are set here.
+    // Colors. Read access is directly through this public variable to save the overhead of a
+    // getColor() call, write access is only via setColors(). Static colors are set here.
     public var colors as Array<Number> = [
         0, // C_FOREGROUND
         Graphics.COLOR_BLACK, // C_BACKGROUND 

@@ -93,11 +93,11 @@ class Indicators {
 
     // Update any indicator positions, which depend on numbers that are not available yet when the constructor is called
     (:modern) public function updatePos(width as Number, height as Number, s0 as Float, s3 as Float) as Void {
-        _pos[6] = [(width * 0.50).toNumber(), (height * 0.50 + s3 + (s0 - Graphics.getFontHeight(ClockView.iconFont as FontResource))/3).toNumber()];
+        _pos[6] = [(width * 0.50).toNumber(), (height * 0.50 + s3 + (s0 - Graphics.getFontHeight(iconFont as FontResource))/3).toNumber()];
     }
 
     (:legacy) public function updatePos(s0 as Float, s3 as Float) as Void {
-        _phoneConnectedY = (_height * 0.50 + s3 + (s0 - Graphics.getFontHeight(ClockView.iconFont as FontResource))/3).toNumber();
+        _phoneConnectedY = (_height * 0.50 + s3 + (s0 - Graphics.getFontHeight(iconFont as FontResource))/3).toNumber();
     }
 
     // Draw all indicators. The legacy version checks settings and determines positions within this function as well.
@@ -534,7 +534,7 @@ class Indicators {
             dc.setColor(config.colors[Config.C_HEART_RATE], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
                 heartRate > 99 ? xpos - width*2/16 - 1 : xpos, ypos - 1, 
-                ClockView.iconFont as FontResource, 
+                iconFont as FontResource, 
                 isAwake ? "H" : "I" as String, 
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
             );
@@ -574,7 +574,7 @@ class Indicators {
         var ret = false;
         if (!icons.equals("")) {
             dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(xpos, ypos, ClockView.iconFont as FontResource, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
+            dc.drawText(xpos, ypos, iconFont as FontResource, icons as String, Graphics.TEXT_JUSTIFY_CENTER);
             ret = true;
         }
         return ret;
@@ -590,7 +590,7 @@ class Indicators {
         var ret = false;
         if (phoneConnected) {
             dc.setColor(config.colors[Config.C_PHONECONN], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(xpos, ypos, ClockView.iconFont as FontResource, "B" as String, Graphics.TEXT_JUSTIFY_CENTER);
+            dc.drawText(xpos, ypos, iconFont as FontResource, "B" as String, Graphics.TEXT_JUSTIFY_CENTER);
             ret = true;
         }
         return ret;
@@ -626,7 +626,7 @@ class Indicators {
                 textAlign |= Graphics.TEXT_JUSTIFY_RIGHT;
             }
             dc.setColor(config.colors[Config.C_INDICATOR], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(xposIcon, ypos - 1, ClockView.iconFont as FontResource, icon as String, textAlign);
+            dc.drawText(xposIcon, ypos - 1, iconFont as FontResource, icon as String, textAlign);
             dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(xposText, ypos, font, value.format("%d"), textAlign);
             ret = true;

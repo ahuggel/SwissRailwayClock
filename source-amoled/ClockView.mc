@@ -24,15 +24,14 @@ import Toybox.Math;
 import Toybox.System;
 import Toybox.WatchUi;
 
+// Global variable for the icon font. Initialized in ClockView.onLayout().
+var iconFont as FontResource?;
+
 // Implements the Swiss Railway Clock watch face for modern watches with an AMOLED display, using layers
 class ClockView extends WatchUi.WatchFace {
-    // Things we want to access from the outside. By convention, write-access is only from within ClockView.
-    static public var iconFont as FontResource?;
-
     private const TWO_PI as Float = 2 * Math.PI;
 
     private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
-    private var _accentColor as Number = 0xff0055;
 
     // List of watchface shapes, used as indexes. Review optimizations in calcSecondData() et al. before changing the Shape enum.
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
@@ -45,6 +44,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _secondData as Array< Array<Number> > = new Array< Array<Number> >[60];
 
     private var _lastDrawnMin as Number = -1; // Minute when the watch face was last completely re-drawn
+    private var _accentColor as Number = 0; // Color of the second hand, determined in onUpdate()
     private var _doWireHands as Number = 0; // Number of seconds to show the minute and hour hands was wire hands after press
     private var _wireHandsColor as Number = 0;
 
@@ -238,6 +238,9 @@ class ClockView extends WatchUi.WatchFace {
             // Determine all colors based on the relevant settings
             config.setColors(_isAwake, deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
 
+            // Turn the second hand on or off
+            _secondLayer.setVisible(_isAwake);
+
             // Fill the entire background with the background color (black)
             _backgroundDc.setColor(config.colors[Config.C_BACKGROUND], config.colors[Config.C_BACKGROUND]);
             _backgroundDc.clear();
@@ -272,7 +275,6 @@ class ClockView extends WatchUi.WatchFace {
             }
         } // if (_lastDrawnMin != clockTime.min)
 
-        _secondLayer.setVisible(_isAwake);
         if (_isAwake) {
             // Clear the clip of the second layer to delete the second hand
             _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
