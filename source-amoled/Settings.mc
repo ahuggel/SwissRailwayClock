@@ -346,10 +346,12 @@ class Config {
         //colors[C_BATTERY_LEVEL_WARN] = [Graphics.COLOR_YELLOW, Graphics.COLOR_ORANGE][colorMode];
     }
 
-    // Determine the accent color for the second hand and return it
+    // Return the accent color for the second hand. If the change color setting is enabled, the 
+    // return value is based on the time passed in, else it's based on the accent color setting.
+    // If a value of -1 is passed for the hour, return the color based on the setting.
     public function getAccentColor(hour as Number, min as Number, sec as Number) as Number {
         var aci = 0;
-        if (isEnabled(I_ACCENT_CYCLE)) {
+        if (hour != -1 and isEnabled(I_ACCENT_CYCLE)) {
             aci = [0, hour, min, sec][getValue(I_ACCENT_CYCLE)] % 9;
         } else {
             aci = getValue(I_ACCENT_COLOR);
@@ -432,11 +434,17 @@ class SettingsMenu extends WatchUi.Menu2 {
                         config.getName(Config.I_DM_CONTRAST), 
                         config.getLabel(Config.I_DM_CONTRAST), 
                         Config.I_DM_CONTRAST,
-                        new MenuIcon(config.getValue(Config.I_DM_CONTRAST)),
+                        new MenuIcon(MenuIcon.T_TRIANGLE, config.getValue(Config.I_DM_CONTRAST), Graphics.COLOR_BLACK),
                         {}
                     ));
                 }
-                addMenuItem(Config.I_ACCENT_COLOR);
+                Menu2.addItem(new WatchUi.IconMenuItem(
+                    config.getName(Config.I_ACCENT_COLOR), 
+                    config.getLabel(Config.I_ACCENT_COLOR), 
+                    Config.I_ACCENT_COLOR,
+                    new MenuIcon(MenuIcon.T_CIRCLE, config.getAccentColor(-1, -1, -1), config.colors[Config.C_BACKGROUND]),
+                    {}
+                ));
                 addMenuItem(Config.I_ACCENT_CYCLE);
                 Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.Done, Rez.Strings.DoneLabel, Config.I_DONE, {}));
                 break;
@@ -533,6 +541,11 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 var menuIcon = menuItem.getIcon() as MenuIcon;
                 menuIcon.setColor(config.getValue(id));
             }
+            if (Config.I_ACCENT_COLOR == id) {
+                // Update the color of the icon
+                var menuIcon = menuItem.getIcon() as MenuIcon;
+                menuIcon.setColor(config.getAccentColor(-1, -1, -1));
+            }
         } else { // I_DM_ON or I_DM_OFF
             // Let the user select the time
             WatchUi.pushView(new TimePicker(id), new TimePickerDelegate(id), WatchUi.SLIDE_IMMEDIATE);
@@ -540,19 +553,24 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
   	}
 } // class SettingsMenuDelegate
 
-// The icon class used for the contrast menu item
+// Drawable used for menu icons (accent color and dark mode contrast / dimmer level)
 class MenuIcon extends WatchUi.Drawable {
-    private var _color as Number;
+    enum Type { T_CIRCLE, T_TRIANGLE }
+    private var _type as Type;
+    private var _fgColor as Number;
+    private var _bgColor as Number;
 
     // Constructor
-    public function initialize(color as Number) {
+    public function initialize(type as Type, fgColor as Number, bgColor as Number) {
         Drawable.initialize({});
-        _color = color;
+        _type = type;
+        _fgColor = fgColor;
+        _bgColor = bgColor;
     }
 
-    // Set the color for the icon
-    public function setColor(color as Number) as Void {
-        _color = color;
+    // Set the foreground color
+    public function setColor(fgColor as Number) as Void {
+        _fgColor = fgColor;
     }
 
     // Draw the icon
@@ -560,9 +578,13 @@ class MenuIcon extends WatchUi.Drawable {
         dc.clearClip();
         var width = dc.getWidth();
         var height = dc.getHeight();
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.setColor(_bgColor, _bgColor);
         dc.clear();
-        dc.setColor(_color, _color);
-        dc.fillPolygon([[0,0], [width, height], [width, 0]]);
+        dc.setColor(_fgColor, _fgColor);
+        if (T_CIRCLE == _type) {
+            dc.fillCircle(width/2, height/2, width/2.5);
+        } else {
+            dc.fillPolygon([[0,0], [width, height], [width, 0]]);
+        }
     }
 }
