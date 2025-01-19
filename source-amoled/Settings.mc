@@ -33,10 +33,8 @@ function getStringResource(id as Symbol) as String {
     return WatchUi.loadResource(Rez.Strings[id] as ResourceId) as String;
 }
 
-// This class maintains all application settings and synchronises them to persistent storage.
-// Having a Setting class (hierarchy) to model individual settings and an array of these for the entire
-// collection would be better design. As objects are expensive in Monkey C, that approach uses way too 
-// much memory though.
+// This class maintains the color configuration and all application settings.
+// Application settings are synchronised to persistent storage.
 class Config {
     // Color configuration
     enum ColorMode { M_LIGHT, M_DARK } // Color modes
