@@ -52,10 +52,23 @@ class Config {
         C_BATTERY_FRAME,
         C_BATTERY_LEVEL_OK,
         C_BATTERY_LEVEL_WARN,
-        C_BATTERY_LEVEL_ALERT,
-        C_SIZE
+        C_BATTERY_LEVEL_ALERT
     }
-    public var colors as Array<Number> = new Array<Number>[C_SIZE]; // see setColors()
+    // Colors. Read access is directly through the public variable (to save a getColor() call), 
+    // write access only via setColors(). Static colors are set here.
+    public var colors as Array<Number> = [
+        0, // C_FOREGROUND
+        Graphics.COLOR_BLACK, // C_BACKGROUND 
+        0, // C_TEXT
+        Graphics.COLOR_BLUE, // C_INDICATOR 
+        Graphics.COLOR_RED, // C_HEART_RATE 
+        0, // C_PHONECONN 
+        Graphics.COLOR_DK_BLUE, // C_MOVE_BAR
+        0, // C_BATTERY_FRAME
+        Graphics.COLOR_GREEN, // C_BATTERY_LEVEL_OK
+        Graphics.COLOR_YELLOW, // C_BATTERY_LEVEL_WARN
+        Graphics.COLOR_RED // C_BATTERY_LEVEL_ALERT
+    ] as Array<Number>;
 
     // Configuration item identifiers. Used throughout the app to refer to individual settings.
     // The last one must be I_SIZE, it is used like size(), those after I_SIZE are hacks
@@ -148,15 +161,6 @@ class Config {
 
     // Constructor
     public function initialize() {
-        // Colors that are static for Amoled watches
-        colors[C_BACKGROUND] = Graphics.COLOR_BLACK;
-        colors[C_INDICATOR] = Graphics.COLOR_BLUE;
-        colors[C_HEART_RATE] = Graphics.COLOR_RED;
-        colors[C_MOVE_BAR] = Graphics.COLOR_DK_BLUE;
-        colors[C_BATTERY_LEVEL_OK] = Graphics.COLOR_GREEN;
-        colors[C_BATTERY_LEVEL_WARN] = Graphics.COLOR_YELLOW;
-        colors[C_BATTERY_LEVEL_ALERT] = Graphics.COLOR_RED;
-
         // Default values for toggle items, each bit is one. I_ALARMS and I_CONNECTED are on by default.
         var defaults = 0x005; // 0b000 0000 0101
 
