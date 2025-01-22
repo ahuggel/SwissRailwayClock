@@ -50,23 +50,12 @@ class Config {
         C_BATTERY_FRAME,
         C_BATTERY_LEVEL_OK,
         C_BATTERY_LEVEL_WARN,
-        C_BATTERY_LEVEL_ALERT
+        C_BATTERY_LEVEL_ALERT,
+        C_SIZE
     }
     // Colors. Read access is directly through this public variable to save the overhead of a
-    // getColor() call, write access is only via setColors(). Static colors are set here.
-    public var colors as Array<Number> = [
-        0, // C_FOREGROUND
-        Graphics.COLOR_BLACK, // C_BACKGROUND 
-        0, // C_TEXT
-        Graphics.COLOR_BLUE, // C_INDICATOR 
-        Graphics.COLOR_RED, // C_HEART_RATE 
-        0, // C_PHONECONN 
-        Graphics.COLOR_DK_BLUE, // C_MOVE_BAR
-        0, // C_BATTERY_FRAME
-        Graphics.COLOR_GREEN, // C_BATTERY_LEVEL_OK
-        Graphics.COLOR_YELLOW, // C_BATTERY_LEVEL_WARN
-        Graphics.COLOR_RED // C_BATTERY_LEVEL_ALERT
-    ] as Array<Number>;
+    // getColor() call, write access is only via setColors(). 
+    public var colors as Array<Number> = new Array<Number>[C_SIZE];
 
     // Configuration item identifiers. Used throughout the app to refer to individual settings.
     // The last one must be I_SIZE, it is used like size(), those after I_SIZE are hacks
@@ -298,50 +287,37 @@ class Config {
             colorMode = M_DARK;
         }
 
-        // The background color is always black for Amoled watches
-
-        // Foreground and text colors
+        colors = [
+            Graphics.COLOR_WHITE, // C_FOREGROUND
+            Graphics.COLOR_BLACK, // C_BACKGROUND 
+            Graphics.COLOR_LT_GRAY, // C_TEXT
+            Graphics.COLOR_BLUE, // C_INDICATOR 
+            Graphics.COLOR_RED, // C_HEART_RATE 
+            Graphics.COLOR_DK_BLUE, // C_PHONECONN 
+            Graphics.COLOR_DK_BLUE, // C_MOVE_BAR
+            Graphics.COLOR_LT_GRAY, // C_BATTERY_FRAME
+            Graphics.COLOR_GREEN, // C_BATTERY_LEVEL_OK
+            Graphics.COLOR_ORANGE, // C_BATTERY_LEVEL_WARN
+            Graphics.COLOR_RED // C_BATTERY_LEVEL_ALERT
+        ];
+        // Foreground color based on display mode and dimmer setting
         if (isAwake) {
-            colors[C_FOREGROUND] = Graphics.COLOR_WHITE;
-            colors[C_TEXT] = Graphics.COLOR_LT_GRAY;
-
-            if (M_LIGHT == colorMode) {
-                colors[C_FOREGROUND] = Graphics.COLOR_WHITE;
-                colors[C_TEXT] = Graphics.COLOR_LT_GRAY;
-            } else {
-                // In dark mode, set foreground and text colors based on the contrast (dimmer) setting
-                var foregroundColor = getValue(I_DM_CONTRAST);
-                colors[C_FOREGROUND] = foregroundColor;
-                if (Graphics.COLOR_WHITE == foregroundColor) {
-                    colors[C_TEXT] = Graphics.COLOR_LT_GRAY;
-                } else { // Graphics.COLOR_LT_GRAY or Graphics.COLOR_DK_GRAY
-                    colors[C_TEXT] = Graphics.COLOR_DK_GRAY;
-                }
+            if (M_DARK == colorMode) {
+                // In dark/dimmer mode, set the foreground color based on the contrast (dimmer) setting
+                colors[C_FOREGROUND] = getValue(I_DM_CONTRAST); // Graphics.COLOR_LT_GRAY or Graphics.COLOR_DK_GRAY
             }
         } else { // !isAwake
             colors[C_FOREGROUND] = Graphics.COLOR_DK_GRAY;
-            colors[C_TEXT] = Graphics.COLOR_DK_GRAY;
         }
-
-        // Indicator icon color is always (light) blue for Amoled watches
-        // colors[C_INDICATOR] = Graphics.COLOR_BLACK == colors[C_BACKGROUND] ? Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE;
-
-        // Heart rate indicator color is always red
-
-        // Phone connected icon color         
-        colors[C_PHONECONN] = /*   Graphics.COLOR_BLACK == colors[C_FOREGROUND] 
-                              or */Graphics.COLOR_DK_GRAY == colors[C_FOREGROUND] ?
-                              Graphics.COLOR_BLUE : Graphics.COLOR_DK_BLUE;
-
-        // Move bar color is always dark blue for Amoled watches
-        //colors[C_MOVE_BAR] = [Graphics.COLOR_BLUE, Graphics.COLOR_DK_BLUE][colorMode];
-
-        // Battery level indicator colors
-        colors[C_BATTERY_FRAME] = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY][colorMode];
-        if (!isAwake) {
+        // Phone connected icon color
+        if (Graphics.COLOR_DK_GRAY == colors[C_FOREGROUND]) {
+            colors[C_PHONECONN] = Graphics.COLOR_BLUE;
+        }
+        // Text and battery level indicator colors
+        if (M_DARK == colorMode or !isAwake) {
+            colors[C_TEXT] = Graphics.COLOR_DK_GRAY;
             colors[C_BATTERY_FRAME] = Graphics.COLOR_DK_GRAY;
         }
-        //colors[C_BATTERY_LEVEL_WARN] = [Graphics.COLOR_YELLOW, Graphics.COLOR_ORANGE][colorMode];
     }
 
     // Return the accent color for the second hand. If the change color setting is enabled, the 
