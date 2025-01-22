@@ -396,7 +396,7 @@ class ClockView extends WatchUi.WatchFace {
     private function drawSecondHand(dc as Dc, second as Number) as Void {
         // Use the pre-calculated numbers for the current second
         var sd = _secondData[second];
-        var coords = [[sd[2], sd[3]], [sd[4], sd[5]], [sd[6], sd[7]], [sd[8], sd[9]]];
+        var coords = [[sd[2], sd[3]], [sd[4], sd[5]], [sd[6], sd[7]], [sd[8], sd[9]]] as Array<Point2D>;
 
         // Set the clipping region
         dc.setClip(sd[10], sd[11], sd[12], sd[13]);
