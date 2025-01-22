@@ -32,11 +32,31 @@ function getStringResource(id as Symbol) as String {
     return WatchUi.loadResource(Rez.Strings[id] as ResourceId) as String;
 }
 
-// This class maintains all application settings and synchronises them to persistent storage.
-// Having a Setting class (hierarchy) to model individual settings and an array of these for the entire
-// collection would be better design. As objects are expensive in Monkey C, that approach uses way too 
-// much memory though.
+// This class maintains the color configuration and all application settings.
+// Application settings are synchronised to persistent storage.
 class Config {
+    // Color configuration
+    enum ColorMode { M_LIGHT, M_DARK } // Color modes
+    // Indexes into the colors array
+    enum Color {
+        C_FOREGROUND, 
+        C_BACKGROUND, 
+        C_TEXT, 
+        C_INDICATOR, 
+        C_HEART_RATE, 
+        C_PHONECONN, 
+        C_MOVE_BAR,
+        C_BATTERY_FRAME,
+        C_BATTERY_LEVEL_OK,
+        C_BATTERY_LEVEL_WARN,
+        C_BATTERY_LEVEL_ALERT,
+        C_SIZE
+    }
+    // Colors. Read access is directly through this public variable to save the overhead of a
+    // getColor() call, write access is only via setColors().
+    public var colors as Array<Number> = new Array<Number>[C_SIZE];
+    private var _colorMode as Number = M_LIGHT;
+
     // Configuration item identifiers. Used throughout the app to refer to individual settings.
     // The last one must be I_SIZE, it is used like size(), those after I_SIZE are hacks
     enum Item {
@@ -253,6 +273,86 @@ class Config {
     public function hasBatteryInDays() as Boolean {
         return _hasBatteryInDays;
     }
+
+    // Determine the color mode and the colors to use, return the color mode
+    public function setColors(isAwake as Boolean, doNotDisturb as Boolean, hour as Number, min as Number) as Number {        
+        // Determine if dark mode is on
+        _colorMode = M_LIGHT;
+        var darkMode = getOption(I_DARK_MODE);
+        if (:DarkModeScheduled == darkMode) {
+            var time = hour * 60 + min;
+            if (time >= getValue(I_DM_ON) or time < getValue(I_DM_OFF)) {
+                _colorMode = M_DARK;
+            }
+        } else if (   :On == darkMode
+                   or (:DarkModeInDnD == darkMode and doNotDisturb)) {
+            _colorMode = M_DARK;
+        }
+
+        if (M_LIGHT == _colorMode) {
+            colors = [
+                Graphics.COLOR_BLACK, // C_FOREGROUND
+                Graphics.COLOR_WHITE, // C_BACKGROUND 
+                Graphics.COLOR_DK_GRAY, // C_TEXT
+                Graphics.COLOR_DK_BLUE, // C_INDICATOR 
+                Graphics.COLOR_RED, // C_HEART_RATE 
+                Graphics.COLOR_BLUE, // C_PHONECONN 
+                Graphics.COLOR_BLUE, // C_MOVE_BAR
+                Graphics.COLOR_LT_GRAY, // C_BATTERY_FRAME
+                Graphics.COLOR_GREEN, // C_BATTERY_LEVEL_OK
+                Graphics.COLOR_YELLOW, // C_BATTERY_LEVEL_WARN
+                Graphics.COLOR_RED // C_BATTERY_LEVEL_ALERT
+            ];
+        } else {
+            colors = [
+                getValue(I_DM_CONTRAST), // C_FOREGROUND
+                Graphics.COLOR_BLACK, // C_BACKGROUND 
+                Graphics.COLOR_DK_GRAY, // C_TEXT
+                Graphics.COLOR_BLUE, // C_INDICATOR 
+                Graphics.COLOR_RED, // C_HEART_RATE 
+                Graphics.COLOR_BLUE, // C_PHONECONN 
+                Graphics.COLOR_DK_BLUE, // C_MOVE_BAR
+                Graphics.COLOR_DK_GRAY, // C_BATTERY_FRAME
+                Graphics.COLOR_GREEN, // C_BATTERY_LEVEL_OK
+                Graphics.COLOR_ORANGE, // C_BATTERY_LEVEL_WARN
+                Graphics.COLOR_RED // C_BATTERY_LEVEL_ALERT
+            ];
+            // Text color depends on foreground
+            if (Graphics.COLOR_WHITE == colors[C_FOREGROUND]) {
+                colors[C_TEXT] = Graphics.COLOR_LT_GRAY;
+            }
+            // Phone connected icon color depends on foreground
+            if (Graphics.COLOR_DK_GRAY != colors[C_FOREGROUND]) {
+                colors[C_PHONECONN] = Graphics.COLOR_DK_BLUE;
+            }
+        }
+
+        return _colorMode;
+    }
+
+    // Return the accent color for the second hand. If the change color setting is enabled, the 
+    // return value is based on the time passed in, else it's based on the accent color setting.
+    // If a value of -1 is passed for the hour, return the color based on the setting.
+    public function getAccentColor(hour as Number, min as Number, sec as Number) as Number {
+        var aci = 0;
+        if (hour != -1 and isEnabled(I_ACCENT_CYCLE)) {
+            aci = [0, hour, min, sec][getValue(I_ACCENT_CYCLE)] % 9 * 2;
+        } else {
+            aci = getValue(I_ACCENT_COLOR) * 2;
+        }
+        return [
+            // Colors for the second hand, in pairs with one color for each color mode
+            0xFF0000, 0xff0055, // red 
+            0xff5500, 0xffaa00, // orange
+            0xffff00, 0xffff55, // yellow
+            0x55ff00, 0x55ff00, // light green
+            0x00AA00, 0x00aa55, // green
+            0x00ffff, 0x55ffff, // light blue
+            0x0000FF, 0x00AAFF, // blue
+            0xaa00aa, 0xaa00ff, // purple
+            0xff00aa, 0xff00aa  // pink
+        ][M_LIGHT == _colorMode ? aci : aci + 1];
+    }
 } // class Config
 
 // The app settings menu
@@ -316,12 +416,18 @@ class SettingsMenu extends WatchUi.Menu2 {
                         config.getName(Config.I_DM_CONTRAST), 
                         config.getLabel(Config.I_DM_CONTRAST), 
                         Config.I_DM_CONTRAST,
-                        new MenuIcon(config.getValue(Config.I_DM_CONTRAST)),
+                        new MenuIcon(MenuIcon.T_TRIANGLE, config.getValue(Config.I_DM_CONTRAST), Graphics.COLOR_BLACK),
                         {}
                     ));
                 }
                 addMenuItem(Config.I_HIDE_SECONDS);
-                addMenuItem(Config.I_ACCENT_COLOR);
+                Menu2.addItem(new WatchUi.IconMenuItem(
+                    config.getName(Config.I_ACCENT_COLOR), 
+                    config.getLabel(Config.I_ACCENT_COLOR), 
+                    Config.I_ACCENT_COLOR,
+                    new MenuIcon(MenuIcon.T_CIRCLE, config.getAccentColor(-1, -1, -1), config.colors[Config.C_BACKGROUND]),
+                    {}
+                ));
                 addMenuItem(Config.I_ACCENT_CYCLE);
                 if (config.hasAlpha()) {
                     addToggleMenuItem(Config.I_3D_EFFECTS); 
@@ -423,6 +529,11 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 var menuIcon = menuItem.getIcon() as MenuIcon;
                 menuIcon.setColor(config.getValue(id));
             }
+            if (Config.I_ACCENT_COLOR == id) {
+                // Update the color of the icon
+                var menuIcon = menuItem.getIcon() as MenuIcon;
+                menuIcon.setColor(config.getAccentColor(-1, -1, -1));
+            }
         } else { // I_DM_ON or I_DM_OFF
             // Let the user select the time
             WatchUi.pushView(new TimePicker(id), new TimePickerDelegate(id), WatchUi.SLIDE_IMMEDIATE);
@@ -430,29 +541,41 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
   	}
 } // class SettingsMenuDelegate
 
-// The icon class used for the contrast menu item
+// Drawable used for menu icons (accent color and dark mode contrast / dimmer level)
 class MenuIcon extends WatchUi.Drawable {
-    private var _color as Number;
+    enum Type { T_CIRCLE, T_TRIANGLE }
+    private var _type as Type;
+    private var _fgColor as Number;
+    private var _bgColor as Number;
 
     // Constructor
-    public function initialize(color as Number) {
+    public function initialize(type as Type, fgColor as Number, bgColor as Number) {
         Drawable.initialize({});
-        _color = color;
+        _type = type;
+        _fgColor = fgColor;
+        _bgColor = bgColor;
     }
 
-    // Set the color for the icon
-    public function setColor(color as Number) as Void {
-        _color = color;
+    // Set the foreground color
+    public function setColor(fgColor as Number) as Void {
+        _fgColor = fgColor;
     }
 
     // Draw the icon
     public function draw(dc as Dc) as Void {
-        dc.clearClip();
         var width = dc.getWidth();
         var height = dc.getHeight();
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        var length = width < height ? width : height;
+        var sx0 = (width - length)/2;
+        var sy0 = (height - length)/2;
+        dc.setColor(_bgColor, _bgColor);
+        dc.setClip(sx0, sy0, length, length);
         dc.clear();
-        dc.setColor(_color, _color);
-        dc.fillPolygon([[0,0], [width, height], [width, 0]]);
+        dc.setColor(_fgColor, _fgColor);
+        if (T_CIRCLE == _type) {
+            dc.fillCircle(width/2, height/2, length/2.6);
+        } else {
+            dc.fillPolygon([[sx0, sy0], [sx0 + length, sy0 + length], [sx0 + length, sy0]]);
+        }
     }
 }

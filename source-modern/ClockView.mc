@@ -24,22 +24,15 @@ import Toybox.Math;
 import Toybox.System;
 import Toybox.WatchUi;
 
+// Global variable for the icon font. Initialized in ClockView.onLayout().
+var iconFont as FontResource?;
+
 // Implements the Swiss Railway Clock watch face for modern watches, using layers
 class ClockView extends WatchUi.WatchFace {
-
-    enum { M_LIGHT, M_DARK } // Color modes
-    enum { C_FOREGROUND, C_BACKGROUND, C_TEXT } // Indexes into the colors array
-
-    // Things we want to access from the outside. By convention, write-access is only from within ClockView.
-    static public var iconFont as FontResource?;
-    static public var colorMode as Number = M_LIGHT;
-    static public var colors as Array<Number> = new Array<Number>[3]; // Foreground, background and text colors, see setColors()
-
     private const TWO_PI as Float = 2 * Math.PI;
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
 
     private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
-    private var _accentColor as Number = 0xFF0000;
 
     // List of watchface shapes, used as indexes. Review optimizations in calcSecondData() et al. before changing the Shape enum.
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
@@ -53,6 +46,7 @@ class ClockView extends WatchUi.WatchFace {
 
     private var _lastDrawnMin as Number = -1; // Minute when the watch face was last completely re-drawn
     private var _doPartialUpdates as Boolean = true; // WatchUi.WatchFace has :onPartialUpdate since API Level 2.3.0
+    private var _accentColor as Number = 0;
     private var _doWireHands as Number = 0; // Number of seconds to show the minute and hour hands was wire hands after press
     private var _sleepTimer as Number = SECOND_HAND_TIMER; // Counter for the time in low-power mode, before the second hand disappears
     private var _hideSecondHand as Boolean = false;
@@ -232,7 +226,7 @@ class ClockView extends WatchUi.WatchFace {
 
     public function stopPartialUpdates() as Void {
         _doPartialUpdates = false;
-        colors[C_BACKGROUND] = Graphics.COLOR_BLUE; // Make the issue visible
+        config.colors[Config.C_BACKGROUND] = Graphics.COLOR_BLUE; // Hack to make the issue visible
     }
 
     // Handle the update event. This function is called
@@ -272,36 +266,36 @@ class ClockView extends WatchUi.WatchFace {
 
             var deviceSettings = System.getDeviceSettings();
 
-            // Set the colors and color mode based on the relevant settings
-            colorMode = setColors(deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
+            // Determine all colors based on the relevant settings
+            var colorMode = config.setColors(_isAwake, deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
 
             // Note: Whether 3D effects are supported by the device is also ensured by getValue().
-            _show3dEffects = config.isEnabled(Config.I_3D_EFFECTS) and M_LIGHT == colorMode;
+            _show3dEffects = config.isEnabled(Config.I_3D_EFFECTS) and Config.M_LIGHT == colorMode;
             _secondShadowLayer.setVisible(_show3dEffects and _isAwake);
 
             // Handle the setting to disable the second hand in sleep mode after some time
             var secondsOption = config.getOption(Config.I_HIDE_SECONDS);
             _hideSecondHand = :HideSecondsAlways == secondsOption 
-                or (:HideSecondsInDm == secondsOption and M_DARK == colorMode);
+                or (:HideSecondsInDm == secondsOption and Config.M_DARK == colorMode);
             _secondLayer.setVisible(_sleepTimer != 0 or !_hideSecondHand);
 
             // Draw the background
             if (System.SCREEN_SHAPE_ROUND == _screenShape) {
                 // Fill the entire background with the background color
-                _backgroundDc.setColor(colors[C_BACKGROUND], colors[C_BACKGROUND]);
+                _backgroundDc.setColor(config.colors[Config.C_BACKGROUND], config.colors[Config.C_BACKGROUND]);
                 _backgroundDc.clear();
             } else {
                 // Fill the entire background with black and draw a circle with the background color
                 _backgroundDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
                 _backgroundDc.clear();
-                if (colors[C_BACKGROUND] != Graphics.COLOR_BLACK) {
-                    _backgroundDc.setColor(colors[C_BACKGROUND], colors[C_BACKGROUND]);
+                if (config.colors[Config.C_BACKGROUND] != Graphics.COLOR_BLACK) {
+                    _backgroundDc.setColor(config.colors[Config.C_BACKGROUND], config.colors[Config.C_BACKGROUND]);
                     _backgroundDc.fillCircle(_screenCenter[0], _screenCenter[1], _clockRadius);
                 }
             }
 
             // Draw tick marks around the edge of the screen on the background layer
-            _backgroundDc.setColor(colors[C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+            _backgroundDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
             for (var i = 0; i < 60; i++) {
                 _backgroundDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
             }
@@ -323,7 +317,7 @@ class ClockView extends WatchUi.WatchFace {
                 _hourMinuteDc.fillPolygon(shadowCoords(minuteHandCoords, 8));
             }
             if (0 == _doWireHands) {
-                _hourMinuteDc.setColor(colors[C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+                _hourMinuteDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
                 _hourMinuteDc.fillPolygon(hourHandCoords);
                 _hourMinuteDc.fillPolygon(minuteHandCoords);
             } else {
@@ -347,25 +341,7 @@ class ClockView extends WatchUi.WatchFace {
                 _secondShadowDc.clear();
             }
             // Determine the color of the second hand and draw it and its shadow
-            var aci = 0;
-            if (config.isEnabled(Config.I_ACCENT_CYCLE)) {
-                var cnt = [0, clockTime.hour, clockTime.min, clockTime.sec][config.getValue(Config.I_ACCENT_CYCLE)];
-                aci = cnt % 9 /*(accentColors.size() / 2)*/ * 2;
-            } else {
-                aci = config.getValue(Config.I_ACCENT_COLOR) * 2;
-            }
-            _accentColor = [
-                // Colors for the second hand, in pairs with one color for each color mode
-                0xFF0000, 0xff0055, // red 
-                0xff5500, 0xffaa00, // orange
-                0xffff00, 0xffff55, // yellow
-                0x55ff00, 0x55ff00, // light green
-                0x00AA00, 0x00aa55, // green
-                0x00ffff, 0x55ffff, // light blue
-                0x0000FF, 0x00AAFF, // blue
-                0xaa00aa, 0xaa00ff, // purple
-                0xff00aa, 0xff00aa  // pink
-            ][M_LIGHT == colorMode ? aci : aci + 1];
+            _accentColor = config.getAccentColor(clockTime.hour, clockTime.min, clockTime.sec);
             drawSecondHand(_secondDc, clockTime.sec);
         }
     }
@@ -420,7 +396,7 @@ class ClockView extends WatchUi.WatchFace {
     private function drawSecondHand(dc as Dc, second as Number) as Void {
         // Use the pre-calculated numbers for the current second
         var sd = _secondData[second];
-        var coords = [[sd[2], sd[3]], [sd[4], sd[5]], [sd[6], sd[7]], [sd[8], sd[9]]];
+        var coords = [[sd[2], sd[3]], [sd[4], sd[5]], [sd[6], sd[7]], [sd[8], sd[9]]] as Array<Point2D>;
 
         // Set the clipping region
         dc.setClip(sd[10], sd[11], sd[12], sd[13]);
@@ -546,34 +522,6 @@ class ClockView extends WatchUi.WatchFace {
         }
         return result;
     }
-
-    private function setColors(doNotDisturb as Boolean, hour as Number, min as Number) as Number {
-        var colorMode = M_LIGHT;
-        colors = [Graphics.COLOR_BLACK, Graphics.COLOR_WHITE, Graphics.COLOR_DK_GRAY];
-        var darkMode = config.getOption(Config.I_DARK_MODE);
-        if (:DarkModeScheduled == darkMode) {
-            var time = hour * 60 + min;
-            if (time >= config.getValue(Config.I_DM_ON) or time < config.getValue(Config.I_DM_OFF)) {
-                colorMode = M_DARK;
-            }
-        } else if (   :On == darkMode
-                   or (:DarkModeInDnD == darkMode and doNotDisturb)) {
-            colorMode = M_DARK;
-        }
-        if (M_DARK == colorMode) {
-            colors = [Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK, Graphics.COLOR_DK_GRAY];
-            // In dark mode, adjust text color based on the contrast setting
-            var foregroundColor = config.getValue(Config.I_DM_CONTRAST);
-            colors[C_FOREGROUND] = foregroundColor;
-            if (Graphics.COLOR_WHITE == foregroundColor) {
-                colors[C_TEXT] = Graphics.COLOR_LT_GRAY;
-            } else { // Graphics.COLOR_LT_GRAY or Graphics.COLOR_DK_GRAY
-                colors[C_TEXT] = Graphics.COLOR_DK_GRAY;
-            }
-        }
-        return colorMode;
-    }
-
 } // class ClockView
 
 // Receives watch face events
