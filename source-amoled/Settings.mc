@@ -549,16 +549,19 @@ class MenuIcon extends WatchUi.Drawable {
 
     // Draw the icon
     public function draw(dc as Dc) as Void {
-        dc.clearClip();
         var width = dc.getWidth();
         var height = dc.getHeight();
+        var length = width < height ? width : height;
+        var sx0 = (width - length)/2;
+        var sy0 = (height - length)/2;
         dc.setColor(_bgColor, _bgColor);
+        dc.setClip(sx0, sy0, length, length);
         dc.clear();
         dc.setColor(_fgColor, _fgColor);
         if (T_CIRCLE == _type) {
-            dc.fillCircle(width/2, height/2, width/2.5);
+            dc.fillCircle(width/2, height/2, length/2.6);
         } else {
-            dc.fillPolygon([[0,0], [width, height], [width, 0]]);
+            dc.fillPolygon([[sx0, sy0], [sx0 + length, sy0 + length], [sx0 + length, sy0]]);
         }
     }
 }
