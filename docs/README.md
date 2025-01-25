@@ -69,6 +69,7 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | Forerunner® 255s | fr255s | Modern |
 | Forerunner® 255s Music | fr255sm | Modern |
 | Forerunner® 265 | fr265 | Amoled |
+| Forerunner® 265s | fr265s | Amoled |
 | Forerunner® 645 Music | fr645m | Legacy |
 | Forerunner® 745 | fr745 | Legacy |
 | Forerunner® 945 | fr945 | Legacy |
@@ -90,6 +91,7 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | Rey™ | legacysagarey | Modern |
 | Venu® 2 Plus | venu2plus | Amoled |
 | Venu® 2 | venu2 | Amoled |
+| Venu® 2S | venu2s | Amoled |
 | Venu® 3 | venu3 | Amoled |
 | Venu® 3S | venu3s | Amoled |
 | Venu® Sq 2 | venusq2 | Amoled |

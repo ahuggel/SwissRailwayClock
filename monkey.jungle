@@ -164,6 +164,11 @@ fr965.sourcePath = $(fr965.sourcePath);source-amoled
 fr965.excludeAnnotations = legacy
 venu3.sourcePath = $(venu3.sourcePath);source-amoled
 venu3.excludeAnnotations = legacy
+# Round 360x360 displays
+fr265s.sourcePath = $(fr265s.sourcePath);source-amoled
+fr265s.excludeAnnotations = legacy
+venu2s.sourcePath = $(venu2s.sourcePath);source-amoled
+venu2s.excludeAnnotations = legacy
 # Rectangular 320x360 displays
 venusq2.sourcePath = $(venusq2.sourcePath);source-amoled
 venusq2.excludeAnnotations = legacy
