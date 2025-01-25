@@ -74,12 +74,11 @@ class ClockView extends WatchUi.WatchFace {
         // 1) A background layer with the tick marks and any indicators.
         // 2) A full screen layer for the hour and minute hands.
         // 3) A dedicated layer for the second hand.
-        //
-        // Using layers is elegant.
-        // On the other hand, this architecture requires more memory and is only feasible on CIQ 4
-        // devices, i.e., on devices with a graphics pool, and on a few older models which have
-        // more memory.
-        // For improved performance, we're still using a clipping region for both second hands to
+        // 
+        // Using layers is elegant. On the other hand, this architecture requires more memory 
+        // and is only feasible on CIQ 4 devices, i.e., on devices with a graphics pool, and on
+        // a few older models which have more memory.
+        // For improved performance, we're still using a clipping region for the second hand to
         // limit the area affected when clearing the layer.
         // There's potential to reduce the memory footprint by minimizing the size of the second
         // hand layers to about a quarter of the screen size and moving them every 15 seconds.
@@ -251,7 +250,7 @@ class ClockView extends WatchUi.WatchFace {
                 _backgroundDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
             }
 
-            // Draw the indicators (those which are updated every minute) on the background layer
+            // Draw the indicators on the background layer
             _indicators.draw(_backgroundDc, deviceSettings, _isAwake);
             _indicators.drawHeartRate(_backgroundDc, _isAwake);
 
