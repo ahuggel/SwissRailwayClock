@@ -64,24 +64,26 @@ class Indicators {
         _screenCenter = screenCenter;
         _clockRadius = clockRadius;
         _batteryLevel = new BatteryLevel(clockRadius);
+        // Most displays are round, but two supported watches have rectangular displays with height > width, which results in top and bottom borders
+        var b = (height-width)/2; 
 
         // Positions of the various indicators
         _pos = [
-            [(width * 0.73).toNumber(), (height * 0.50).toNumber()], //  0: Heart rate indicator at 3 o'clock
-            [(width * 0.48).toNumber(), (height * 0.75).toNumber()], //  1: Heart rate indicator at 6 o'clock
-            [(width * 0.23).toNumber(), (height * 0.50).toNumber()], //  2: Recovery time indicator at 9 o'clock
-            [(width * 0.50).toNumber(), (height * 0.30).toNumber()], //  3: Battery level indicator at 12 o'clock with notifications
-            [(width * 0.50).toNumber(), (height * 0.25).toNumber()], //  4: Battery level indicator at 12 o'clock w/o notifications
-            [(width * 0.50).toNumber(), (height * 0.165).toNumber()], //  5: Alarms and notifications at 12 o'clock
-            [0, 0],                                                  //  6: Phone connection indicator on the 6 o'clock tick mark (see updatePos() )
-            [(width * 0.75).toNumber(), (height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
-            [(width * 0.50).toNumber(), (height * 0.65).toNumber()], //  8: Date (weekday and day format) at 6 o'clock, w/o steps
-            [(width * 0.50).toNumber(), (height * 0.69).toNumber()], //  9: Date (weekday and day format) at 6 o'clock, with steps
-            [(width * 0.49).toNumber(), (height * 0.70).toNumber()], // 10: Steps at 6 o'clock, w/o date (weekday and day format)
-            [(width * 0.49).toNumber(), (height * 0.65).toNumber()], // 11: Steps at 6 o'clock, with date (weekday and day format)
-            [(width * 0.49).toNumber(), (height * 0.76).toNumber()], // 12: Heart rate indicator at 6 o'clock with steps
-            [(width * 0.49).toNumber(), (height * 0.39).toNumber()], // 13: Calories in upper half, with notifications and battery
-            [(width * 0.49).toNumber(), (height * 0.35).toNumber()]  // 14: Calories in upper half, w/o notifications but with battery
+            [(width * 0.73).toNumber(), (b + width * 0.50).toNumber()], //  0: Heart rate indicator at 3 o'clock
+            [(width * 0.48).toNumber(), (b + width * 0.75).toNumber()], //  1: Heart rate indicator at 6 o'clock
+            [(width * 0.23).toNumber(), (b + width * 0.50).toNumber()], //  2: Recovery time indicator at 9 o'clock
+            [(width * 0.50).toNumber(), (b + width * 0.30).toNumber()], //  3: Battery level indicator at 12 o'clock with notifications
+            [(width * 0.50).toNumber(), (b + width * 0.25).toNumber()], //  4: Battery level indicator at 12 o'clock w/o notifications
+            [(width * 0.50).toNumber(), (b + width * 0.165).toNumber()],//  5: Alarms and notifications at 12 o'clock
+            [0, 0],                                                     //  6: Phone connection indicator on the 6 o'clock tick mark (see updatePos() )
+            [(width * 0.75).toNumber(), (b + width * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
+            [(width * 0.50).toNumber(), (b + width * 0.65).toNumber()], //  8: Date (weekday and day format) at 6 o'clock, w/o steps
+            [(width * 0.50).toNumber(), (b + width * 0.69).toNumber()], //  9: Date (weekday and day format) at 6 o'clock, with steps
+            [(width * 0.49).toNumber(), (b + width * 0.70).toNumber()], // 10: Steps at 6 o'clock, w/o date (weekday and day format)
+            [(width * 0.49).toNumber(), (b + width * 0.65).toNumber()], // 11: Steps at 6 o'clock, with date (weekday and day format)
+            [(width * 0.49).toNumber(), (b + width * 0.76).toNumber()], // 12: Heart rate indicator at 6 o'clock with steps
+            [(width * 0.49).toNumber(), (b + width * 0.39).toNumber()], // 13: Calories in upper half, with notifications and battery
+            [(width * 0.49).toNumber(), (b + width * 0.35).toNumber()]  // 14: Calories in upper half, w/o notifications but with battery
         ] as Array< Array<Number> >;
     }
 

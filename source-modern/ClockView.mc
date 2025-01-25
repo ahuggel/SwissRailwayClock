@@ -321,8 +321,14 @@ class ClockView extends WatchUi.WatchFace {
                 _hourMinuteDc.fillPolygon(hourHandCoords);
                 _hourMinuteDc.fillPolygon(minuteHandCoords);
             } else {
-                _hourMinuteDc.setStroke(_shadowColor);
-                _hourMinuteDc.setPenWidth(3); // TODO: Should be a percentage of the clock radius
+                var pw = 3;
+                if (config.hasAlpha()) {
+                    _hourMinuteDc.setStroke(_shadowColor);
+                } else {
+                    _hourMinuteDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+                    pw = 1;
+                }
+                _hourMinuteDc.setPenWidth(pw); // TODO: Should be a percentage of the clock radius
                 drawPolygon(_hourMinuteDc, hourHandCoords);
                 drawPolygon(_hourMinuteDc, minuteHandCoords);
             }

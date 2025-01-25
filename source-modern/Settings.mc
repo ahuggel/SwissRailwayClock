@@ -18,6 +18,7 @@
    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+import Toybox.ActivityMonitor;
 import Toybox.Application.Storage;
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -151,6 +152,7 @@ class Config {
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
+    private var _hasTimeToRecovery as Boolean; // Indicates if the device provides recovery time
 
     // Constructor
     public function initialize() {
@@ -159,6 +161,7 @@ class Config {
 
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasBatteryInDays = (System.Stats has :batteryInDays);
+        _hasTimeToRecovery = (ActivityMonitor.Info has :timeToRecovery);
         // Read the configuration values from persistent storage 
         for (var id = 0; id < I_SIZE; id++) {
             var value = Storage.getValue(_itemLabels[id]) as Number;
@@ -168,6 +171,9 @@ class Config {
                 }
                 // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
                 if (I_BATTERY_DAYS == id and !_hasBatteryInDays) { 
+                    value = 0;
+                }
+                if (I_RECOVERY_TIME == id and !_hasTimeToRecovery) {
                     value = 0;
                 }
                 if (I_3D_EFFECTS == id and !_hasAlpha) { 
@@ -272,6 +278,11 @@ class Config {
     // Returns true if the device provides battery in days estimates, false if not.
     public function hasBatteryInDays() as Boolean {
         return _hasBatteryInDays;
+    }
+
+    // Returns true if the device provides recovery time, false if not.
+    public function hasTimeToRecovery() as Boolean {
+        return _hasTimeToRecovery;
     }
 
     // Determine the color mode and the colors to use, return the color mode
@@ -398,7 +409,9 @@ class SettingsMenu extends WatchUi.Menu2 {
                 addToggleMenuItem(Config.I_NOTIFICATIONS);
                 addToggleMenuItem(Config.I_CONNECTED);
                 addToggleMenuItem(Config.I_HEART_RATE);
-                addToggleMenuItem(Config.I_RECOVERY_TIME);
+                if (config.hasTimeToRecovery()) { 
+                    addToggleMenuItem(Config.I_RECOVERY_TIME);
+                }
                 addToggleMenuItem(Config.I_STEPS);
                 addToggleMenuItem(Config.I_CALORIES);
                 addToggleMenuItem(Config.I_MOVE_BAR);

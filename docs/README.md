@@ -92,6 +92,8 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | Venu® 2 | venu2 | Amoled |
 | Venu® 3 | venu3 | Amoled |
 | Venu® 3S | venu3s | Amoled |
+| Venu® Sq 2 | venusq2 | Amoled |
+| Venu® Sq 2 Music | venusq2m | Amoled |
 | vívoactive® 3 Music | vivoactive3m | Legacy |
 | vívoactive® 4 | vivoactive4 | Modern |
 | vívoactive® 4S | vivoactive4s | Modern |
