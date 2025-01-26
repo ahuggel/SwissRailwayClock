@@ -51,10 +51,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _screenCenter as Array<Number>;
     private var _clockRadius as Number;
 
-    private var _secondLayer as Layer;
-    private var _backgroundDc as Dc;
-    private var _hourMinuteDc as Dc;
-    private var _secondDc as Dc;
+    private var _offscreenBuffer as BufferedBitmap;
 
     private var _indicators as Indicators;
 
@@ -69,35 +66,19 @@ class ClockView extends WatchUi.WatchFace {
         _screenCenter = [width/2, height/2] as Array<Number>;
         _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
 
-        // Instead of a buffered bitmap, this version uses multiple layers (since API Level 3.1.0):
-        //
-        // 1) A background layer with the tick marks and any indicators.
-        // 2) A full screen layer for the hour and minute hands.
-        // 3) A dedicated layer for the second hand.
-        // 
-        // Using layers is elegant. On the other hand, this architecture requires more memory 
-        // and is only feasible on CIQ 4 devices, i.e., on devices with a graphics pool, and on
-        // a few older models which have more memory.
-        // For improved performance, we're still using a clipping region for the second hand to
-        // limit the area affected when clearing the layer.
-        // There's potential to reduce the memory footprint by minimizing the size of the second
-        // hand layers to about a quarter of the screen size and moving them every 15 seconds.
-
-        // Initialize layers and add them to the view
-        var opts = {:locX => 0, :locY => 0, :width => width, :height => height};
-        var backgroundLayer = new WatchUi.Layer(opts);
-        var hourMinuteLayer = new WatchUi.Layer(opts);
-        _secondLayer = new WatchUi.Layer(opts);
-
-        addLayer(backgroundLayer);
-        addLayer(hourMinuteLayer);
-        addLayer(_secondLayer);
-        _backgroundDc = backgroundLayer.getDc() as Dc;
-        _hourMinuteDc = hourMinuteLayer.getDc() as Dc;
-        _secondDc = _secondLayer.getDc() as Dc;
-        _backgroundDc.setAntiAlias(true); // Graphics.Dc has :setAntiAlias since API Level 3.2.0
-        _hourMinuteDc.setAntiAlias(true);
-        _secondDc.setAntiAlias(true);
+        // Allocate the buffer we use for drawing the watchface, using BufferedBitmap (API Level 2.3.0).
+        // This is a full-colored buffer (with no palette), as that makes drawing text with
+        // anti-aliased fonts much more straightforward.
+        // Doing this in initialize() rather than onLayout() so _offscreenBuffer does not need to be 
+        // nullable, which makes the type checker complain less.
+        var bbmo = {:width=>width, :height=>height};
+        // CIQ 4 devices *need* to use createBufferBitmaps() 
+  	    if (Graphics has :createBufferedBitmap) {
+    		var bbRef = Graphics.createBufferedBitmap(bbmo);
+			_offscreenBuffer = bbRef.get() as BufferedBitmap;
+    	} else {
+    		_offscreenBuffer = new Graphics.BufferedBitmap(bbmo);
+		}
 
         _indicators = new Indicators(width, height, _screenCenter, _clockRadius);
     }
@@ -154,7 +135,6 @@ class ClockView extends WatchUi.WatchFace {
             _coords[idx+6] =  (shapes[s][1] / 2 + 0.5).toNumber();
             _coords[idx+7] = -(shapes[s][3] + 0.5).toNumber();
         }
-        //System.println("("+_coords[S_SECONDHAND*8+2]+","+_coords[S_SECONDHAND*8+3]+") ("+_coords[S_SECONDHAND*8+4]+","+_coords[S_SECONDHAND*8+5]+")");
         if (_clockRadius >= 130 and 0 == (_coords[S_SECONDHAND*8+4] - _coords[S_SECONDHAND*8+2]) % 2) {
             // TODO: Check if we always get here because of the way the numbers are calculated
             _coords[S_SECONDHAND*8+6] += 1;
@@ -171,11 +151,6 @@ class ClockView extends WatchUi.WatchFace {
 
         // Calculate all numbers required to draw the second hand for every second
         calcSecondData();
-
-        //var s = _secondData[0];
-        //System.println("INFO: Clock radius = " + _clockRadius);
-        //System.println("INFO: Secondhand circle: ("+s[0]+","+s[1]+"), r = "+_secondCircleRadius);
-        //System.println("INFO: Secondhand coords: ("+s[2]+","+s[3]+") ("+s[4]+","+s[5]+") ("+s[6]+","+s[7]+") ("+s[8]+","+s[9]+")");
     }
 
     // Called when this View is brought to the foreground. Restore the state of this view and
@@ -215,8 +190,15 @@ class ClockView extends WatchUi.WatchFace {
     //
     // The watchface is redrawn every full minute and when the watch enters or exists sleep.
     // During sleep, the second hand is not drawn.
+    // The off-screen buffer is used to blank out the second hand,
+    // before it is re-drawn at the new position, directly on the main display.
     public function onUpdate(dc as Dc) as Void {
         dc.clearClip(); // Still needed as the settings menu messes with the clip
+
+        // Use the offscreen buffer and enable anti-aliasing.
+        var targetDc = _offscreenBuffer.getDc();
+        dc.setAntiAlias(true); // Graphics.Dc has :setAntiAlias since API Level 3.2.0
+        targetDc.setAntiAlias(true); 
 
         // Update the wire hands timer
         if (_doWireHands != 0) {
@@ -237,56 +219,49 @@ class ClockView extends WatchUi.WatchFace {
             // Determine all colors based on the relevant settings
             config.setColors(_isAwake, deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
 
-            // Turn the second hand on or off
-            _secondLayer.setVisible(_isAwake);
-
             // Fill the entire background with the background color (black)
-            _backgroundDc.setColor(config.colors[Config.C_BACKGROUND], config.colors[Config.C_BACKGROUND]);
-            _backgroundDc.clear();
+            targetDc.setColor(config.colors[Config.C_BACKGROUND], config.colors[Config.C_BACKGROUND]);
+            targetDc.clear();
 
-            // Draw tick marks around the edge of the screen on the background layer
-            _backgroundDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+            // Draw tick marks around the edge of the screen
+            targetDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
             for (var i = 0; i < 60; i++) {
-                _backgroundDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
+                targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
             }
 
-            // Draw the indicators on the background layer
-            _indicators.draw(_backgroundDc, deviceSettings, _isAwake);
-            _indicators.drawHeartRate(_backgroundDc, _isAwake);
-
-            // Clear the layer used for the hour and minute hands
-            _hourMinuteDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
-            _hourMinuteDc.clear();
+            // Draw the indicators
+            _indicators.draw(targetDc, deviceSettings, _isAwake);
+            _indicators.drawHeartRate(targetDc, _isAwake);
 
             // Draw the hour and minute hands
             var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
             var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
             var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
             if (0 == _doWireHands) {
-                _hourMinuteDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
-                _hourMinuteDc.fillPolygon(hourHandCoords);
-                _hourMinuteDc.fillPolygon(minuteHandCoords);
+                targetDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+                targetDc.fillPolygon(hourHandCoords);
+                targetDc.fillPolygon(minuteHandCoords);
             } else {
                 var pw = 3;
                 if (config.hasAlpha()) {
-                    _hourMinuteDc.setStroke(_wireHandsColor);
+                    targetDc.setStroke(_wireHandsColor);
                 } else {
-                    _hourMinuteDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+                    targetDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
                     pw = 1;
                 }
-                _hourMinuteDc.setPenWidth(pw); // TODO: Should be a percentage of the clock radius
-                drawPolygon(_hourMinuteDc, hourHandCoords);
-                drawPolygon(_hourMinuteDc, minuteHandCoords);
+                targetDc.setPenWidth(pw); // TODO: Should be a percentage of the clock radius
+                drawPolygon(targetDc, hourHandCoords);
+                drawPolygon(targetDc, minuteHandCoords);
             }
         } // if (_lastDrawnMin != clockTime.min)
 
+        // Output the offscreen buffer to the main display
+        dc.drawBitmap(0, 0, _offscreenBuffer);
+
         if (_isAwake) {
-            // Clear the clip of the second layer to delete the second hand
-            _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
-            _secondDc.clear();
-            // Set the color for the second hand and draw it
+            // Determine the color of the second hand and draw it, directly on the screen
             _accentColor = config.getAccentColor(clockTime.hour, clockTime.min, clockTime.sec);
-            drawSecondHand(_secondDc, clockTime.sec);
+            drawSecondHand(dc, clockTime.sec); 
         }
     }
 
