@@ -184,8 +184,8 @@ class ClockView extends WatchUi.WatchFace {
     // This version is kept simple. It always draws the watch face from scratch,
     // directly on the display. Amoled watches do not support updates every second
     // in always-on mode, so this is all that's required.
-    // An addition of a buffered bitmap or layers would only serve to try to be
-    // more energy efficient during a prolonged use in high-power mode.
+    // Using a buffered bitmap or layers would only serve to try to be more energy
+    // efficient during a prolonged use in high-power mode.
     public function onUpdate(dc as Dc) as Void {
         var clockTime = System.getClockTime();
         var deviceSettings = System.getDeviceSettings();
