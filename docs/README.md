@@ -7,11 +7,11 @@
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a [second hand] in both high- and low-power mode on watches with a MIP display;
 - The operation differs from the original Swiss railway clock in that the second hand ticks like that of a quartz watch, rather than sweeps, and it does not pause at 12 o'clock. There is also a battery saving option to make the second hand disappear in low-power mode, after about 30s;
 - On-device settings allow the configuration of battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a [Move Bar] and some other options. The "Configurable Clutter" clip above shows most of them. In addition, an accent color (the color of the second hand) can also be configured. The menu implements three different types of menu items as well as a basic time picker;
-- On watches with an AMOLED display, the watchface has been adapted to the inherent peculiarities of this display type: The background is always black and dark mode just works as a dimmer. Always-on (low-power) mode uses the darkest dimmer setting and has no second hand;
+- On watches with an AMOLED display, the watchface has been adapted to the inherent peculiarities of this display type: The background is always black and dark mode just works as a dimmer. Always-on (low-power) mode uses the darkest dimmer setting and has no second hand. A few older AMOLED watches with more complex burn-in protection requirements are not supported;
 - On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955, fēnix 7 and 8 series, Enduro 2 and 3 and all AMOLED watches);
 - Symbols for active alarms, phone connection and notifications, as well as the various indicators use icons from a [custom font];
 - A global settings class synchronises the selected options to persistent storage and makes them available across the app;
-- Newer ("Modern") watches with support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. The code for newer watches with an [AMOLED] display is also based on this modern architecture. Older ("Legacy") devices without layer support or insufficient memory use a buffered bitmap. The distinction is made using [Jungle file build instructions]. ```minApiLevel``` is set to 3.2.0 as that's the minimum level required for on-device settings;
+- Newer ("Modern") watches with support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. Older ("Legacy") devices without layer support or insufficient memory work with a buffered bitmap. The code for watches with an [AMOLED] display draws directly on the device display, it doesn't need layers or a bitmap. [Jungle file build instructions] define for each device, which architecture it uses;
 - The program has been upgraded to compile exclusively with SDK 7 (due to type changes in Monkey C, it is not backward compatible with older SDKs). It still compiles with a single warning with the compiler type checking level set to "Strict";
 - Memory usage on legacy devices is now really close to the limit. I highly recommend using the [Prettier Monkey C] extension for Visual Studio Code to optimize the generated program as much as possible. From my experience, for legacy watches, the size of the code and data memory of the optimized program (as shown in the simulator's Active Memory window) is reduced by around 12%.
 
@@ -19,7 +19,7 @@ This program reflects the progress of my ongoing journey to learn [Monkey C] and
 
 ## Compatible devices
 
-The Architecture column shows for each of the [compatible devices], if it supports the layer based implementation (Modern), the modern architecture for watches with an AMOLED display (Amoled), or uses a buffered bitmap (Legacy).
+The Architecture column shows for each of the [compatible devices], if it supports the layer based implementation (Modern), uses a buffered bitmap (Legacy), or the simple code for AMOLED watches (Amoled).
 
 | Device name | Label | Architecture |
 | ----------- | ----- | ------------ |
