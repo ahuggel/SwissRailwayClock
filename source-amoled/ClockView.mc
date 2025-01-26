@@ -31,27 +31,20 @@ var iconFont as FontResource?;
 class ClockView extends WatchUi.WatchFace {
     private const TWO_PI as Float = 2 * Math.PI;
 
-    private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
-
     // List of watchface shapes, used as indexes. Review optimizations in calcSecondData() et al. before changing the Shape enum.
     enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
     // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
     private var _secondCircleRadius as Number = 0; // Radius of the second hand circle
     private var _secondCircleCenter as Array<Number> = new Array<Number>[2]; // Center of the second hand circle
-
     // Cache for all numbers required to draw the second hand. These are pre-calculated in onLayout().
     private var _secondData as Array< Array<Number> > = new Array< Array<Number> >[60];
 
-    private var _lastDrawnMin as Number = -1; // Minute when the watch face was last completely re-drawn
-    private var _accentColor as Number = 0; // Color of the second hand, determined in onUpdate()
-    private var _doWireHands as Number = 0; // Number of seconds to show the minute and hour hands was wire hands after press
-    private var _wireHandsColor as Number = 0;
+    private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
+    private var _doWireHands as Number = 0; // Number of seconds to show the minute and hour hands as wire hands after press
 
     private var _screenCenter as Array<Number>;
     private var _clockRadius as Number;
-
-    private var _offscreenBuffer as BufferedBitmap;
 
     private var _indicators as Indicators;
 
@@ -59,26 +52,11 @@ class ClockView extends WatchUi.WatchFace {
     public function initialize() {
         WatchFace.initialize();
 
-        if (config.hasAlpha()) { _wireHandsColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
         var deviceSettings = System.getDeviceSettings();
         var width = deviceSettings.screenWidth;
         var height = deviceSettings.screenHeight;
         _screenCenter = [width/2, height/2] as Array<Number>;
         _clockRadius = _screenCenter[0] < _screenCenter[1] ? _screenCenter[0] : _screenCenter[1];
-
-        // Allocate the buffer we use for drawing the watchface, using BufferedBitmap (API Level 2.3.0).
-        // This is a full-colored buffer (with no palette), as that makes drawing text with
-        // anti-aliased fonts much more straightforward.
-        // Doing this in initialize() rather than onLayout() so _offscreenBuffer does not need to be 
-        // nullable, which makes the type checker complain less.
-        var bbmo = {:width=>width, :height=>height};
-        // CIQ 4 devices *need* to use createBufferBitmaps() 
-  	    if (Graphics has :createBufferedBitmap) {
-    		var bbRef = Graphics.createBufferedBitmap(bbmo);
-			_offscreenBuffer = bbRef.get() as BufferedBitmap;
-    	} else {
-    		_offscreenBuffer = new Graphics.BufferedBitmap(bbmo);
-		}
 
         _indicators = new Indicators(width, height, _screenCenter, _clockRadius);
     }
@@ -180,121 +158,82 @@ class ClockView extends WatchUi.WatchFace {
         }
     }
 
-    // Called when this View is brought to the foreground. Restore the state of this view and
-    // prepare it to be shown. This includes loading resources into memory.
-    public function onShow() as Void {
-        // Assuming onShow() is triggered after any settings change, force the watch face
-        // to be re-drawn in the next call to onUpdate(). This is to immediately react to
-        // changes of the watch settings or a possible change of the DND setting.
-        _lastDrawnMin = -1;
-    }
-
     // This method is called when the device re-enters sleep mode
     public function onEnterSleep() as Void {
         _isAwake = false;
-        _lastDrawnMin = -1; // Force the watchface to be re-drawn
         WatchUi.requestUpdate();
     }
 
     // This method is called when the device exits sleep mode
     public function onExitSleep() as Void {
         _isAwake = true;
-        _lastDrawnMin = -1; // Force the watchface to be re-drawn
         WatchUi.requestUpdate();
     }
 
     public function startWireHands() as Void {
         _doWireHands = 6;
-        _lastDrawnMin = -1;
         WatchUi.requestUpdate();
     }
 
     // Handle the update event. This function is called
     // 1) every second when the device is awake,
-    // 2) every full minute in low-power mode, and
+    // 2) every full minute in always-on (low-power) mode, and
     // 3) it's also triggered when the device goes in or out of low-power mode
     //    (from onEnterSleep() and onExitSleep()).
     //
-    // Every full minute and when the watch enters or exists sleep, the watchface,
-    // indicators and hour and minute hands are drawn into an offscreen buffer,
-    // which is then copied to the main screen.
-    // During all other calls, the existing buffer is copied to the main display.
-    // The second hand is then drawn directly on the screen.
-    // During sleep, there is no way to draw the second hand every second.
-    // Because of this limitation of Amoled watches, the logic for a watchface is 
-    // actually very straightforward.
-    // The main consideration is just how much effort we want to put into making
-    // it as energy efficient as possible.
+    // This version is kept simple. It always draws the watch face from scratch,
+    // directly on the display. Amoled watches do not support updates every second
+    // in always-on mode, so this is all that's required.
+    // An addition of a buffered bitmap or layers would only serve to try to be
+    // more energy efficient during a prolonged use in high-power mode.
     public function onUpdate(dc as Dc) as Void {
+        var clockTime = System.getClockTime();
+        var deviceSettings = System.getDeviceSettings();
+
+        // Determine all colors based on the relevant settings
+        config.setColors(_isAwake, deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
+
+        // Initialise the dc and fill the entire background with the background color (black)
         dc.clearClip(); // Still needed as the settings menu messes with the clip
-
-        // Use the offscreen buffer and enable anti-aliasing.
-        var targetDc = _offscreenBuffer.getDc();
         dc.setAntiAlias(true); // Graphics.Dc has :setAntiAlias since API Level 3.2.0
-        targetDc.setAntiAlias(true); 
+        dc.setColor(config.colors[Config.C_BACKGROUND], config.colors[Config.C_BACKGROUND]);
+        dc.clear();
 
-        // Update the wire hands timer
-        if (_doWireHands != 0) {
-            _doWireHands -= 1;
-            if (0 == _doWireHands) {
-                _lastDrawnMin = -1;
-            }
+        // Draw tick marks around the edge of the screen
+        dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+        for (var i = 0; i < 60; i++) {
+            dc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
         }
 
-        var clockTime = System.getClockTime();
+        // Draw the indicators
+        _indicators.draw(dc, deviceSettings, _isAwake);
+        _indicators.drawHeartRate(dc, _isAwake);
 
-        // Only re-draw the watch face if the minute changed since the last time
-        if (_lastDrawnMin != clockTime.min) { 
-            _lastDrawnMin = clockTime.min;
-
-            var deviceSettings = System.getDeviceSettings();
-
-            // Determine all colors based on the relevant settings
-            config.setColors(_isAwake, deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
-
-            // Fill the entire background with the background color (black)
-            targetDc.setColor(config.colors[Config.C_BACKGROUND], config.colors[Config.C_BACKGROUND]);
-            targetDc.clear();
-
-            // Draw tick marks around the edge of the screen
-            targetDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
-            for (var i = 0; i < 60; i++) {
-                targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
-            }
-
-            // Draw the indicators
-            _indicators.draw(targetDc, deviceSettings, _isAwake);
-            _indicators.drawHeartRate(targetDc, _isAwake);
-
-            // Draw the hour and minute hands
-            var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
-            var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
-            var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
-            if (0 == _doWireHands) {
-                targetDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
-                targetDc.fillPolygon(hourHandCoords);
-                targetDc.fillPolygon(minuteHandCoords);
+        // Draw the hour and minute hands
+        var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
+        var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
+        var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
+        if (_doWireHands != 0) { _doWireHands -= 1; } // Update the wire hands timer
+        if (0 == _doWireHands) { // draw regular hour and minute hands
+            dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+            dc.fillPolygon(hourHandCoords);
+            dc.fillPolygon(minuteHandCoords);
+        } else { // draw only the outline of the hands
+            var pw = 3;
+            if (config.hasAlpha()) {
+                dc.setStroke(Graphics.createColor(0x80, 0x80, 0x80, 0x80));
             } else {
-                var pw = 3;
-                if (config.hasAlpha()) {
-                    targetDc.setStroke(_wireHandsColor);
-                } else {
-                    targetDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
-                    pw = 1;
-                }
-                targetDc.setPenWidth(pw); // TODO: Should be a percentage of the clock radius
-                drawPolygon(targetDc, hourHandCoords);
-                drawPolygon(targetDc, minuteHandCoords);
+                dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+                pw = 1;
             }
-        } // if (_lastDrawnMin != clockTime.min)
-
-        // Output the offscreen buffer to the main display
-        dc.drawBitmap(0, 0, _offscreenBuffer);
+            dc.setPenWidth(pw); // TODO: Should be a percentage of the clock radius
+            drawPolygon(dc, hourHandCoords);
+            drawPolygon(dc, minuteHandCoords);
+        }
 
         if (_isAwake) {
-            // Determine the color of the second hand and draw it, directly on the screen
-            _accentColor = config.getAccentColor(clockTime.hour, clockTime.min, clockTime.sec);
-            drawSecondHand(dc, clockTime.sec); 
+            var accentColor = config.getAccentColor(clockTime.hour, clockTime.min, clockTime.sec);
+            drawSecondHand(dc, clockTime.sec, accentColor);
         }
     }
 
@@ -310,13 +249,13 @@ class ClockView extends WatchUi.WatchFace {
 
     // Draw the second hand for the given second.
     // This function has been optimized to use only pre-calculated numbers.
-    private function drawSecondHand(dc as Dc, second as Number) as Void {
+    private function drawSecondHand(dc as Dc, second as Number, accentColor as Number) as Void {
         // Use the pre-calculated numbers for the current second
         var sd = _secondData[second];
         var coords = [[sd[2], sd[3]], [sd[4], sd[5]], [sd[6], sd[7]], [sd[8], sd[9]]];
 
         // Draw the second hand
-        dc.setColor(_accentColor, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(accentColor, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(coords);
         dc.fillCircle(sd[0], sd[1], _secondCircleRadius);
     }
