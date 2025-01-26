@@ -252,7 +252,6 @@ class ClockView extends WatchUi.WatchFace {
 
             // Draw the indicators on the background layer
             _indicators.draw(_backgroundDc, deviceSettings, _isAwake);
-            _indicators.drawHeartRate(_backgroundDc, _isAwake);
 
             // Clear the layer used for the hour and minute hands
             _hourMinuteDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
@@ -279,6 +278,9 @@ class ClockView extends WatchUi.WatchFace {
                 drawPolygon(_hourMinuteDc, minuteHandCoords);
             }
         } // if (_lastDrawnMin != clockTime.min)
+
+        // Always update the heart rate (on the background layer)
+        _indicators.drawHeartRate(_backgroundDc, _isAwake);
 
         if (_isAwake) {
             // Clear the clip of the second layer to delete the second hand
