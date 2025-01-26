@@ -215,15 +215,16 @@ class ClockView extends WatchUi.WatchFace {
     // 3) it's also triggered when the device goes in or out of low-power mode
     //    (from onEnterSleep() and onExitSleep()).
     //
-    // Every full minute and when the watch enters or exists sleep we draw the watchface, 
-    // indicators and hour and minute hands into the off-screen buffer. During all other 
-    // calls of onUpdate(), we just output the existing buffer to the main display.
+    // Every full minute and when the watch enters or exists sleep, the watchface,
+    // indicators and hour and minute hands are drawn into an offscreen buffer,
+    // which is then copied to the main screen.
+    // During all other calls, the existing buffer is copied to the main display.
     // The second hand is then drawn directly on the screen.
-    //
-    // This is energy efficient, however, the heart rate is only refreshed once per 
-    // minute this way.
-    //
-    // During sleep, there is no way to draw the second hand.
+    // During sleep, there is no way to draw the second hand every second.
+    // Because of this limitation of Amoled watches, the logic for a watchface is 
+    // actually very straightforward.
+    // The main consideration is just how much effort we want to put into making
+    // it as energy efficient as possible.
     public function onUpdate(dc as Dc) as Void {
         dc.clearClip(); // Still needed as the settings menu messes with the clip
 
