@@ -217,17 +217,17 @@ class Config {
         if (id >= I_ALARMS) { // toggle items
             ret = isEnabled(id) ? :On : :Off;            
         } else if (id < I_DM_ON) { // list items
-            var opts = _options[id] as Array<Symbol>;
+            var opts = _options[id];
             ret = opts[value];
         } else { // if (I_DM_ON == id or I_DM_OFF == id) {
             var pm = "";
-            var hour = (value as Number / 60).toNumber();
+            var hour = (value / 60).toNumber();
             if (!System.getDeviceSettings().is24Hour) {
                 pm = hour < 12 ? " am" : " pm";
                 hour %= 12;
                 if (0 == hour) { hour = 12; }
             }
-            ret = hour + ":" + (value as Number % 60).format("%02d") + pm;
+            ret = hour + ":" + (value % 60).format("%02d") + pm;
         }
         return ret;
     }
