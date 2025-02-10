@@ -286,12 +286,12 @@ class Config {
     }
 
     // Determine the color mode and the colors to use, return the color mode
-    public function setColors(isAwake as Boolean, doNotDisturb as Boolean, hour as Number, min as Number) as Number {        
+    public function setColors(isAwake as Boolean, doNotDisturb as Boolean, hour as Number, minute as Number) as Number {        
         // Determine if dark mode is on
         _colorMode = M_LIGHT;
         var darkMode = getOption(I_DARK_MODE);
         if (:DarkModeScheduled == darkMode) {
-            var time = hour * 60 + min;
+            var time = hour * 60 + minute;
             if (time >= getValue(I_DM_ON) or time < getValue(I_DM_OFF)) {
                 _colorMode = M_DARK;
             }
@@ -344,10 +344,10 @@ class Config {
     // Return the accent color for the second hand. If the change color setting is enabled, the 
     // return value is based on the time passed in, else it's based on the accent color setting.
     // If a value of -1 is passed for the hour, return the color based on the setting.
-    public function getAccentColor(hour as Number, min as Number, sec as Number) as Number {
+    public function getAccentColor(hour as Number, minute as Number, second as Number) as Number {
         var aci = 0;
         if (hour != -1 and isEnabled(I_ACCENT_CYCLE)) {
-            aci = [0, hour, min, sec][getValue(I_ACCENT_CYCLE)] % 9 * 2;
+            aci = [0, hour, minute, second][getValue(I_ACCENT_CYCLE)] % 9 * 2;
         } else {
             aci = getValue(I_ACCENT_COLOR) * 2;
         }
