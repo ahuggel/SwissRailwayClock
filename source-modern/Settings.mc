@@ -137,7 +137,7 @@ class Config {
         "bd"  // I_BATTERY_DAYS
     ] as Array<String>;
 
-    // Options for list items. One array of symbols for each of the them. These inner arrays are accessed
+    // Options for list items. One array of symbols for each of them. These inner arrays are accessed
     // using Item enums, so list items need to be the first ones in the Item enum and in the same order.
     private var _options as Array< Array<Symbol> > = [
         [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern], // I_BATTERY
