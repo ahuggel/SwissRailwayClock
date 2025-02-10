@@ -188,10 +188,13 @@ class ClockView extends WatchUi.WatchFace {
     // efficient during a prolonged use in high-power mode.
     public function onUpdate(dc as Dc) as Void {
         var clockTime = System.getClockTime();
+        var hour = clockTime.hour; // Using local variables for these saves a bit of memory
+        var minute = clockTime.min;
+        var second = clockTime.sec;
         var deviceSettings = System.getDeviceSettings();
 
         // Determine all colors based on the relevant settings
-        config.setColors(_isAwake, deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
+        config.setColors(_isAwake, deviceSettings.doNotDisturb, hour, minute);
 
         // Initialise the dc and fill the entire background with the background color (black)
         dc.clearClip(); // Still needed as the settings menu messes with the clip
@@ -210,9 +213,9 @@ class ClockView extends WatchUi.WatchFace {
         _indicators.drawHeartRate(dc, _isAwake);
 
         // Draw the hour and minute hands
-        var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
+        var hourHandAngle = ((hour % 12) * 60 + minute) / (12 * 60.0) * TWO_PI;
         var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
-        var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
+        var minuteHandCoords = rotateCoords(S_MINUTEHAND, minute / 60.0 * TWO_PI);
         if (_doWireHands != 0) { _doWireHands -= 1; } // Update the wire hands timer
         if (0 == _doWireHands) { // draw regular hour and minute hands
             dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
@@ -232,8 +235,8 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         if (_isAwake) {
-            var accentColor = config.getAccentColor(clockTime.hour, clockTime.min, clockTime.sec);
-            drawSecondHand(dc, clockTime.sec, accentColor);
+            var accentColor = config.getAccentColor(hour, minute, second);
+            drawSecondHand(dc, second, accentColor);
         }
     }
 

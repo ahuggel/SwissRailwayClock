@@ -215,17 +215,17 @@ class ClockView extends WatchUi.WatchFace {
 
         var clockTime = System.getClockTime();
         var hour = clockTime.hour; // Using local variables for these saves a bit of memory
-        var min = clockTime.min;
-        var sec = clockTime.sec;
+        var minute = clockTime.min;
+        var second = clockTime.sec;
 
         // Only re-draw the watch face if the minute changed since the last time
-        if (_lastDrawnMin != min) { 
-            _lastDrawnMin = min;
+        if (_lastDrawnMin != minute) { 
+            _lastDrawnMin = minute;
 
             var deviceSettings = System.getDeviceSettings();
 
             // Determine all colors based on the relevant settings
-            var colorMode = config.setColors(_isAwake, deviceSettings.doNotDisturb, hour, min);
+            var colorMode = config.setColors(_isAwake, deviceSettings.doNotDisturb, hour, minute);
 
             // Handle the setting to disable the second hand in sleep mode after some time
             var secondsOption = config.getOption(Config.I_HIDE_SECONDS);
@@ -257,19 +257,19 @@ class ClockView extends WatchUi.WatchFace {
             _indicators.draw(targetDc, deviceSettings, _isAwake);
 
             // Draw the hour and minute hands
-            var hourHandAngle = ((hour % 12) * 60 + min) / (12 * 60.0) * TWO_PI;
+            var hourHandAngle = ((hour % 12) * 60 + minute) / (12 * 60.0) * TWO_PI;
             targetDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
             targetDc.fillPolygon(rotateCoords(S_HOURHAND, hourHandAngle));
-            targetDc.fillPolygon(rotateCoords(S_MINUTEHAND, min / 60.0 * TWO_PI));
-        } // if (_lastDrawnMin != min)
+            targetDc.fillPolygon(rotateCoords(S_MINUTEHAND, minute / 60.0 * TWO_PI));
+        } // if (_lastDrawnMin != minute)
 
         // Output the offscreen buffer to the main display
         dc.drawBitmap(0, 0, _offscreenBuffer);
 
         if (_isAwake or _doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand)) {
             // Determine the color of the second hand and draw it, directly on the screen
-            _accentColor = config.getAccentColor(hour, min, sec);
-            drawSecondHand(dc, sec); 
+            _accentColor = config.getAccentColor(hour, minute, second);
+            drawSecondHand(dc, second); 
         }
     }
 
