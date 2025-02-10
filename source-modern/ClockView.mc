@@ -259,15 +259,18 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         var clockTime = System.getClockTime();
+        var hour = clockTime.hour; // Using local variables for these saves a bit of memory
+        var min = clockTime.min;
+        var sec = clockTime.sec;
 
         // Only re-draw the watch face if the minute changed since the last time
-        if (_lastDrawnMin != clockTime.min) { 
-            _lastDrawnMin = clockTime.min;
+        if (_lastDrawnMin != min) { 
+            _lastDrawnMin = min;
 
             var deviceSettings = System.getDeviceSettings();
 
             // Determine all colors based on the relevant settings
-            var colorMode = config.setColors(_isAwake, deviceSettings.doNotDisturb, clockTime.hour, clockTime.min);
+            var colorMode = config.setColors(_isAwake, deviceSettings.doNotDisturb, hour, min);
 
             // Note: Whether 3D effects are supported by the device is also ensured by getValue().
             _show3dEffects = config.isEnabled(Config.I_3D_EFFECTS) and Config.M_LIGHT == colorMode;
@@ -308,9 +311,9 @@ class ClockView extends WatchUi.WatchFace {
             _hourMinuteDc.clear();
 
             // Draw the hour and minute hands and their shadows
-            var hourHandAngle = ((clockTime.hour % 12) * 60 + clockTime.min) / (12 * 60.0) * TWO_PI;
+            var hourHandAngle = ((hour % 12) * 60 + min) / (12 * 60.0) * TWO_PI;
             var hourHandCoords = rotateCoords(S_HOURHAND, hourHandAngle);
-            var minuteHandCoords = rotateCoords(S_MINUTEHAND, clockTime.min / 60.0 * TWO_PI);
+            var minuteHandCoords = rotateCoords(S_MINUTEHAND, min / 60.0 * TWO_PI);
             if (_isAwake and _show3dEffects and 0 == _doWireHands) {
                 _hourMinuteDc.setFill(_shadowColor);
                 _hourMinuteDc.fillPolygon(shadowCoords(hourHandCoords, 7));
@@ -332,7 +335,7 @@ class ClockView extends WatchUi.WatchFace {
                 drawPolygon(_hourMinuteDc, hourHandCoords);
                 drawPolygon(_hourMinuteDc, minuteHandCoords);
             }
-        } // if (_lastDrawnMin != clockTime.min)
+        } // if (_lastDrawnMin != min)
 
         if (_isAwake or _doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand)) {
             // Draw the heart rate indicator, every time onUpdate() is called
@@ -347,8 +350,8 @@ class ClockView extends WatchUi.WatchFace {
                 _secondShadowDc.clear();
             }
             // Determine the color of the second hand and draw it and its shadow
-            _accentColor = config.getAccentColor(clockTime.hour, clockTime.min, clockTime.sec);
-            drawSecondHand(_secondDc, clockTime.sec);
+            _accentColor = config.getAccentColor(hour, min, sec);
+            drawSecondHand(_secondDc, sec);
         }
     }
 
