@@ -39,6 +39,8 @@ import Toybox.WatchUi;
 // memory usage.
 class Indicators {
     private var _batteryLevel as BatteryLevel;
+    private var _width as Number;
+    private var _height as Number;
 
     (:modern) private var _batteryDrawn as Boolean = false;
     (:modern) private var _iconsDrawn as Boolean = false;
@@ -50,8 +52,6 @@ class Indicators {
     (:modern) private var _drawHeartRate as Number = -1;
     (:modern) private var _pos as Array< Array<Number> >; // Positions (x,y) of the indicators
 
-    (:legacy) private var _width as Number;
-    (:legacy) private var _height as Number;
     (:legacy) private var _phoneConnectedY as Number = 0;
 
     // Constructor
@@ -61,6 +61,8 @@ class Indicators {
         screenCenter as Array<Number>,
         clockRadius as Number
     ) {
+        _width = width;
+        _height = height;
         _screenCenter = screenCenter;
         _clockRadius = clockRadius;
         _batteryLevel = new BatteryLevel(clockRadius);
@@ -94,8 +96,8 @@ class Indicators {
     }
 
     // Update any indicator positions, which depend on numbers that are not available yet when the constructor is called
-    (:modern) public function updatePos(width as Number, height as Number, s0 as Float, s3 as Float) as Void {
-        _pos[6] = [(width * 0.50).toNumber(), (height * 0.50 + s3 + (s0 - Graphics.getFontHeight(iconFont as FontResource))/3).toNumber()];
+    (:modern) public function updatePos(s0 as Float, s3 as Float) as Void {
+        _pos[6] = [(_width * 0.50).toNumber(), (_height * 0.50 + s3 + (s0 - Graphics.getFontHeight(iconFont as FontResource))/3).toNumber()];
     }
 
     (:legacy) public function updatePos(s0 as Float, s3 as Float) as Void {
