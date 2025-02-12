@@ -18,42 +18,45 @@
    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-import Toybox.Application;
+import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-class SwissRailwayClockApp extends Application.AppBase {
+// Drawable used for menu icons (accent color and dark mode contrast / dimmer level)
+(:modern) class MenuIcon extends WatchUi.Drawable {
+    enum Type { T_CIRCLE, T_TRIANGLE }
+    private var _type as Type;
+    private var _fgColor as Number;
+    private var _bgColor as Number;
 
     // Constructor
-    public function initialize() {
-        AppBase.initialize();
+    public function initialize(type as Type, fgColor as Number, bgColor as Number) {
+        Drawable.initialize({});
+        _type = type;
+        _fgColor = fgColor;
+        _bgColor = bgColor;
     }
 
-    // onStart() is called on application start up
-    public function onStart(state as Dictionary?) as Void {
+    // Set the foreground color
+    public function setColor(fgColor as Number) as Void {
+        _fgColor = fgColor;
     }
 
-    // onStop() is called when the application is exiting
-    public function onStop(state as Dictionary?) as Void {
+    // Draw the icon
+    public function draw(dc as Dc) as Void {
+        var width = dc.getWidth();
+        var height = dc.getHeight();
+        var length = width < height ? width : height;
+        var sx0 = (width - length)/2;
+        var sy0 = (height - length)/2;
+        dc.setColor(_bgColor, _bgColor);
+        dc.setClip(sx0, sy0, length, length);
+        dc.clear();
+        dc.setColor(_fgColor, _fgColor);
+        if (T_CIRCLE == _type) {
+            dc.fillCircle(width/2, height/2, length/2.6);
+        } else {
+            dc.fillPolygon([[sx0, sy0], [sx0 + length, sy0 + length], [sx0 + length, sy0]]);
+        }
     }
-
-    // Return the initial view and delegate of the application 
-    // (WatchFaceDelegate is available since API Level 2.3.0 )
-    public function getInitialView() as [ Views ] or [ Views, InputDelegates ] {
-        var view = new ClockView();
-        var delegate = new ClockDelegate(view);
-        return [view, delegate];
-    }
-
-    // Return the settings view and delegate
-    // @return Array Pair [View, Delegate]
-    public function getSettingsView() as [ Views ] or [ Views, InputDelegates ] or Null {
-        var view = new SettingsView();
-        var delegate = new SettingsDelegate(view);
-        return [view, delegate];
-    }
-}
-
-function getApp() as SwissRailwayClockApp {
-    return Application.getApp() as SwissRailwayClockApp;
 }
