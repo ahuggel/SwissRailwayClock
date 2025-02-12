@@ -22,8 +22,8 @@ import Toybox.Lang;
 import Toybox.System;
 import Toybox.WatchUi;
 
-// The app settings menu
-class SettingsMenu extends WatchUi.Menu2 {
+// The view for the on-device settings menu
+class SettingsView extends WatchUi.Menu2 {
     // Constructor
     public function initialize() {
         Menu2.initialize({:title=>Rez.Strings.Settings});
@@ -154,14 +154,14 @@ class SettingsMenu extends WatchUi.Menu2 {
         if (del) { Menu2.deleteItem(idx); }
         return del;
     }
-} // class SettingsMenu
+} // class SettingsView
 
-// Input handler for the app settings menu
-class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
-    private var _menu as SettingsMenu;
+// Input handler for the on-device settings menu
+class SettingsDelegate extends WatchUi.Menu2InputDelegate {
+    private var _menu as SettingsView;
 
     // Constructor
-    public function initialize(menu as SettingsMenu) {
+    public function initialize(menu as SettingsView) {
         Menu2InputDelegate.initialize();
         _menu = menu;
     }
@@ -202,4 +202,4 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(new TimePicker(id), new TimePickerDelegate(id), WatchUi.SLIDE_IMMEDIATE);
         }
   	}
-} // class SettingsMenuDelegate
+} // class SettingsDelegate
