@@ -27,7 +27,7 @@ import Toybox.WatchUi;
 // Global variable for the icon font. Initialized in ClockView.onLayout().
 var iconFont as FontResource?;
 
-// Implements the Swiss Railway Clock watch face for modern watches with an AMOLED display, using layers
+// Implements the Swiss Railway Clock watch face for watches with an AMOLED display.
 class ClockView extends WatchUi.WatchFace {
     private const TWO_PI as Float = 2 * Math.PI;
 
