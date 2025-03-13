@@ -313,6 +313,16 @@ class Config {
             colors[C_TEXT] = Graphics.COLOR_DK_GRAY;
             colors[C_BATTERY_FRAME] = Graphics.COLOR_DK_GRAY;
         }
+        if (Graphics.COLOR_DK_GRAY == colors[C_FOREGROUND]) {
+            var f = 0.60;
+            colors[C_INDICATOR] = adjustBrightness(colors[C_INDICATOR], f);
+            colors[C_HEART_RATE] = adjustBrightness(colors[C_HEART_RATE], f);
+            colors[C_PHONECONN] = adjustBrightness(colors[C_PHONECONN], 0.75);
+            colors[C_MOVE_BAR] = adjustBrightness(colors[C_MOVE_BAR], f);
+            colors[C_BATTERY_LEVEL_OK] = adjustBrightness(colors[C_BATTERY_LEVEL_OK], f);
+            colors[C_BATTERY_LEVEL_WARN] = adjustBrightness(colors[C_BATTERY_LEVEL_WARN], f);
+            colors[C_BATTERY_LEVEL_ALERT] = adjustBrightness(colors[C_BATTERY_LEVEL_ALERT], f);
+        }
     }
 
     // Return the accent color for the second hand. If the change color setting is enabled, the 
@@ -337,6 +347,27 @@ class Config {
             0xaa00ff, // purple
             0xff00aa  // pink
             ][aci];
+    }
+
+    // Adjust the brightness of color by factor f, return the adjusted color
+    // 0 < f < 1 decreases brightness, f = 0 returns black, f = 1 leaves color unchanged,
+    // f > 1 increases brightness, for large values, the resulting color will approach white
+    private function adjustBrightness(color as Number, f as Float) as Number {
+        // Colors are 24-bit numbers of the form 0xRRGGBB
+        var r = clamp((color & 0xff0000 >> 16 * f + 0.5).toNumber(), 0x00 , 0xff);
+        var g = clamp((color & 0x00ff00 >> 8 * f + 0.5).toNumber(), 0x00 , 0xff);
+        var b = clamp((color & 0x0000ff * f + 0.5).toNumber(), 0x00 , 0xff);
+        return r << 16 | g << 8 | b;
+    }
+
+    // Limit value to min and max
+    private function clamp(value as Number, min as Number, max as Number) as Number {
+        if (value < min) {
+            value = min;
+        } else if (value > max) {
+            value = max;
+        }
+        return value;
     }
 
     // Helper function to load string resources, just to keep the code simpler and see only one compiler warning. 
