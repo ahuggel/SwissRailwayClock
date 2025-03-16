@@ -264,7 +264,7 @@ class Config {
     }
 
     // Return the color (shade of gray) for the current I_DM_CONTRAST (dimmer level) setting  
-    public function getDimmerColor() as Number {
+    public function getContrastColor() as Number {
         // Graphics.COLOR_LT_GRAY = 0xaaaaaa, Graphics.COLOR_DK_GRAY = 0x555555
         return [0xd4d4d4, Graphics.COLOR_LT_GRAY, 0x808080, Graphics.COLOR_DK_GRAY][_values[I_DM_CONTRAST] % 4];
     }
@@ -290,7 +290,7 @@ class Config {
         if (isAwake) {
             if (M_DARK == colorMode) {
                 // In dark/dimmer mode, set the foreground color based on the dimmer (contrast) setting
-                foreground = getDimmerColor();
+                foreground = getContrastColor();
                 idx = getValue(I_DM_CONTRAST) + 1;
             }
         } else { // !isAwake

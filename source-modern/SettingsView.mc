@@ -85,7 +85,7 @@ class SettingsView extends WatchUi.Menu2 {
                         config.getName(Config.I_DM_CONTRAST), 
                         config.getLabel(Config.I_DM_CONTRAST), 
                         Config.I_DM_CONTRAST,
-                        new MenuIcon(MenuIcon.T_TRIANGLE, config.getValue(Config.I_DM_CONTRAST), Graphics.COLOR_BLACK),
+                        new MenuIcon(MenuIcon.T_TRIANGLE, config.getContrastColor(), Graphics.COLOR_BLACK),
                         {}
                     ));
                 }
@@ -196,7 +196,7 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
             if (Config.I_DM_CONTRAST == id) {
                 // Update the color of the icon
                 var menuIcon = menuItem.getIcon() as MenuIcon;
-                menuIcon.setColor(config.getValue(id));
+                menuIcon.setColor(config.getContrastColor());
             }
             if (Config.I_ACCENT_COLOR == id) {
                 // Update the color of the icon

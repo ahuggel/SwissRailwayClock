@@ -241,11 +241,7 @@ class Config {
 
     // Return the current value of the specified setting.
     public function getValue(id as Item) as Number {
-        var value = _values[id];
-        if (I_DM_CONTRAST == id) {
-            value = ([Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE] as Array<Number>)[value];
-        }
-        return value;
+        return _values[id];
     }
 
     // Advance the setting to the next value. Does not make sense for I_DM_ON, I_DM_OFF.
@@ -280,6 +276,11 @@ class Config {
         return _hasTimeToRecovery;
     }
 
+    // Return the color (shade of gray) for the current I_DM_CONTRAST setting  
+    public function getContrastColor() as Number {
+        return [Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY, Graphics.COLOR_WHITE][_values[I_DM_CONTRAST] % 3];
+    }
+
     // Determine the color mode and the colors to use, return the color mode
     public function setColors(isAwake as Boolean, doNotDisturb as Boolean, hour as Number, minute as Number) as Number {        
         // Determine if dark mode is on
@@ -311,7 +312,7 @@ class Config {
             ];
         } else {
             colors = [
-                getValue(I_DM_CONTRAST), // C_FOREGROUND
+                getContrastColor(), // C_FOREGROUND
                 Graphics.COLOR_BLACK, // C_BACKGROUND 
                 Graphics.COLOR_DK_GRAY, // C_TEXT
                 Graphics.COLOR_BLUE, // C_INDICATOR 
