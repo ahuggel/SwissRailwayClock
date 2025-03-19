@@ -60,6 +60,7 @@ class Config {
         I_DARK_MODE, 
         I_ACCENT_COLOR,
         I_ACCENT_CYCLE,
+        I_BRIGHTNESS,
         I_DM_CONTRAST,
         I_DM_ON, // the first item that is not a list item
         I_DM_OFF, 
@@ -86,6 +87,7 @@ class Config {
         :Dimmer, 
         :AccentColor, 
         :AccentCycle, 
+        :Brightness,
         :DimmerLevel, 
         :DmOn, 
         :DmOff,
@@ -110,6 +112,7 @@ class Config {
         "dm", // I_DARK_MODE
         "ac", // I_ACCENT_COLOR
         "ay", // I_ACCENT_CYCLE
+        "br", // I_BRIGHTNESS
         "dc", // I_DM_CONTRAST
         "dn", // I_DM_ON
         "df", // I_DM_OFF
@@ -130,9 +133,10 @@ class Config {
     private var _options as Array< Array<Symbol> > = [
         [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern], // I_BATTERY
         [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay], // I_DATE_DISPLAY
-        [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
+        [:DarkModeScheduled, :Off, :DarkModeInDnD], // I_DARK_MODE
         [:AccentRed, :AccentOrange, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentLtBlue, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
         [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
+        [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_BRIGHTNESS
         [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark] // I_DM_CONTRAST
      ] as Array< Array<Symbol> >;
 
@@ -217,7 +221,7 @@ class Config {
     }
 
     // Return true if the setting is enabled, else false.
-    // Does not make sense for I_DM_CONTRAST, I_DM_ON and I_DM_OFF.
+    // Does not make sense for I_BRIGHTNESS, I_DM_CONTRAST, I_DM_ON and I_DM_OFF.
     public function isEnabled(id as Item) as Boolean {
         var disabled = 0; // value when the setting is disabled
         if (I_DARK_MODE == id) {
@@ -263,10 +267,10 @@ class Config {
         return _hasTimeToRecovery;
     }
 
-    // Return the color (shade of gray) for the current I_DM_CONTRAST (dimmer level) setting  
-    public function getContrastColor() as Number {
+    // Return the color (shade of gray) for the current I_BRIGHTNESS or I_DM_CONTRAST (dimmer level) setting
+    public function getSettingColor(id as Item) as Number {
         // Graphics.COLOR_WHITE = 0xffffff, Graphics.COLOR_LT_GRAY = 0xaaaaaa, Graphics.COLOR_DK_GRAY = 0x555555
-        return [Graphics.COLOR_WHITE, 0xd4d4d4, Graphics.COLOR_LT_GRAY, 0x808080, Graphics.COLOR_DK_GRAY][_values[I_DM_CONTRAST] % 5];
+        return [Graphics.COLOR_WHITE, 0xd4d4d4, Graphics.COLOR_LT_GRAY, 0x808080, Graphics.COLOR_DK_GRAY][_values[id] % 5];
     }
 
     // Determine the colors to use
@@ -279,23 +283,17 @@ class Config {
             if (time >= getValue(I_DM_ON) or time < getValue(I_DM_OFF)) {
                 colorMode = M_DARK;
             }
-        } else if (   :On == darkMode
-                   or (:DarkModeInDnD == darkMode and doNotDisturb)) {
+        } else if (:DarkModeInDnD == darkMode and doNotDisturb) {
             colorMode = M_DARK;
         }
 
-        // Foreground color is based on display mode and dimmer setting
-        var foreground = Graphics.COLOR_WHITE;
-        var lvl = 0;
+        // Foreground color is based on display mode and the brightness or dimmer setting
+        var foreground = Graphics.COLOR_DK_GRAY;
+        var lvl = 4;
         if (isAwake) {
-            if (M_DARK == colorMode) {
-                // In dark/dimmer mode, set the foreground color based on the dimmer (contrast) setting
-                foreground = getContrastColor();
-                lvl = getValue(I_DM_CONTRAST);
-            }
-        } else { // !isAwake
-            foreground = Graphics.COLOR_DK_GRAY;
-            lvl = 4;
+            var id = M_LIGHT == colorMode ? I_BRIGHTNESS : I_DM_CONTRAST;
+            foreground = getSettingColor(id);
+            lvl = getValue(id);
         }
 
         // Phone connected icon color
@@ -329,7 +327,7 @@ class Config {
         } else {
             aci = getValue(I_ACCENT_COLOR);
         }
-        var color = [
+        var accentColor = [
             // Colors for the second hand
             0xff0055, // red 
             0xffaa00, // orange
@@ -343,9 +341,9 @@ class Config {
             ][aci];
         // For the darkest dimmer setting and always-on mode, reduce the brightness slightly
         if (Graphics.COLOR_DK_GRAY == colors[C_FOREGROUND]) {
-            color = adjustBrightness(color, 0.80);
+            accentColor = adjustBrightness(accentColor, 0.80);
         }
-        return color;
+        return accentColor;
     }
 
     // Adjust the brightness of color by factor f, return the adjusted color
