@@ -133,7 +133,7 @@ class Config {
         [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
         [:AccentRed, :AccentOrange, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentLtBlue, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
         [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
-        [:DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark] // I_DM_CONTRAST
+        [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark] // I_DM_CONTRAST
      ] as Array< Array<Symbol> >;
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
@@ -265,8 +265,8 @@ class Config {
 
     // Return the color (shade of gray) for the current I_DM_CONTRAST (dimmer level) setting  
     public function getContrastColor() as Number {
-        // Graphics.COLOR_LT_GRAY = 0xaaaaaa, Graphics.COLOR_DK_GRAY = 0x555555
-        return [0xd4d4d4, Graphics.COLOR_LT_GRAY, 0x808080, Graphics.COLOR_DK_GRAY][_values[I_DM_CONTRAST] % 4];
+        // Graphics.COLOR_WHITE = 0xffffff, Graphics.COLOR_LT_GRAY = 0xaaaaaa, Graphics.COLOR_DK_GRAY = 0x555555
+        return [Graphics.COLOR_WHITE, 0xd4d4d4, Graphics.COLOR_LT_GRAY, 0x808080, Graphics.COLOR_DK_GRAY][_values[I_DM_CONTRAST] % 5];
     }
 
     // Determine the colors to use
@@ -286,24 +286,24 @@ class Config {
 
         // Foreground color is based on display mode and dimmer setting
         var foreground = Graphics.COLOR_WHITE;
-        var idx = 0;
+        var lvl = 0;
         if (isAwake) {
             if (M_DARK == colorMode) {
                 // In dark/dimmer mode, set the foreground color based on the dimmer (contrast) setting
                 foreground = getContrastColor();
-                idx = getValue(I_DM_CONTRAST) + 1;
+                lvl = getValue(I_DM_CONTRAST);
             }
         } else { // !isAwake
             foreground = Graphics.COLOR_DK_GRAY;
-            idx = 4;
+            lvl = 4;
         }
 
         // Phone connected icon color
-        var phoneconn = idx < 4 ? Graphics.COLOR_DK_BLUE : Graphics.COLOR_BLUE;
+        var phoneconn = lvl < 4 ? Graphics.COLOR_DK_BLUE : Graphics.COLOR_BLUE;
         // Brightness factors for each foreground color (in the order white, light, medium, slate, dark)
-        var fDef = [1.00, 0.925,0.85, 0.75, 0.60][idx]; // default
-        var fTxt = [0.667,0.75, 0.833,1.20, 1.40][idx]; // for text and battery frame
-        var fPco = [1.00, 0.90, 0.80, 0.70, 0.75][idx]; // for the color of the phone connected icon
+        var fDef = [1.00, 0.925,0.85, 0.75, 0.60][lvl]; // default
+        var fTxt = [0.667,0.75, 0.833,1.20, 1.40][lvl]; // for text and battery frame
+        var fPco = [1.00, 0.90, 0.80, 0.70, 0.75][lvl]; // for the color of the phone connected icon
         colors = [
             foreground, // C_FOREGROUND
             Graphics.COLOR_BLACK, // C_BACKGROUND 

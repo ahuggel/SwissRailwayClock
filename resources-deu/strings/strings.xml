@@ -40,6 +40,7 @@
     <string id="DmContrastLtGray">Hellgrau</string>
     <string id="DmContrastDkGray">Dunkelgrau</string>
     <string id="DmContrastWhite">Weiss</string>
+    <string id="DimmerLevelWhite">Weiss</string>
     <string id="DimmerLevelLight">Hell</string>
     <string id="DimmerLevelMedium">Mittel</string>
     <string id="DimmerLevelSlate">Schiefer</string>
