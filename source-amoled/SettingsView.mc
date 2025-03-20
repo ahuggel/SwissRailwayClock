@@ -71,6 +71,13 @@ class SettingsView extends WatchUi.Menu2 {
                 addToggleMenuItem(Config.I_STEPS);
                 addToggleMenuItem(Config.I_CALORIES);
                 addToggleMenuItem(Config.I_MOVE_BAR);
+                Menu2.addItem(new WatchUi.IconMenuItem(
+                    config.getName(Config.I_BRIGHTNESS), 
+                    config.getLabel(Config.I_BRIGHTNESS), 
+                    Config.I_BRIGHTNESS,
+                    new MenuIcon(MenuIcon.T_TRIANGLE, config.getSettingColor(Config.I_BRIGHTNESS), Graphics.COLOR_BLACK),
+                    {}
+                ));
                 addMenuItem(Config.I_DARK_MODE);
                 //Fallthrough
             case Config.I_DARK_MODE:
@@ -85,7 +92,7 @@ class SettingsView extends WatchUi.Menu2 {
                         config.getName(Config.I_DM_CONTRAST), 
                         config.getLabel(Config.I_DM_CONTRAST), 
                         Config.I_DM_CONTRAST,
-                        new MenuIcon(MenuIcon.T_TRIANGLE, config.getValue(Config.I_DM_CONTRAST), Graphics.COLOR_BLACK),
+                        new MenuIcon(MenuIcon.T_TRIANGLE, config.getSettingColor(Config.I_DM_CONTRAST), Graphics.COLOR_BLACK),
                         {}
                     ));
                 }
@@ -117,6 +124,7 @@ class SettingsView extends WatchUi.Menu2 {
                 deleteAnyItem(Config.I_STEPS);
                 deleteAnyItem(Config.I_CALORIES);
                 deleteAnyItem(Config.I_MOVE_BAR);
+                deleteAnyItem(Config.I_BRIGHTNESS);
                 deleteAnyItem(Config.I_DARK_MODE);
                 // Fallthrough
             case Config.I_DARK_MODE:
@@ -187,10 +195,10 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
                 _menu.deleteMenu(id);
                 _menu.buildMenu(id);
             }
-            if (Config.I_DM_CONTRAST == id) {
+            if (Config.I_BRIGHTNESS == id or Config.I_DM_CONTRAST == id) {
                 // Update the color of the icon
                 var menuIcon = menuItem.getIcon() as MenuIcon;
-                menuIcon.setColor(config.getValue(id));
+                menuIcon.setColor(config.getSettingColor(id));
             }
             if (Config.I_ACCENT_COLOR == id) {
                 // Update the color of the icon

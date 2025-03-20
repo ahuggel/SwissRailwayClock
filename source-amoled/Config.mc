@@ -60,6 +60,7 @@ class Config {
         I_DARK_MODE, 
         I_ACCENT_COLOR,
         I_ACCENT_CYCLE,
+        I_BRIGHTNESS,
         I_DM_CONTRAST,
         I_DM_ON, // the first item that is not a list item
         I_DM_OFF, 
@@ -86,6 +87,7 @@ class Config {
         :Dimmer, 
         :AccentColor, 
         :AccentCycle, 
+        :Brightness,
         :DimmerLevel, 
         :DmOn, 
         :DmOff,
@@ -110,6 +112,7 @@ class Config {
         "dm", // I_DARK_MODE
         "ac", // I_ACCENT_COLOR
         "ay", // I_ACCENT_CYCLE
+        "br", // I_BRIGHTNESS
         "dc", // I_DM_CONTRAST
         "dn", // I_DM_ON
         "df", // I_DM_OFF
@@ -130,10 +133,11 @@ class Config {
     private var _options as Array< Array<Symbol> > = [
         [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern], // I_BATTERY
         [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay], // I_DATE_DISPLAY
-        [:DarkModeScheduled, :Off, :On, :DarkModeInDnD], // I_DARK_MODE
+        [:DarkModeScheduled, :Off, :DarkModeInDnD], // I_DARK_MODE
         [:AccentRed, :AccentOrange, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentLtBlue, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
         [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
-        [:DimmerLevelMedium, :DimmerLevelDark] // I_DM_CONTRAST
+        [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_BRIGHTNESS
+        [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark] // I_DM_CONTRAST
      ] as Array< Array<Symbol> >;
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
@@ -165,7 +169,7 @@ class Config {
                 }
             } else if (id < I_DM_ON) { // list items
                 if (null == value) { 
-                    value = 0;
+                    value = I_DM_CONTRAST == id ? 2 : 0;
                 }
             } else { // I_DM_ON or I_DM_OFF
                 if (I_DM_ON == id and (null == value or value < 0 or value > 1439)) {
@@ -217,7 +221,7 @@ class Config {
     }
 
     // Return true if the setting is enabled, else false.
-    // Does not make sense for I_DM_CONTRAST, I_DM_ON and I_DM_OFF.
+    // Does not make sense for I_BRIGHTNESS, I_DM_CONTRAST, I_DM_ON and I_DM_OFF.
     public function isEnabled(id as Item) as Boolean {
         var disabled = 0; // value when the setting is disabled
         if (I_DARK_MODE == id) {
@@ -228,11 +232,7 @@ class Config {
 
     // Return the current value of the specified setting.
     public function getValue(id as Item) as Number {
-        var value = _values[id];
-        if (I_DM_CONTRAST == id) {
-            value = ([Graphics.COLOR_LT_GRAY, Graphics.COLOR_DK_GRAY] as Array<Number>)[value];
-        }
-        return value;
+        return _values[id];
     }
 
     // Advance the setting to the next value. Does not make sense for I_DM_ON, I_DM_OFF.
@@ -267,6 +267,12 @@ class Config {
         return _hasTimeToRecovery;
     }
 
+    // Return the color (shade of gray) for the current I_BRIGHTNESS or I_DM_CONTRAST (dimmer level) setting
+    public function getSettingColor(id as Item) as Number {
+        // Graphics.COLOR_WHITE = 0xffffff, Graphics.COLOR_LT_GRAY = 0xaaaaaa, Graphics.COLOR_DK_GRAY = 0x555555
+        return [Graphics.COLOR_WHITE, 0xd4d4d4, Graphics.COLOR_LT_GRAY, 0x808080, Graphics.COLOR_DK_GRAY][_values[id] % 5];
+    }
+
     // Determine the colors to use
     public function setColors(isAwake as Boolean, doNotDisturb as Boolean, hour as Number, minute as Number) as Void {        
         // Determine if dark/dimmer mode is on
@@ -277,42 +283,38 @@ class Config {
             if (time >= getValue(I_DM_ON) or time < getValue(I_DM_OFF)) {
                 colorMode = M_DARK;
             }
-        } else if (   :On == darkMode
-                   or (:DarkModeInDnD == darkMode and doNotDisturb)) {
+        } else if (:DarkModeInDnD == darkMode and doNotDisturb) {
             colorMode = M_DARK;
         }
 
-        colors = [
-            Graphics.COLOR_WHITE, // C_FOREGROUND
-            Graphics.COLOR_BLACK, // C_BACKGROUND 
-            Graphics.COLOR_LT_GRAY, // C_TEXT
-            Graphics.COLOR_BLUE, // C_INDICATOR 
-            Graphics.COLOR_RED, // C_HEART_RATE 
-            Graphics.COLOR_DK_BLUE, // C_PHONECONN 
-            Graphics.COLOR_DK_BLUE, // C_MOVE_BAR
-            Graphics.COLOR_LT_GRAY, // C_BATTERY_FRAME
-            Graphics.COLOR_GREEN, // C_BATTERY_LEVEL_OK
-            Graphics.COLOR_ORANGE, // C_BATTERY_LEVEL_WARN
-            Graphics.COLOR_RED // C_BATTERY_LEVEL_ALERT
-        ];
-        // Foreground color based on display mode and dimmer setting
+        // Foreground color is based on display mode and the brightness or dimmer setting
+        var foreground = Graphics.COLOR_DK_GRAY;
+        var lvl = 4;
         if (isAwake) {
-            if (M_DARK == colorMode) {
-                // In dark/dimmer mode, set the foreground color based on the contrast (dimmer) setting
-                colors[C_FOREGROUND] = getValue(I_DM_CONTRAST); // Graphics.COLOR_LT_GRAY or Graphics.COLOR_DK_GRAY
-            }
-        } else { // !isAwake
-            colors[C_FOREGROUND] = Graphics.COLOR_DK_GRAY;
+            var id = M_LIGHT == colorMode ? I_BRIGHTNESS : I_DM_CONTRAST;
+            foreground = getSettingColor(id);
+            lvl = getValue(id);
         }
+
         // Phone connected icon color
-        if (Graphics.COLOR_DK_GRAY == colors[C_FOREGROUND]) {
-            colors[C_PHONECONN] = Graphics.COLOR_BLUE;
-        }
-        // Text and battery level indicator colors
-        if (M_DARK == colorMode or !isAwake) {
-            colors[C_TEXT] = Graphics.COLOR_DK_GRAY;
-            colors[C_BATTERY_FRAME] = Graphics.COLOR_DK_GRAY;
-        }
+        var phoneconn = lvl < 4 ? Graphics.COLOR_DK_BLUE : Graphics.COLOR_BLUE;
+        // Brightness factors for each foreground color (in the order white, light, medium, slate, dark)
+        var fDef = [1.00, 0.925,0.85, 0.75, 0.60][lvl]; // default
+        var fTxt = [0.667,0.75, 0.833,1.20, 1.40][lvl]; // for text and battery frame
+        var fPco = [1.00, 0.90, 0.80, 0.70, 0.75][lvl]; // for the color of the phone connected icon
+        colors = [
+            foreground, // C_FOREGROUND
+            Graphics.COLOR_BLACK, // C_BACKGROUND 
+            adjustBrightness(foreground, fTxt), // C_TEXT
+            adjustBrightness(Graphics.COLOR_BLUE, fDef), // C_INDICATOR 
+            adjustBrightness(Graphics.COLOR_RED, fDef), // C_HEART_RATE 
+            adjustBrightness(phoneconn, fPco), // C_PHONECONN 
+            adjustBrightness(Graphics.COLOR_DK_BLUE, fDef), // C_MOVE_BAR
+            adjustBrightness(foreground, fTxt), // C_BATTERY_FRAME  TODO: This color should be removed - use C_TEXT instead
+            adjustBrightness(Graphics.COLOR_GREEN, fDef), // C_BATTERY_LEVEL_OK
+            adjustBrightness(Graphics.COLOR_ORANGE, fDef), // C_BATTERY_LEVEL_WARN
+            adjustBrightness(Graphics.COLOR_RED, fDef) // C_BATTERY_LEVEL_ALERT
+        ];
     }
 
     // Return the accent color for the second hand. If the change color setting is enabled, the 
@@ -325,7 +327,7 @@ class Config {
         } else {
             aci = getValue(I_ACCENT_COLOR);
         }
-        return [
+        var accentColor = [
             // Colors for the second hand
             0xff0055, // red 
             0xffaa00, // orange
@@ -337,6 +339,32 @@ class Config {
             0xaa00ff, // purple
             0xff00aa  // pink
             ][aci];
+        // For the darkest dimmer setting and always-on mode, reduce the brightness slightly
+        if (Graphics.COLOR_DK_GRAY == colors[C_FOREGROUND]) {
+            accentColor = adjustBrightness(accentColor, 0.80);
+        }
+        return accentColor;
+    }
+
+    // Adjust the brightness of color by factor f, return the adjusted color
+    // 0 < f < 1 decreases brightness, f = 0 returns black, f = 1 leaves color unchanged,
+    // f > 1 increases brightness, for large values, the resulting color will approach white
+    private function adjustBrightness(color as Number, f as Float) as Number {
+        // Colors are 24-bit numbers of the form 0xRRGGBB
+        var r = clamp((color & 0xff0000 >> 16 * f + 0.5).toNumber(), 0x00 , 0xff);
+        var g = clamp((color & 0x00ff00 >> 8 * f + 0.5).toNumber(), 0x00 , 0xff);
+        var b = clamp((color & 0x0000ff * f + 0.5).toNumber(), 0x00 , 0xff);
+        return r << 16 | g << 8 | b;
+    }
+
+    // Limit value to min and max
+    private function clamp(value as Number, min as Number, max as Number) as Number {
+        if (value < min) {
+            value = min;
+        } else if (value > max) {
+            value = max;
+        }
+        return value;
     }
 
     // Helper function to load string resources, just to keep the code simpler and see only one compiler warning. 
