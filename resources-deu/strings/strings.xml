@@ -42,8 +42,8 @@
     <string id="DmContrastDkGray">Dunkelgrau</string>
     <string id="DmContrastWhite">Weiss</string>
     <string id="DimmerLevelWhite">Weiss</string>
-    <string id="DimmerLevelLight">Hell</string>
-    <string id="DimmerLevelMedium">Mittel</string>
+    <string id="DimmerLevelLight">Silbern</string>
+    <string id="DimmerLevelMedium">Grau</string>
     <string id="DimmerLevelSlate">Schiefer</string>
     <string id="DimmerLevelDark">Dunkel</string>
     <string id="HideSecondsInDm">Im Dunkelmodus</string>
