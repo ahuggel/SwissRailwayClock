@@ -327,22 +327,23 @@ class Config {
         } else {
             aci = getValue(I_ACCENT_COLOR);
         }
-        var accentColor = [
-            // Colors for the second hand
-            0xff0055, // red 
-            0xffaa00, // orange
-            0xffff55, // yellow
-            0x55ff00, // light green
-            0x00aa55, // green
-            0x55ffff, // light blue
-            0x00AAFF, // blue
-            0xaa00ff, // purple
-            0xff00aa  // pink
-            ][aci];
-        // For the darkest dimmer setting and always-on mode, reduce the brightness slightly
+        aci *= 2;
         if (Graphics.COLOR_DK_GRAY == colors[C_FOREGROUND]) {
-            accentColor = adjustBrightness(accentColor, 0.80);
+            aci += 1;
         }
+        var accentColor = [
+            // Colors for the second hand, in pairs of the actual color and a dimmed version,
+            // used with the darkest dimmer setting and always-on mode.
+            0xff0055, 0xcc0044, // red
+            0xffaa00, 0xcc8800, // orange
+            0xffff55, 0xcccc44, // yellow
+            0x55ff00, 0x44cc00, // light green
+            0x00aa55, 0x008844, // green
+            0x55ffff, 0x44cccc, // light blue
+            0x00AAFF, 0x0088cc, // blue
+            0xaa00ff, 0x8800cc, // purple
+            0xff00aa, 0xcc0088  // pink
+            ][aci];
         return accentColor;
     }
 
