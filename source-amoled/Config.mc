@@ -323,7 +323,7 @@ class Config {
         if (Graphics.COLOR_DK_GRAY == colors[C_FOREGROUND]) {
             aci += 1;
         }
-        var accentColor = [
+        return [
             // Colors for the second hand, in pairs of the actual color and a dimmed version,
             // used with the darkest dimmer setting and always-on mode.
             0xff0055, 0xcc0044, // red
@@ -335,8 +335,7 @@ class Config {
             0x00AAFF, 0x0088cc, // blue
             0xaa00ff, 0x8800cc, // purple
             0xff00aa, 0xcc0088  // pink
-            ][aci];
-        return accentColor;
+        ][aci];
     }
 
     // Helper function to load string resources, just to keep the code simpler and see only one compiler warning. 
