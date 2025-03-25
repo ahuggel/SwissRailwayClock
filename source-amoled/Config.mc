@@ -286,34 +286,26 @@ class Config {
         } else if (:DarkModeInDnD == darkMode and doNotDisturb) {
             colorMode = M_DARK;
         }
-
         // Foreground color is based on display mode and the brightness or dimmer setting
         var foreground = Graphics.COLOR_DK_GRAY;
         var lvl = 4;
         if (isAwake) {
             var id = M_LIGHT == colorMode ? I_BRIGHTNESS : I_DM_CONTRAST;
             foreground = getSettingColor(id);
-            lvl = getValue(id);
+            lvl = getValue(id) % 5;
         }
-
-        // Phone connected icon color
-        var phoneconn = lvl < 4 ? Graphics.COLOR_DK_BLUE : Graphics.COLOR_BLUE;
-        // Brightness factors for each foreground color (in the order white, light, medium, slate, dark)
-        var fDef = [1.00, 0.925,0.85, 0.75, 0.60][lvl]; // default
-        var fTxt = [0.667,0.75, 0.833,1.20, 1.40][lvl]; // for text and battery frame
-        var fPco = [1.00, 0.90, 0.80, 0.70, 0.75][lvl]; // for the color of the phone connected icon
         colors = [
             foreground, // C_FOREGROUND
             Graphics.COLOR_BLACK, // C_BACKGROUND 
-            adjustBrightness(foreground, fTxt), // C_TEXT
-            adjustBrightness(Graphics.COLOR_BLUE, fDef), // C_INDICATOR 
-            adjustBrightness(Graphics.COLOR_RED, fDef), // C_HEART_RATE 
-            adjustBrightness(phoneconn, fPco), // C_PHONECONN 
-            adjustBrightness(Graphics.COLOR_DK_BLUE, fDef), // C_MOVE_BAR
-            adjustBrightness(foreground, fTxt), // C_BATTERY_FRAME  TODO: This color should be removed - use C_TEXT instead
-            adjustBrightness(Graphics.COLOR_GREEN, fDef), // C_BATTERY_LEVEL_OK
-            adjustBrightness(Graphics.COLOR_ORANGE, fDef), // C_BATTERY_LEVEL_WARN
-            adjustBrightness(Graphics.COLOR_RED, fDef) // C_BATTERY_LEVEL_ALERT
+            [0xaaaaaa, 0x9f9f9f, 0x8e8e8e, 0x9a9a9a, 0x777777][lvl], // C_TEXT
+            [0x00aaff, 0x009dec, 0x0091d9, 0x0080bf, 0x006699][lvl], // C_INDICATOR
+            [0xff0000, 0xec0000, 0xd90000, 0xbf0000, 0x990000][lvl], // C_HEART_RATE
+            [0x0000ff, 0x0000e6, 0x0000cc, 0x0000b3, 0x0080bf][lvl], // C_PHONECONN
+            [0x0000ff, 0x0000ec, 0x0000d9, 0x0000bf, 0x000099][lvl], // C_MOVE_BAR
+            [0xaaaaaa, 0x9f9f9f, 0x8e8e8e, 0x9a9a9a, 0x777777][lvl], // C_BATTERY_FRAME
+            [0x00ff00, 0x00ec00, 0x00d900, 0x00bf00, 0x009900][lvl], // C_BATTERY_LEVEL_OK
+            [0xff5500, 0xec4f00, 0xd94800, 0xbf4000, 0x993300][lvl], // C_BATTERY_LEVEL_WARN
+            [0xff0000, 0xec0000, 0xd90000, 0xbf0000, 0x990000][lvl]  // C_BATTERY_LEVEL_ALERT
         ];
     }
 
@@ -327,44 +319,24 @@ class Config {
         } else {
             aci = getValue(I_ACCENT_COLOR);
         }
-        var accentColor = [
-            // Colors for the second hand
-            0xff0055, // red 
-            0xffaa00, // orange
-            0xffff55, // yellow
-            0x55ff00, // light green
-            0x00aa55, // green
-            0x55ffff, // light blue
-            0x00AAFF, // blue
-            0xaa00ff, // purple
-            0xff00aa  // pink
-            ][aci];
-        // For the darkest dimmer setting and always-on mode, reduce the brightness slightly
+        aci *= 2;
         if (Graphics.COLOR_DK_GRAY == colors[C_FOREGROUND]) {
-            accentColor = adjustBrightness(accentColor, 0.80);
+            aci += 1;
         }
+        var accentColor = [
+            // Colors for the second hand, in pairs of the actual color and a dimmed version,
+            // used with the darkest dimmer setting and always-on mode.
+            0xff0055, 0xcc0044, // red
+            0xffaa00, 0xcc8800, // orange
+            0xffff55, 0xcccc44, // yellow
+            0x55ff00, 0x44cc00, // light green
+            0x00aa55, 0x008844, // green
+            0x55ffff, 0x44cccc, // light blue
+            0x00AAFF, 0x0088cc, // blue
+            0xaa00ff, 0x8800cc, // purple
+            0xff00aa, 0xcc0088  // pink
+            ][aci];
         return accentColor;
-    }
-
-    // Adjust the brightness of color by factor f, return the adjusted color
-    // 0 < f < 1 decreases brightness, f = 0 returns black, f = 1 leaves color unchanged,
-    // f > 1 increases brightness, for large values, the resulting color will approach white
-    private function adjustBrightness(color as Number, f as Float) as Number {
-        // Colors are 24-bit numbers of the form 0xRRGGBB
-        var r = clamp((color & 0xff0000 >> 16 * f + 0.5).toNumber(), 0x00 , 0xff);
-        var g = clamp((color & 0x00ff00 >> 8 * f + 0.5).toNumber(), 0x00 , 0xff);
-        var b = clamp((color & 0x0000ff * f + 0.5).toNumber(), 0x00 , 0xff);
-        return r << 16 | g << 8 | b;
-    }
-
-    // Limit value to min and max
-    private function clamp(value as Number, min as Number, max as Number) as Number {
-        if (value < min) {
-            value = min;
-        } else if (value > max) {
-            value = max;
-        }
-        return value;
     }
 
     // Helper function to load string resources, just to keep the code simpler and see only one compiler warning. 
