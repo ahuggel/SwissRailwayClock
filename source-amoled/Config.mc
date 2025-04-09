@@ -294,18 +294,20 @@ class Config {
             foreground = getSettingColor(id);
             lvl = getValue(id) % 5;
         }
+        var red = [0xff0000, 0xec0000, 0xd90000, 0xbf0000, 0x990000][lvl];
+        var gray = [0xaaaaaa, 0x9f9f9f, 0x8e8e8e, 0x9a9a9a, 0x777777][lvl];
         colors = [
-            foreground, // C_FOREGROUND
-            Graphics.COLOR_BLACK, // C_BACKGROUND 
-            [0xaaaaaa, 0x9f9f9f, 0x8e8e8e, 0x9a9a9a, 0x777777][lvl], // C_TEXT
+            foreground,                                              // C_FOREGROUND
+            Graphics.COLOR_BLACK,                                    // C_BACKGROUND 
+            gray,                                                    // C_TEXT
             [0x00aaff, 0x009dec, 0x0091d9, 0x0080bf, 0x006699][lvl], // C_INDICATOR
-            [0xff0000, 0xec0000, 0xd90000, 0xbf0000, 0x990000][lvl], // C_HEART_RATE
+            red,                                                     // C_HEART_RATE
             [0x0000ff, 0x0000e6, 0x0000cc, 0x0000b3, 0x0080bf][lvl], // C_PHONECONN
             [0x0000ff, 0x0000ec, 0x0000d9, 0x0000bf, 0x000099][lvl], // C_MOVE_BAR
-            [0xaaaaaa, 0x9f9f9f, 0x8e8e8e, 0x9a9a9a, 0x777777][lvl], // C_BATTERY_FRAME
+            gray,                                                    // C_BATTERY_FRAME
             [0x00ff00, 0x00ec00, 0x00d900, 0x00bf00, 0x009900][lvl], // C_BATTERY_LEVEL_OK
             [0xff5500, 0xec4f00, 0xd94800, 0xbf4000, 0x993300][lvl], // C_BATTERY_LEVEL_WARN
-            [0xff0000, 0xec0000, 0xd90000, 0xbf0000, 0x990000][lvl]  // C_BATTERY_LEVEL_ALERT
+            red                                                      // C_BATTERY_LEVEL_ALERT
         ];
     }
 
