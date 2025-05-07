@@ -62,7 +62,7 @@ As the number of supported optional indicators (or "Configurable Clutter") grew,
 - replacing more complex variable types with simpler ones (e.g., use array instead of dictionary); and
 - introducing local variables to avoid repeating any, even minor, repeated expressions (e.g., instead of ```a=b+c+2; d=e+c+2;```, write ```var f=c+2; a=b+f; d=e+f;```).
 
-For more ideas how to save memory, you can search the [Garmin Developer forum]. Also, keep in mind that the resulting optimized design and code to save a few bytes here and there often violates common software development best practices. The optimized design and code may not look right. Fortunately, [Prettier Monkey C] takes care of some optimizations (which the compiler should really do, so that the available language features can actually be used in a real program), like, e.g., making sure that the use of ```switch``` statements and ```enum``` does not incur a memory penalty.
+For more ideas how to save memory, you can search the [Garmin Developer forum]. Also, keep in mind that the resulting optimized design and code to save a few bytes here and there often violates common software development best practices. The optimized design and code may not look right. Fortunately, [Prettier Monkey C] takes care of some optimizations (which the compiler should really do, so that the available language features can actually be used in a real program), like, e.g., making sure that the use of ```enum``` does not incur a memory penalty.
 
 Memory optimizations can be measured with the simulator's "Active Memory" utility, which reports the size of the application code and data as well as other useful information.
 
