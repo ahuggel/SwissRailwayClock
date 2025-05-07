@@ -4,18 +4,67 @@
 
 # Swiss Railway Clock - An analog watchface for Garmin smartwatches
 
-- This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with a [second hand] in both high- and low-power mode on watches with a MIP display;
+- This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with an always-on second hand on watches with a MIP display;
 - The operation differs from the original Swiss railway clock in that the second hand ticks like that of a quartz watch, rather than sweeps, and it does not pause at 12 o'clock. There is also a battery saving option to make the second hand disappear in low-power mode, after about 30s;
-- On-device settings allow the configuration of battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a [Move Bar] and some other options. The "Configurable Clutter" clip above shows most of them. In addition, an accent color (the color of the second hand) can also be configured. The menu implements three different types of menu items as well as a basic time picker;
-- On watches with an AMOLED display, the watchface has been adapted to the inherent peculiarities of this display type: The background is always black and dark mode just works as a dimmer. A brightness setting has been added and always-on (low-power) mode uses the darkest dimmer setting and has no second hand. A few older AMOLED watches with more complex burn-in protection requirements are not supported;
-- On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955, fēnix 7 and 8 series, Enduro 2 and 3 and all AMOLED watches);
-- Symbols for active alarms, phone connection and notifications, as well as the various indicators use icons from a [custom font];
-- A global settings class synchronises the selected options to persistent storage and makes them available across the app;
-- Newer ("Modern") watches with support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. Older ("Legacy") devices without layer support or insufficient memory work with a buffered bitmap. The code for watches with an [AMOLED] display draws directly on the device display, it doesn't need layers or a bitmap. [Jungle file build instructions] define for each device, which architecture it uses;
-- The program has been upgraded to compile exclusively with SDK 7 (due to type changes in Monkey C, it is not backward compatible with older SDKs). It still compiles with a single warning with the compiler type checking level set to "Strict";
-- Memory usage on legacy devices is now really close to the limit. I highly recommend using the [Prettier Monkey C] extension for Visual Studio Code to optimize the generated program as much as possible. From my experience, for legacy watches, the size of the code and data memory of the optimized program (as shown in the simulator's Active Memory window) is reduced by around 12%.
+- On-device settings (a settings menu on the watch itself) allow the configuration of a battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a [Move Bar] and some other options. The "Configurable Clutter" clip above shows most of them. In addition, an accent color (the color of the second hand) can also be configured;
+- On watches with an AMOLED display, the background is always black and there are two independent brightness settings, replacing the contrast and dark mode options of MIP watches. Always-on (low-power) mode uses the darkest dimmer level and has no second hand[^1];
+- On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955, fēnix 7 and 8 series, Enduro 2 and 3 and all AMOLED watches).
 
-This program reflects the progress of my ongoing journey to learn [Monkey C] and the Garmin [Connect IQ ecosystem] to create an analog watchface. I am making it available in the hope that others will find it useful to grasp the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
+This program reflects the progress of my ongoing journey to master [Monkey C] and the Garmin [Connect IQ ecosystem] to create an analog watchface. I am making it available to share what I've learned, in the hope that others will find it useful to grasp the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
+
+[^1]: Newer AMOLED watches have burn-in protection requirements, which are easily and quite naturally addressed with the concept of a brightness setting. A few older AMOLED watches with more complex burn-in protection requirements are not supported.
+
+## Design and architecture notes
+
+One of the main challenges of this watchface program was that I wanted it to show the long and rather bulky second hand in both high- and low-power mode.
+
+Garmin smartwatches with a MIP display can perform screen updates every second, even in low-power mode, which makes it possible to always show a [second hand], as opposed to only drawing it in high-power mode. This per-second update in low-power mode has very strict limits set on execution time though; only a tiny portion of the screen can be modified and only a minimal number of statements can be executed within these limits.
+
+AMOLED watches on the other hand, do not have support for such per-second updates at all. It is not possible to update the screen more often than once a minute in always-on (low-power) mode and therefore, the second hand is only shown in high-power mode on AMOLED watches.
+
+The Swiss Railway Clock watchface implements three different architectures for three classes of devices and [Jungle file build instructions] define for each device, which architecture it uses:
+
+1. Older ("Legacy") devices, which do not support [layers] or have insufficient memory, work with a buffered bitmap and indicators are only updated once a minute in low-power mode. This is the traditional model to implement a watchface with per-second screen updates.
+
+2. Newer ("Modern") watches with a MIP display and support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. This results in more straightforward code and allows refreshing indicators, like the heart rate, more often than once a minute, even in low-power mode.
+
+Either one of these two concepts is required in order to stay within Garmin's execution time limits when updating the second hand in low-power mode.
+
+3. The code for watches with an [AMOLED] display draws directly on the device display and just draws the entire screen every second in high-power mode and once a minute in always-on (low-power) mode. This is the simplest of the three architectures, as it doesn't require layers or a buffered bitmap.
+
+The code for the different architectures is in the directories ```source-legacy```, ```source-modern``` and ```source-amoled```.
+Besides the actual watchface, each also implements its own version of the global settings class and the on-device menu, which provide slightly different options to cater for the capabilities of each class of devices.
+
+In some of the common code, [excluded annotations] are used to distinguish between code for Modern and Legacy devices and there are further excluded annotations to distinguish between Legacy devices with more and less memory.
+
+The global settings class ```Config``` synchronises the selected menu options to [persistent storage] and makes them available across the app. It also manages the different colors for the watchface. The [on-device menu] implements three different types of menu items as well as a basic time [picker].
+
+Symbols for active alarms, phone connection and notifications, as well as the various indicators use icons from a [custom font];
+
+The compiler [type checking] level is set to "Strict" and the program compiles with a single warning.
+
+## Optimizations
+
+Garmin smartwatches are constrained devices with limited processing power, memory, and energy resources. The resources are interlinked, once you optimize for one of them, it tends to adversely affect the others, and while the [Monkey C] language and the [Toybox APIs] provide a modern programming environment, the compiler's built-in optimizer is not very effective (yet). In the meantime, I highly recommend using [Prettier Monkey C], an extension for Visual Studio Code, which does a great job at optimizing the memory usage of the generated program. From my experience, for legacy watches, for which the memory usage is now really close to the limit, Prettier Monkey C reduces the size of the code and data memory by around 12%.
+
+However, the first optimization needed for the Swiss Railway Clock watchface was not about memory but to reduce the execution time to stay within Garmin's execution time limits when updating the screen in low-power mode. The goal for this is to minimize the time it takes to run ```WatchFace.onPartialUpdate()```. This function is called every second when the device is in low-power mode. Its main task is to delete the second hand and redraw it at the next position, which requires calculating the new coordinates for the hand and for the smallest rectangle around it and calling the relevant Garmin graphics functions.
+
+Optimizing these calculations involved removing any not strictly required (e.g. repeated) statements, inlining functions and unrolling loops. After much tweaking, the resulting code now meets the execution time limits, but some of it is probably no longer easy to read and understand. If you're looking for a basic example of code to rotate coordinates and set the clipping regions for a second hand, you may be better off checking out Garmin's sample analog watchface application first.
+
+For devices with sufficient memory the optimization goes one step further and all required coordinates for every second are only calculated once, when the app is started. They are kept in an array and the time critical code then only needs to lookup the coordinates for the current second.
+
+To measure the efficiency of performance optimizations, Garmin's simulator provides a "Watchface Diagnostics" tool that shows the time spent in ```onPartialUpdate()``` and a Profiler to analyze the program's performance in more detail.
+
+As the number of supported optional indicators (or "Configurable Clutter") grew, memory became a constraint on older devices. Optimizing memory usage involved
+- removing some functionality from legacy devices;
+- minimizing the number of classes, class variables and functions;
+- replacing switch constructs with if statements;
+- replacing more complex variable types with simpler ones (e.g., use array instead of dictionary); and
+- introducing local variables to avoid repeating any, even minor, repeated expressions (e.g., instead of ```a=b+c+2; d=e+c+2;```, write ```var f=c+2; a=b+f; d=e+f;```).
+
+For more ideas how to save memory, you can search the [Garmin Developer forum]. Also, keep in mind that the resulting optimized design and code to save a few bytes here and there often violates common software development best practices. The optimized design and code may not look right. Fortunately, [Prettier Monkey C] takes care of some optimizations (which the compiler should really do, so that the available language features can actually be used in a real program), like, e.g., making sure that the use of enums does not incur a memory penalty.
+
+Memory optimizations can be measured with the simulator's "Active Memory" utility, which shows the size of the application code and data as well as other useful information.
 
 ## Compatible devices
 
@@ -113,23 +162,6 @@ Footsteps icon by Freepik, [Flaticon license].
 
 Recovery time icon by Urs Huggel.
 
-[second hand]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-get-my-watch-face-to-update-every-second/
-[custom font]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-use-custom-fonts/
-[layers]: https://developer.garmin.com/connect-iq/core-topics/user-interface/
-[Connect IQ 4.0]: https://forums.garmin.com/developer/connect-iq/b/news-announcements/posts/a-whole-new-world-of-graphics-with-connect-iq-4
-[Jungle file build instructions]: https://developer.garmin.com/connect-iq/reference-guides/jungle-reference/
-[AMOLED]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-make-a-watch-face-for-amoled-products/#howdoimakeawatchfaceforamoledproducts
-[Monkey C]: https://developer.garmin.com/connect-iq/monkey-c/
-[Connect IQ ecosystem]: https://developer.garmin.com/connect-iq/
-[Garmin Developer forum]: https://forums.garmin.com/developer/connect-iq/f/discussion
-[Swiss railway clock]: https://en.wikipedia.org/wiki/Swiss_railway_clock
-[Flaticon]: https://www.flaticon.com/packs/material-design/
-[CC 3.0 BY]: https://creativecommons.org/licenses/by/3.0/
-[Flaticon license]: https://www.freepikcompany.com/legal?&_ga=2.78543444.1954543656.1683086561-616594141.1683086561&_gl=1*4sgkt0*test_ga*NjE2NTk0MTQxLjE2ODMwODY1NjE.*test_ga_523JXC6VL7*MTY4MzEyNDUwMi4yLjEuMTY4MzEyNDg0OS41NC4wLjA.*fp_ga*NjE2NTk0MTQxLjE2ODMwODY1NjE.*fp_ga_1ZY8468CQB*MTY4MzEyNDUzMi4yLjEuMTY4MzEyNDg0OS41NC4wLjA.#nav-flaticon
-[Prettier Monkey C]: https://marketplace.visualstudio.com/items?itemName=markw65.prettier-extension-monkeyc
-[Move Bar]: https://support.garmin.com/en-US/?faq=JwIMwaMTTV0t7r0mvkdA08
-[compatible devices]: https://developer.garmin.com/connect-iq/compatible-devices/
-
 ## License
 
 Copyright (C) Andreas Huggel <ahuggel@gmx.net>
@@ -148,3 +180,26 @@ BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR P
 NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
 DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+[second hand]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-get-my-watch-face-to-update-every-second/
+[custom font]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-use-custom-fonts/
+[layers]: https://developer.garmin.com/connect-iq/core-topics/user-interface/
+[Connect IQ 4.0]: https://forums.garmin.com/developer/connect-iq/b/news-announcements/posts/a-whole-new-world-of-graphics-with-connect-iq-4
+[Jungle file build instructions]: https://developer.garmin.com/connect-iq/reference-guides/jungle-reference/
+[AMOLED]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-make-a-watch-face-for-amoled-products/#howdoimakeawatchfaceforamoledproducts
+[Monkey C]: https://developer.garmin.com/connect-iq/monkey-c/
+[Toybox APIs]: https://developer.garmin.com/connect-iq/api-docs/
+[Connect IQ ecosystem]: https://developer.garmin.com/connect-iq/
+[Garmin Developer forum]: https://forums.garmin.com/developer/connect-iq/f/discussion
+[Swiss railway clock]: https://en.wikipedia.org/wiki/Swiss_railway_clock
+[Flaticon]: https://www.flaticon.com/packs/material-design/
+[CC 3.0 BY]: https://creativecommons.org/licenses/by/3.0/
+[Flaticon license]: https://www.freepikcompany.com/legal?&_ga=2.78543444.1954543656.1683086561-616594141.1683086561&_gl=1*4sgkt0*test_ga*NjE2NTk0MTQxLjE2ODMwODY1NjE.*test_ga_523JXC6VL7*MTY4MzEyNDUwMi4yLjEuMTY4MzEyNDg0OS41NC4wLjA.*fp_ga*NjE2NTk0MTQxLjE2ODMwODY1NjE.*fp_ga_1ZY8468CQB*MTY4MzEyNDUzMi4yLjEuMTY4MzEyNDg0OS41NC4wLjA.#nav-flaticon
+[Prettier Monkey C]: https://marketplace.visualstudio.com/items?itemName=markw65.prettier-extension-monkeyc
+[Move Bar]: https://support.garmin.com/en-US/?faq=JwIMwaMTTV0t7r0mvkdA08
+[compatible devices]: https://developer.garmin.com/connect-iq/compatible-devices/
+[on-device menu]: https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/Menu2.html
+[picker]: https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/Picker.html
+[excluded annotations]: https://developer.garmin.com/connect-iq/reference-guides/jungle-reference/#excludedannotations
+[persistent storage]: https://developer.garmin.com/connect-iq/api-docs/Toybox/Application/Storage.html
+[type checking]: https://developer.garmin.com/connect-iq/monkey-c/monkey-types/
