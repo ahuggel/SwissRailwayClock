@@ -47,7 +47,7 @@ The compiler [type checking] level is set to "Strict" and the program compiles w
 
 Garmin smartwatches are constrained devices with limited processing power, memory, and energy resources. The resources are interlinked, once you optimize for one of them, it tends to adversely affect the others, and while the [Monkey C] language and the [Toybox APIs] provide a modern programming environment, the compiler's built-in optimizer is not very effective (yet). In the meantime, I highly recommend using [Prettier Monkey C], an extension for Visual Studio Code, which does a great job at optimizing the memory usage of the generated program. From my experience, for legacy watches, for which the memory usage is now really close to the limit, Prettier Monkey C reduces the size of the code and data memory by around 12%.
 
-However, the first optimization needed for the Swiss Railway Clock watchface was not about memory but to reduce the execution time to stay within Garmin's execution time limits when updating the screen in low-power mode. The goal for this is to minimize the time it takes to run ```WatchFace.onPartialUpdate()```. This function is called every second when the device is in low-power mode. Its main task is to delete the second hand and redraw it at the next position, which requires calculating the new coordinates for the hand and for the smallest rectangle around it and calling the relevant Garmin graphics functions.
+However, the first optimization needed for the Swiss Railway Clock watchface was not about memory but to reduce the execution time to stay within Garmin's execution time limits when updating the screen in low-power mode. The goal for this is to minimize the time it takes to run ```WatchFace.onPartialUpdate()```. This function is called every second when the device is in low-power mode. Its main task is to delete the [second hand] and redraw it at the next position, which requires calculating the new coordinates for the hand and for the smallest rectangle around it and calling the relevant Garmin graphics functions.
 
 Optimizing these calculations involved removing any not strictly required (e.g. repeated) statements, inlining functions and unrolling loops. After much tweaking, the resulting code now meets the execution time limits, but some of it is probably no longer easy to read and understand. If you're looking for a basic example of code to rotate coordinates and set the clipping regions for a second hand, you may be better off checking out Garmin's sample analog watchface application first.
 
@@ -58,13 +58,13 @@ To measure the efficiency of performance optimizations, Garmin's simulator provi
 As the number of supported optional indicators (or "Configurable Clutter") grew, memory became a constraint on older devices. Optimizing memory usage involved
 - removing some functionality from legacy devices;
 - minimizing the number of classes, class variables and functions;
-- replacing switch constructs with if statements;
+- replacing ```switch``` constructs with ```if``` statements;
 - replacing more complex variable types with simpler ones (e.g., use array instead of dictionary); and
 - introducing local variables to avoid repeating any, even minor, repeated expressions (e.g., instead of ```a=b+c+2; d=e+c+2;```, write ```var f=c+2; a=b+f; d=e+f;```).
 
-For more ideas how to save memory, you can search the [Garmin Developer forum]. Also, keep in mind that the resulting optimized design and code to save a few bytes here and there often violates common software development best practices. The optimized design and code may not look right. Fortunately, [Prettier Monkey C] takes care of some optimizations (which the compiler should really do, so that the available language features can actually be used in a real program), like, e.g., making sure that the use of enums does not incur a memory penalty.
+For more ideas how to save memory, you can search the [Garmin Developer forum]. Also, keep in mind that the resulting optimized design and code to save a few bytes here and there often violates common software development best practices. The optimized design and code may not look right. Fortunately, [Prettier Monkey C] takes care of some optimizations (which the compiler should really do, so that the available language features can actually be used in a real program), like, e.g., making sure that the use of ```switch``` statements and ```enum``` does not incur a memory penalty.
 
-Memory optimizations can be measured with the simulator's "Active Memory" utility, which shows the size of the application code and data as well as other useful information.
+Memory optimizations can be measured with the simulator's "Active Memory" utility, which reports the size of the application code and data as well as other useful information.
 
 ## Compatible devices
 
