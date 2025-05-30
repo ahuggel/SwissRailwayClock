@@ -24,13 +24,13 @@ AMOLED watches on the other hand, do not have support for such per-second update
 
 The Swiss Railway Clock watchface implements three different architectures for three classes of devices and [Jungle file build instructions] define for each device, which architecture it uses:
 
-1. Older ("Legacy") devices, which do not support [layers] or have insufficient memory, work with a buffered bitmap and indicators are only updated once a minute in low-power mode. This is the traditional model to implement a watchface with per-second screen updates.
+1. Older ("Legacy") devices, which do not support [layers] or have insufficient memory, work with a [buffered bitmap] and indicators are only updated once a minute in low-power mode (when the entire screen is redrawn). This is the traditional model to implement a watchface with per-second screen updates.
 
-2. Newer ("Modern") watches with a MIP display and support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. This results in more straightforward code and allows refreshing indicators, like the heart rate, more often than once a minute, even in low-power mode (on the background layer).
+2. Newer ("Modern") watches with a MIP display and support for [layers] and sufficient memory or a graphics pool (since [Connect IQ 4.0]) use layers. This results in more straightforward code and allows refreshing indicators, like the heart rate, more often than once a minute, even in low-power mode (on the background layer, without having to worry about the watch hands).
 
-Either one of these two concepts, together with a "clipping area", is required in order to stay within Garmin's execution time limits when updating the second hand in low-power mode. The [clipping area] is set to the smallest rectangle around the second hand and is used to restrict the rendering window when "deleting" the second hand before redrawing it at its next position. On older devices, the buffered bitmap holds a copy of the watchface screen without the second hand, which is used to "delete" the second hand by copying the region defined by the clipping area to the device display. The new second hand is then drawn directly on the display. On newer devices, a separate layer is used just for the second hand. The clipping area is cleared to delete it, before the new second hand is drawn on the second hand layer.
+Either one of these two concepts, together with a "clipping area", is required in order to stay within Garmin's execution time limits when updating the second hand in low-power mode. The [clipping area] is set to the smallest rectangle around the second hand and is used to restrict the rendering window when "deleting" the second hand before redrawing it at its next position. On older devices, the buffered bitmap holds a copy of the watchface screen without the second hand, which is used to "delete" the second hand by copying the region defined by the clipping area to the device display. The new second hand is then drawn directly on the display. On newer devices, a separate layer is used just for the second hand. The clipping area of the second hand layer is cleared to delete it, before the new second hand is drawn on the layer.
 
-3. The code for watches with an [AMOLED] display draws directly on the device display and just draws the entire watchface screen every second in high-power mode and once a minute in always-on (low-power) mode. This is the simplest of the three architectures. It doesn't have to deal with a second hand in always-on (low-power) mode and thus doesn't require layers or a buffered bitmap.
+3. The code for watches with an [AMOLED] display draws directly on the device display and just draws the entire watchface screen from scratch every second in high-power mode and once a minute in always-on (low-power) mode. This is the simplest of the three architectures. It doesn't have to deal with a second hand in always-on (low-power) mode and thus doesn't require layers or a buffered bitmap[^2].
 
 The code for the different architectures is in the directories ```source-legacy```, ```source-modern``` and ```source-amoled```.
 Besides the actual watchface, each also implements its own version of the global settings class and the on-device menu, which provide slightly different options to cater for the capabilities of each class of devices.
@@ -43,6 +43,8 @@ Symbols for active alarms, phone connection and notifications, as well as the va
 
 The compiler [type checking] level is set to "Strict" and the program compiles with a single warning.
 
+[^2]: Also argueing that any potential performance improvements that might be achieved by using either of these concepts anyway to avoid redrawing some watchface elements every second (e.g., the tick marks), would be small and insignificant in comparison with the energy required in any case to update the pixels and light the device display.
+
 ## Optimizations
 
 Garmin smartwatches are constrained devices with limited processing power, memory, and energy resources. The resources are interlinked, once you optimize for one of them, it tends to adversely affect the others, and while the [Monkey C] language and the [Toybox APIs] provide a modern programming environment, the compiler's built-in optimizer is not very effective (yet). In the meantime, I highly recommend using [Prettier Monkey C], an extension for Visual Studio Code, which does a great job at optimizing the memory usage of the generated program. From my experience, for legacy watches, for which the memory usage is now really close to the limit, Prettier Monkey C reduces the size of the code and data memory by around 12%.
@@ -53,7 +55,7 @@ Optimizing these calculations involved removing any not strictly required (e.g. 
 
 For devices with sufficient memory the optimization goes one step further and all required coordinates for every second are only calculated once, when the app is started. They are kept in an array and the time critical code then only needs to lookup the coordinates for the current second.
 
-To measure the efficiency of performance optimizations, Garmin's simulator provides a "Watchface Diagnostics" tool that shows the time spent in ```onPartialUpdate()```[^2] and a Profiler to analyze the program's performance in more detail.
+To measure the efficiency of performance optimizations, Garmin's simulator provides a "Watchface Diagnostics" tool that shows the time spent in ```onPartialUpdate()```[^3] and a Profiler to analyze the program's performance in more detail.
 
 As the number of supported optional indicators (or "Configurable Clutter") grew, memory became a constraint on older devices. Optimizing memory usage involved
 - removing some functionality from legacy devices;
@@ -66,7 +68,7 @@ For more ideas how to save memory, you can search the [Garmin Developer forum]. 
 
 Memory optimizations can be measured with the simulator's "Active Memory" utility, which reports the size of the application code and data as well as other useful information.
 
-[^2]: This tool would be even more useful if it also showed the *average* partial update execution time, i.e., the actual metric that is limited.
+[^3]: This tool would be even more useful if it also showed the *average* partial update execution time, i.e., the actual metric that is limited.
 
 ## Compatible devices
 
@@ -185,6 +187,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 
 [second hand]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-get-my-watch-face-to-update-every-second/
 [custom font]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-use-custom-fonts/
+[buffered bitmap]: https://developer.garmin.com/connect-iq/api-docs/Toybox/Graphics/BufferedBitmap.html
 [layers]: https://developer.garmin.com/connect-iq/core-topics/user-interface/
 [Connect IQ 4.0]: https://forums.garmin.com/developer/connect-iq/b/news-announcements/posts/a-whole-new-world-of-graphics-with-connect-iq-4
 [Jungle file build instructions]: https://developer.garmin.com/connect-iq/reference-guides/jungle-reference/
