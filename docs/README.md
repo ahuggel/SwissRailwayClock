@@ -14,7 +14,7 @@ This program reflects the progress of my ongoing journey to master [Monkey C] an
 
 [^1]: Newer AMOLED watches have burn-in protection requirements, which are easily and quite naturally addressed with the concept of a brightness setting. A few older AMOLED watches with more complex burn-in protection requirements are not supported.
 
-## Design and architecture notes
+## Design and architecture notes[^2]
 
 One of the main challenges of this watchface program was that I wanted it to show the long and rather bulky second hand in both high- and low-power mode.
 
@@ -30,24 +30,27 @@ The Swiss Railway Clock watchface implements three different architectures for t
 
 Either one of these two concepts, together with a "clipping area", is required in order to stay within Garmin's execution time limits when updating the second hand in low-power mode. The [clipping area] is set to the smallest rectangle around the second hand and is used to restrict the rendering window when "deleting" the second hand before redrawing it at its next position. On older devices, the buffered bitmap holds a copy of the watchface screen without the second hand, which is used to "delete" the second hand by copying the region defined by the clipping area to the device display. The new second hand is then drawn directly on the display. On newer devices, a separate layer is used just for the second hand. The clipping area of the second hand layer is cleared to delete it, before the new second hand is drawn on the layer.
 
-3. The code for watches with an [AMOLED] display draws directly on the device display and just draws the entire watchface screen from scratch every second in high-power mode and once a minute in always-on (low-power) mode. This is the simplest of the three architectures. It doesn't have to deal with a second hand in always-on (low-power) mode and thus doesn't require layers or a buffered bitmap[^2].
+3. The code for watches with an [AMOLED] display draws directly on the device display and just draws the entire watchface screen from scratch every second in high-power mode and once a minute in always-on (low-power) mode. This is the simplest of the three architectures. It doesn't have to deal with a second hand in always-on (low-power) mode and thus doesn't require layers or a buffered bitmap[^3].
 
 The code for the different architectures is in the directories ```source-legacy```, ```source-modern``` and ```source-amoled```.
-Besides the actual watchface, each also implements its own version of the global settings class and the on-device menu, which provide slightly different options to cater for the capabilities of each class of devices.
+Besides the actual watchface, each also implements its own version of the global settings class and the on-device menu, as they provide slightly different options to cater for the capabilities of each class of devices.
 
 In some of the common code, [excluded annotations] are used to distinguish between code for Modern and Legacy devices and there are further excluded annotations to distinguish between Legacy devices with more and less memory.
 
-The global settings class ```Config``` synchronises the selected menu options to [persistent storage] and makes them available across the app. It also manages the different colors for the watchface. The [on-device menu] implements three different types of menu items as well as a basic time [picker].
+A global instance of class ```Config``` maintains the settings and related information. It synchronises the selected menu options to [persistent storage] and makes them available across the app. It also manages all the colors for the watchface.
+
+The [on-device menu] implements three different types of menu items (```MenuItem```, ```ToggleMenuItem``` and ```IconMenuItem```) and uses a basic time [picker] for the user to configure dark mode begin and end times.
 
 Symbols for active alarms, phone connection and notifications, as well as the various indicators use icons from a [custom font];
 
 The compiler [type checking] level is set to "Strict" and the program compiles with a single warning.
 
-[^2]: Also argueing that any potential performance improvements that might be achieved by using either of these concepts anyway to avoid redrawing some watchface elements every second (e.g., the tick marks), would be small and insignificant in comparison with the energy required in any case to update the pixels and light the device display.
+[^2]: These are kept high-level; for the full picture, read them together with the code and the comments in the code.
+[^3]: How significant would any potential performance improvements be that might be achieved by using either of these concepts, in comparison with the energy required to update the pixels and light the device display?
 
 ## Optimizations
 
-Garmin smartwatches are constrained devices with limited processing power, memory, and energy resources. The resources are interlinked, once you optimize for one of them, it tends to adversely affect the others, and while the [Monkey C] language and the [Toybox APIs] provide a modern programming environment, the compiler's built-in optimizer is not very effective (yet). In the meantime, I highly recommend using [Prettier Monkey C], an extension for Visual Studio Code, which does a great job at optimizing the memory usage of the generated program. From my experience, for legacy watches, for which the memory usage is now really close to the limit, Prettier Monkey C reduces the size of the code and data memory by around 12%.
+Garmin smartwatches are constrained devices with limited processing power, memory, and energy resources. These resources are interlinked; optimizing for one often adversely affects the others. While the [Monkey C] language and the [Toybox APIs] provide a modern programming environment, this can give a misleading sense of ample capabilities, comparable to more powerful computers. Moreover, the compiler's built-in optimizer isn't very effective (yet) and even some basic language features incur memory overheads and are best avoided. In the meantime, I highly recommend using [Prettier Monkey C], an extension for Visual Studio Code, which does a great job at optimizing the memory usage of the generated program. From my experience, for legacy watches, for which the memory usage is now really close to the limit, Prettier Monkey C allows me to keep the source code more maintainable (I can keep the ```enum```s for example) while reducing the size of the application code and data by around 12%.
 
 The first optimization needed for the Swiss Railway Clock watchface was not about memory though, but to reduce the execution time to stay within Garmin's execution time limits when updating the screen in low-power mode. The goal for this is to minimize the time it takes to run ```WatchFace.onPartialUpdate()```. This function is called every second when the device is in low-power mode. Its main task is to delete the [second hand] and redraw it at the next position, which requires calculating the new coordinates for the hand and for the smallest rectangle around it and calling the relevant Garmin graphics functions.
 
@@ -55,7 +58,7 @@ Optimizing these calculations involved removing any not strictly required (e.g. 
 
 For devices with sufficient memory the optimization goes one step further and all required coordinates for every second are only calculated once, when the app is started. They are kept in an array and the time critical code then only needs to lookup the coordinates for the current second.
 
-To measure the efficiency of performance optimizations, Garmin's simulator provides a "Watchface Diagnostics" tool that shows the time spent in ```onPartialUpdate()```[^3] and a Profiler to analyze the program's performance in more detail.
+To measure the efficiency of performance optimizations, Garmin's simulator provides a "Watchface Diagnostics" tool that shows the time spent in ```onPartialUpdate()```[^4] and a Profiler to analyze the program's performance in more detail.
 
 As the number of supported optional indicators (or "Configurable Clutter") grew, memory became a constraint on older devices. Optimizing memory usage involved
 - removing some functionality from legacy devices;
@@ -64,11 +67,11 @@ As the number of supported optional indicators (or "Configurable Clutter") grew,
 - replacing more complex variable types with simpler ones (e.g., use array instead of dictionary); and
 - introducing local variables to avoid repeating any, even minor, repeated expressions (e.g., instead of ```a=b+c+2; d=e+c+2;```, write ```var f=c+2; a=b+f; d=e+f;```).
 
-For more ideas how to save memory, you can search the [Garmin Developer forum]. Also, keep in mind that the resulting optimized design and code to save a few bytes here and there often violates common software development best practices. The optimized design and code may not look right. Fortunately, [Prettier Monkey C] takes care of some optimizations (which the compiler should really do, so that the available language features can actually be used in a real program), like, e.g., making sure that the use of ```enum``` does not incur a memory penalty.
+For more ideas how to save memory, search the [Garmin Developer forum]. Also, keep in mind that the resulting optimized design and code to save a few bytes here and there often violates common software development best practices. The optimized design and code may not look right. (For example, why isn't there a class hierarchy ```Setting``` with derived classes for each type of option and maybe a dictionary to hold them all together? Or at least a singleton instead of a naked global instance of class ```Config```?)
 
 Memory optimizations can be measured with the simulator's "Active Memory" utility, which reports the size of the application code and data as well as other useful information.
 
-[^3]: This tool would be even more useful if it also showed the *average* partial update execution time, i.e., the actual metric that is limited.
+[^4]: This tool would be even more useful if it also showed the (running) *average* partial update execution time, i.e., the actual metric that is limited.
 
 ## Compatible devices
 
