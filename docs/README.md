@@ -35,7 +35,7 @@ Either one of these two concepts, together with a "clipping area", is required i
 The code for the different architectures is in the directories ```source-legacy```, ```source-modern``` and ```source-amoled```.
 Besides the actual watchface, each also implements its own version of the global settings class and the on-device menu, as they provide slightly different options to cater for the capabilities of each class of devices.
 
-In some of the common code, [excluded annotations] are used to distinguish between code for Modern and Legacy devices and there are further excluded annotations to distinguish between Legacy devices with more and less memory.
+In some of the common code, [exclude annotations] are used to distinguish between code for Modern and Legacy devices and there are further exclude annotations to distinguish between Legacy devices with more and less memory.
 
 A global instance of class ```Config``` maintains the settings and related information. It synchronises the selected menu options to [persistent storage] and makes them available across the app. It also manages all the colors for the watchface.
 
@@ -46,7 +46,7 @@ Symbols for active alarms, phone connection and notifications, as well as the va
 The compiler [type checking] level is set to "Strict" and the program compiles with a single warning.
 
 [^2]: These are kept high-level; for the full picture, read them together with the code and the comments in the code.
-[^3]: How significant would any potential performance improvements be that might be achieved by using either of these concepts, in comparison with the energy required to update the pixels and light the device display?
+[^3]: Either of these concepts could be considered to try to be more energy efficient, even in high-power mode. It is difficult to tell how significant such potential performance improvements might be though, in comparison with the energy required to update the pixels and light the device display.
 
 ## Optimizations
 
@@ -67,7 +67,7 @@ As the number of supported optional indicators (or "Configurable Clutter") grew,
 - replacing more complex variable types with simpler ones (e.g., use array instead of dictionary); and
 - introducing local variables to avoid repeating any, even minor, repeated expressions (e.g., instead of ```a=b+c+2; d=e+c+2;```, write ```var f=c+2; a=b+f; d=e+f;```).
 
-For more ideas how to save memory, search the [Garmin Developer forum]. Also, keep in mind that the resulting optimized design and code to save a few bytes here and there often violates common software development best practices. The optimized design and code may not look right. (For example, why isn't there a class hierarchy ```Setting``` with derived classes for each type of option and maybe a dictionary to hold them all together? Or at least a singleton instead of a naked global instance of class ```Config```?)
+For more ideas how to save memory, search the [Garmin Developer forum]. Also, keep in mind that the resulting optimized design and code to save a few bytes here and there often violates common software development best practices. The optimized design and code may not look right.
 
 Memory optimizations can be measured with the simulator's "Active Memory" utility, which reports the size of the application code and data as well as other useful information.
 
@@ -209,6 +209,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 [on-device menu]: https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/Menu2.html
 [picker]: https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/Picker.html
 [clipping area]: https://developer.garmin.com/connect-iq/api-docs/Toybox/Graphics/Dc.html#setClip-instance_function
-[excluded annotations]: https://developer.garmin.com/connect-iq/reference-guides/jungle-reference/#excludedannotations
+[exclude annotations]: https://developer.garmin.com/connect-iq/reference-guides/jungle-reference/#excludedannotations
 [persistent storage]: https://developer.garmin.com/connect-iq/api-docs/Toybox/Application/Storage.html
 [type checking]: https://developer.garmin.com/connect-iq/monkey-c/monkey-types/
