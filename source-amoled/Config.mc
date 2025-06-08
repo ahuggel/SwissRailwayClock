@@ -155,7 +155,7 @@ class Config {
         _hasTimeToRecovery = (ActivityMonitor.Info has :timeToRecovery);
         // Read the configuration values from persistent storage 
         for (var id = 0; id < I_SIZE; id++) {
-            var value = Storage.getValue(_itemLabels[id]) as Number;
+            var value = Storage.getValue(_itemLabels[id]) as Number or Null;
             if (id >= I_ALARMS) { // toggle items
                 if (null == value) { 
                     value = (defaults & (1 << (id - I_ALARMS))) >> (id - I_ALARMS);
