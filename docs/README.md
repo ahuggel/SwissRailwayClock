@@ -79,12 +79,14 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 
 | Device name | Label | Architecture |
 | ----------- | ----- | ------------ |
+| Approach® S50 | approachs50 | Amoled |
 | Approach® S70 42mm | approachs7042mm | Amoled |
 | Approach® S70 47mm | approachs7047mm | Amoled |
 | Captain Marvel | legacyherocaptainmarvel | Modern |
 | D2™ Air X10 | d2airx10 | Amoled |
 | D2™ Mach 1 | d2mach1 | Amoled |
 | Darth Vader™ | legacysagadarthvader | Modern |
+| Descent™ G2 | descentg2 | Amoled |
 | Descent™ Mk2 / Descent™ Mk2i | descentmk2 | Legacy |
 | Descent™ Mk2 S | descentmk2s | Legacy |
 | Descent™ Mk3 43mm / Mk3i 43mm | descentmk343mm | Amoled |
@@ -126,12 +128,15 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | Forerunner® 255s Music | fr255sm | Modern |
 | Forerunner® 265 | fr265 | Amoled |
 | Forerunner® 265s | fr265s | Amoled |
+| Forerunner® 570 42mm | fr57042mm | Amoled |
+| Forerunner® 570 47mm | fr57047mm | Amoled |
 | Forerunner® 645 Music | fr645m | Legacy |
 | Forerunner® 745 | fr745 | Legacy |
 | Forerunner® 945 | fr945 | Legacy |
 | Forerunner® 945 LTE | fr945lte | Legacy |
 | Forerunner® 955 / Solar | fr955 | Modern |
 | Forerunner® 965 | fr965 | Amoled |
+| Forerunner® 970 | fr970 | Amoled |
 | Instinct® 3 AMOLED 45mm | instinct3amoled45mm | Amoled |
 | Instinct® 3 AMOLED 50mm | instinct3amoled50mm | Amoled |
 | MARQ® Adventurer | marqadventurer | Legacy |
@@ -156,6 +161,7 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | vívoactive® 4 | vivoactive4 | Modern |
 | vívoactive® 4S | vivoactive4s | Modern |
 | vívoactive® 5 | vivoactive5 | Amoled |
+| vívoactive® 6 | vivoactive6 | Amoled |
 
 ## Credits
 

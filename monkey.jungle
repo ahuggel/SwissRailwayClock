@@ -110,8 +110,12 @@ vivoactive4s.excludeAnnotations = legacy
 # They have their own code to deal with their inherent properties (only black 
 # background, no second hand in low-power mode) and burn-in protection requirements.
 # Round 390x390 displays
+approachs50.sourcePath = $(approachs50.sourcePath);source-amoled
+approachs50.excludeAnnotations = legacy
 approachs7042mm.sourcePath = $(approachs7042mm.sourcePath);source-amoled
 approachs7042mm.excludeAnnotations = legacy
+descentg2.sourcePath = $(descentg2.sourcePath);source-amoled
+descentg2.excludeAnnotations = legacy
 descentmk343mm.sourcePath = $(descentmk343mm.sourcePath);source-amoled
 descentmk343mm.excludeAnnotations = legacy
 epix2pro42mm.sourcePath = $(epix2pro42mm.sourcePath);source-amoled
@@ -120,6 +124,8 @@ fr165.sourcePath = $(fr165.sourcePath);source-amoled
 fr165.excludeAnnotations = legacy
 fr165m.sourcePath = $(fr165m.sourcePath);source-amoled
 fr165m.excludeAnnotations = legacy
+fr57042mm.sourcePath = $(fr57042mm.sourcePath);source-amoled
+fr57042mm.excludeAnnotations = legacy
 instinct3amoled45mm.sourcePath = $(instinct3amoled45mm.sourcePath);source-amoled
 instinct3amoled45mm.excludeAnnotations = legacy
 marq2.sourcePath = $(marq2.sourcePath);source-amoled
@@ -130,6 +136,8 @@ venu3s.sourcePath = $(venu3s.sourcePath);source-amoled
 venu3s.excludeAnnotations = legacy
 vivoactive5.sourcePath = $(vivoactive5.sourcePath);source-amoled
 vivoactive5.excludeAnnotations = legacy
+vivoactive6.sourcePath = $(vivoactive6.sourcePath);source-amoled
+vivoactive6.excludeAnnotations = legacy
 # Round 416x416 displays
 d2airx10.sourcePath = $(d2airx10.sourcePath);source-amoled
 d2airx10.excludeAnnotations = legacy
@@ -160,8 +168,12 @@ epix2pro51mm.sourcePath = $(epix2pro51mm.sourcePath);source-amoled
 epix2pro51mm.excludeAnnotations = legacy
 fenix847mm.sourcePath = $(fenix847mm.sourcePath);source-amoled
 fenix847mm.excludeAnnotations = legacy
+fr57047mm.sourcePath = $(fr57047mm.sourcePath);source-amoled
+fr57047mm.excludeAnnotations = legacy
 fr965.sourcePath = $(fr965.sourcePath);source-amoled
 fr965.excludeAnnotations = legacy
+fr970.sourcePath = $(fr970.sourcePath);source-amoled
+fr970.excludeAnnotations = legacy
 venu3.sourcePath = $(venu3.sourcePath);source-amoled
 venu3.excludeAnnotations = legacy
 # Round 360x360 displays
