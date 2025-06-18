@@ -186,3 +186,6 @@ venusq2.sourcePath = $(venusq2.sourcePath);source-amoled
 venusq2.excludeAnnotations = legacy
 venusq2m.sourcePath = $(venusq2m.sourcePath);source-amoled
 venusq2m.excludeAnnotations = legacy
+# Rectangular 448x486 displays
+venux1.sourcePath = $(venux1.sourcePath);source-amoled
+venux1.excludeAnnotations = legacy
