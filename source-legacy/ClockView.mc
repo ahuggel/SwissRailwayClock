@@ -344,16 +344,12 @@ class ClockView extends WatchUi.WatchFace {
             var yy1 = y - _secondCircleRadius;
             var xx2 = x + _secondCircleRadius;
             var yy2 = y + _secondCircleRadius;
-            var minX = 65536;
-            var minY = 65536;
-            var maxX = 0;
-            var maxY = 0;
             // coords[1], coords[2] optimized out: only consider the tail and circle coords, loop unrolled for performance,
             // use only points [x0, y0], [x3, y3], [xx1, yy1], [xx2, yy1], [xx2, yy2], [xx1, yy2], minus duplicate comparisons
-            if (x0 < minX) { minX = x0; }
-            if (y0 < minY) { minY = y0; }
-            if (x0 > maxX) { maxX = x0; }
-            if (y0 > maxY) { maxY = y0; }
+            var minX = x0;
+            var minY = y0;
+            var maxX = x0;
+            var maxY = y0;
             if (x3 < minX) { minX = x3; }
             if (y3 < minY) { minY = y3; }
             if (x3 > maxX) { maxX = x3; }
@@ -405,16 +401,12 @@ class ClockView extends WatchUi.WatchFace {
         var yy1 = y - _secondCircleRadius;
         var xx2 = x + _secondCircleRadius;
         var yy2 = y + _secondCircleRadius;
-        var minX = 65536;
-        var minY = 65536;
-        var maxX = 0;
-        var maxY = 0;
         // coords[1], coords[2] optimized out: only consider the tail and circle coords, loop unrolled for performance,
         // use only points [x0, y0], [x3, y3], [xx1, yy1], [xx2, yy1], [xx2, yy2], [xx1, yy2], minus duplicate comparisons
-        if (x0 < minX) { minX = x0; }
-        if (y0 < minY) { minY = y0; }
-        if (x0 > maxX) { maxX = x0; }
-        if (y0 > maxY) { maxY = y0; }
+        var minX = x0;
+        var minY = y0;
+        var maxX = x0;
+        var maxY = y0;
         if (x3 < minX) { minX = x3; }
         if (y3 < minY) { minY = y3; }
         if (x3 > maxX) { maxX = x3; }

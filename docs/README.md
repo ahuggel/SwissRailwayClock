@@ -1,8 +1,8 @@
+# Swiss Railway Clock - An analog watchface for Garmin smartwatches
+
 ![image](WatchFace.png)
 
 ![image](configurable-clutter.gif)
-
-# Swiss Railway Clock - An analog watchface for Garmin smartwatches
 
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with an always-on second hand on watches with a MIP display;
 - The operation differs from the original Swiss railway clock in that the second hand ticks like that of a quartz watch, rather than sweeps, and it does not pause at 12 o'clock. There is also a battery saving option to make the second hand disappear in low-power mode, after about 30s;
@@ -20,7 +20,7 @@ One of the main challenges of this watchface program was that I wanted it to sho
 
 Garmin smartwatches with a MIP display can perform screen updates every second, even in low-power mode, which makes it possible to always show a [second hand], as opposed to only drawing it in high-power mode. This per-second update in low-power mode has very strict limits set on execution time though; only a tiny portion of the screen can be modified and only a minimal number of statements can be executed within these limits.
 
-AMOLED watches on the other hand, do not have support for such per-second updates at all. It is not possible to update the screen more often than once a minute in always-on (low-power) mode and therefore, the second hand is only shown in high-power mode on AMOLED watches.
+AMOLED watches on the other hand, do not have support for such per-second updates at all. It is not possible to update the screen more often than once a minute in always-on (low-power) mode and therefore, the second hand can only be shown in high-power mode on AMOLED watches.
 
 The Swiss Railway Clock watchface implements three different architectures for three classes of devices and [Jungle file build instructions] define for each device, which architecture it uses:
 
@@ -35,11 +35,11 @@ Either one of these two concepts, together with a "clipping area", is required i
 The code for the different architectures is in the directories ```source-legacy```, ```source-modern``` and ```source-amoled```.
 Besides the actual watchface, each also implements its own version of the global settings class and the on-device menu, as they provide slightly different options to cater for the capabilities of each class of devices.
 
-In some of the common code, [exclude annotations] are used to distinguish between code for Modern and Legacy devices and there are further exclude annotations to distinguish between Legacy devices with more and less memory.
+In some of the common code, [exclude annotations] are used to distinguish between code for modern and legacy devices and there are further exclude annotations to distinguish between legacy devices with more and less memory.
 
 A global instance of class ```Config``` maintains the settings and related information. It synchronises the selected menu options to [persistent storage] and makes them available across the app. It also manages all the colors for the watchface.
 
-The [on-device menu] implements three different types of menu items (```MenuItem```, ```ToggleMenuItem``` and ```IconMenuItem```) and uses a basic time [picker] for the user to configure dark mode begin and end times.
+The [on-device menu] implements three different types of menu items (```MenuItem```, ```ToggleMenuItem``` and ```IconMenuItem```) and uses a basic time [picker] for the user to configure dark mode start and end times.
 
 Symbols for active alarms, phone connection and notifications, as well as the various indicators use icons from a [custom font];
 
