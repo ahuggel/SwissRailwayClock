@@ -1,19 +1,49 @@
-# Swiss Railway Clock - An analog watchface for Garmin smartwatches
-
-&nbsp;
-
 ![image](WatchFace.png)
 
 ![image](configurable-clutter.gif)
+
+# Swiss Railway Clock - An analog watchface for Garmin smartwatches
+
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with an always-on second hand on watches with a MIP display;
 - The operation differs from the original Swiss railway clock in that the second hand ticks like that of a quartz watch, rather than sweeps, and it does not pause at 12 o'clock;
-- On-device settings (a settings menu on the watch itself) allow the configuration of a battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a [Move Bar] and some other options. The "Configurable Clutter" clip above shows most of them. In addition, an accent color (the color of the second hand) can also be configured and there is a battery saving option to make the second hand disappear in low-power mode, after about 30s;
+- On-device settings (a settings menu on the watch itself) allow the configuration of a battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a [Move Bar] and some other options. The "Configurable Clutter" clip above shows some of them and section [Settings](#settings) has the complete list;
 - On watches with an AMOLED display, the background is always black and there are two independent brightness settings, replacing the contrast and dark mode options of MIP watches. Always-on (low-power) mode uses the darkest dimmer level and has no second hand[^1];
 - On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955, fēnix 7 and 8 series, Enduro 2 and 3 and all AMOLED watches).
 
 This program reflects the progress of my ongoing journey to master [Monkey C] and the Garmin [Connect IQ ecosystem] to create an analog watchface. I am making it available to share what I've learned, in the hope that others will find it useful to grasp the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
 
 [^1]: Newer AMOLED watches have burn-in protection requirements, which are easily and quite naturally addressed with the concept of a brightness setting. A few older AMOLED watches with more complex burn-in protection requirements are not supported.
+
+### Settings
+
+| Name | Values* | Description | [Architecture](#compatible-devices) |
+| --- | --- | --- | ---|
+| Battery&nbsp;Level | Classic<br/>Modern<br/>Classic&nbsp;Warnings<br/>Modern&nbsp;Warnings<br/>**Off** | _Classic_ refers to a battery-shaped indicator with colored bars for the remaining battery life. _Modern_ shows just a colored solid circle. With _Warnings_, the indicator is only displayed if the remaining battery life is less than the warning threshold of 40%. If the battery life is less than 10% the color is red, if less than 20% it is orange, else green. | Legacy<br/>Modern<br/>Amoled |
+| Battery&nbsp;Percentage | On<br/>**Off** | Adds the battery life as a percentage to the left of the battery indicator. | Legacy<br/>Modern<br/>Amoled |
+| Battery&nbsp;Days** | On<br/>**Off** | Adds the remaining battery life in days to the right of the battery indicator. | Legacy<br/>Modern<br/>Amoled |
+| Date&nbsp;Display | Day&nbsp;Only<br/>Weekday&nbsp;and&nbsp;Day<br/>**Off** | Displays the display of the date, either as a two digit number for the day of the month or the abbreviated weekday and day ot the month. | Legacy<br/>Modern<br/>Amoled |
+| Alarms | **On**<br/>Off | Shows an alarm symbol when an alarm is set on the device. | Legacy<br/>Modern<br/>Amoled |
+| Notifications | On<br/>**Off** | Shows a notification symbol when there are active notifications. | Legacy<br/>Modern<br/>Amoled |
+| Phone&nbsp;Connection | **On**<br/>Off | Shows a Bluetooth symbol on the 6 o'clock tickmark when the phone connection is established. | Legacy<br/>Modern<br/>Amoled |
+| Heart&nbsp;Rate | On<br/>**Off** | Shows the heart rate in beats per minute (bpm). | Legacy<br/>Modern<br/>Amoled |
+| Recovery&nbsp;Time** | On<br/>**Off** | Shows the time to recovery from the last activity, in hours. | Legacy<br/>Modern<br/>Amoled |
+| Steps | On<br/>**Off** | Shows the step count since midnight for the current day in number of steps. | Legacy<br/>Modern<br/>Amoled |
+| Calories | On<br/>**Off** | Shows the calories burned so far for the current day in kilocalories (kCal). | Legacy<br/>Modern<br/>Amoled |
+| Move&nbsp;Bar | On<br/>**Off** | Enables the Move Bar. | Modern<br/>Amoled |
+| Brightness | **White**<br/>Silver<br/>Gray<br/>Slate<br/>Dark | Adjusts the brightness of the foreground color. | Amoled |
+| Dimmer | **Scheduled**<br/>In&nbsp;DnD&nbsp;Mode<br/>Off | Allows for a second configuration of the foreground color. _Scheduled_ enables Dimmer mode from the Turn On to the Turn Off time. _In DnD Mode_ couples Dimmer mode with the do not disturb mode of the device. | Amoled |
+| Dark Mode | **Scheduled**<br/>In&nbsp;DnD&nbsp;Mode<br/>On<br/>Off | Changes the watchface colors to a black background with light foreground. _Scheduled_ enables Dark Mode from the Turn On to the Turn Off time. _In DnD Mode_ couples Dark Mode with the do not disturb mode of the device. | Legacy<br/>Modern |
+| Turn&nbsp;On | Time&nbsp;(**22:00**) | The time when Dark Mode/Dimmer mode is enabled if it is set to _Scheduled_. | Legacy<br/>Modern<br/>Amoled |
+| Turn&nbsp;Off | Time&nbsp;(**07:00**) | The time when Dark Mode/Dimmer mode is disabled if it is set to _Scheduled_. | Legacy<br/>Modern<br/>Amoled |
+| Level | **White**<br/>Silver<br/>Gray<br/>Slate<br/>Dark | Determines the foreground color in Dimmer mode. | Amoled |
+| Contrast | White<br/>**Light&nbsp;Gray**<br/>Dark&nbsp;Gray | Determines the foreground color in Dark Mode. | Modern |
+| Seconds&nbsp;Disappear | **In&nbsp;Dark&nbsp;Mode**<br/>Always<br/>Never | Disables the second hand in low-power mode, after about 30s to save battery. With the _In Dark Mode_ option, the second hand disappears when Dark Mode is enabled. | Legacy<br/>Modern |
+| Seconds&nbsp;Color | **Red**<br/>Orange<br/>Yellow<br/>Light&nbsp;Green<br/>Green<br/>Light&nbsp;Blue<br/>Blue<br/>Purple<br/>Pink | The color of the second hand. | Legacy<br/>Modern<br/>Amoled |
+| Change&nbsp;Color | Hourly<br/>Every&nbsp;Minute<br/>Every&nbsp;Second<br/>**Off** | Cycles the second hand color Hourly, Every Minute or Every Second. | Legacy<br/>Modern<br/>Amoled |
+| 3D&nbsp;Effects** | On<br/>**Off** | Shows a semi-transparent shadow for the watch hands. | Modern |
+
+\* The default value is highlighted in **bold**.\
+** On devices with support for the required system functionality.
 
 ## Design and architecture notes[^2]
 
