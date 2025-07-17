@@ -6,7 +6,7 @@
 
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with an always-on second hand on watches with a MIP display;
 - The operation differs from the original Swiss railway clock in that the second hand ticks like that of a quartz watch, rather than sweeps, and it does not pause at 12 o'clock;
-- On-device settings (a settings menu on the watch itself) allow the configuration of a battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a [Move Bar] and some other options. The "Configurable Clutter" clip above shows some of them and section [Settings](#settings) has the complete list;
+- On-device settings (a settings menu on the watch itself) allow the configuration of a battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a [Move Bar] and various other options. The "Configurable Clutter" clip above shows some of them and section [Settings](#settings) has the complete list;
 - On watches with an AMOLED display, the background is always black and there are two independent brightness settings, replacing the contrast and dark mode options of MIP watches. Always-on (low-power) mode uses the darkest dimmer level and has no second hand[^1];
 - On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955, fēnix 7 and 8 series, Enduro 2 and 3 and all AMOLED watches).
 
@@ -39,7 +39,7 @@ This program reflects the progress of my ongoing journey to master [Monkey C] an
 | Contrast | White<br/>**Light&nbsp;Gray**<br/>Dark&nbsp;Gray | Determines the foreground color in Dark Mode. | Modern |
 | Seconds&nbsp;Disappear | **In&nbsp;Dark&nbsp;Mode**<br/>Always<br/>Never | Disables the second hand in low-power mode, after about 30s to save battery. With the _In Dark Mode_ option, the second hand disappears when Dark Mode is enabled. | Legacy<br/>Modern |
 | Seconds&nbsp;Color | **Red**<br/>Orange<br/>Yellow<br/>Light&nbsp;Green<br/>Green<br/>Light&nbsp;Blue<br/>Blue<br/>Purple<br/>Pink | The color of the second hand. | Legacy<br/>Modern<br/>Amoled |
-| Change&nbsp;Color | Hourly<br/>Every&nbsp;Minute<br/>Every&nbsp;Second<br/>**Off** | Cycles the second hand color Hourly, Every Minute or Every Second. | Legacy<br/>Modern<br/>Amoled |
+| Change&nbsp;Color | Hourly<br/>Every&nbsp;Minute<br/>Every&nbsp;Second<br/>**Off** | Cycles the second hand color _Hourly_, _Every Minute_ or _Every Second_. | Legacy<br/>Modern<br/>Amoled |
 | 3D&nbsp;Effects** | On<br/>**Off** | Shows a semi-transparent shadow for the watch hands. | Modern |
 
 \* The default value is highlighted in **bold**.\
