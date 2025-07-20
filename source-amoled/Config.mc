@@ -173,7 +173,7 @@ class Config {
                 }
             } else if (id < I_DM_ON) { // list items
                 if (null == value) { 
-                    value = I_DM_CONTRAST == id ? 2 : 0;
+                    value = I_DM_CONTRAST == id ? 2 : 0;  // Default dimmer level
                 }
                 // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
                 if (I_COMPLICATION_1 == id and 3 == value and !_hasTimeToRecovery) {
