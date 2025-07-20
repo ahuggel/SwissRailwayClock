@@ -18,6 +18,7 @@
     <string id="Dimmer">Dimmer</string>
     <string id="DmContrast">Kontrast</string>
     <string id="DimmerLevel">Stufe</string>
+    <string id="Complication1">1. Anzeige</string>
     <string id="HideSeconds">Sekunden ausblenden</string>
     <string id="AccentColor">Sekunden Farbe</string>
     <string id="AccentCycle">Farbe wechseln</string>

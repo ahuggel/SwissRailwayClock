@@ -64,12 +64,12 @@ class SettingsView extends WatchUi.Menu2 {
                 addToggleMenuItem(Config.I_ALARMS);
                 addToggleMenuItem(Config.I_NOTIFICATIONS);
                 addToggleMenuItem(Config.I_CONNECTED);
+                addMenuItem(Config.I_COMPLICATION_1);
                 addToggleMenuItem(Config.I_HEART_RATE);
                 if (config.hasTimeToRecovery()) { 
                    addToggleMenuItem(Config.I_RECOVERY_TIME);
                 }
                 addToggleMenuItem(Config.I_STEPS);
-                addToggleMenuItem(Config.I_CALORIES);
                 addToggleMenuItem(Config.I_MOVE_BAR);
                 Menu2.addItem(new WatchUi.IconMenuItem(
                     config.getName(Config.I_BRIGHTNESS), 
@@ -119,10 +119,10 @@ class SettingsView extends WatchUi.Menu2 {
                 deleteAnyItem(Config.I_ALARMS);
                 deleteAnyItem(Config.I_NOTIFICATIONS);
                 deleteAnyItem(Config.I_CONNECTED);
+                deleteAnyItem(Config.I_COMPLICATION_1);
                 deleteAnyItem(Config.I_HEART_RATE);
                 deleteAnyItem(Config.I_RECOVERY_TIME);
                 deleteAnyItem(Config.I_STEPS);
-                deleteAnyItem(Config.I_CALORIES);
                 deleteAnyItem(Config.I_MOVE_BAR);
                 deleteAnyItem(Config.I_BRIGHTNESS);
                 deleteAnyItem(Config.I_DARK_MODE);
@@ -189,6 +189,9 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
         } else if (id < Config.I_DM_ON) { // list items
             // Advance to the next option and show the selected option as the sub label
             config.setNext(id);
+            if (Config.I_COMPLICATION_1 == id and 3 == config.getValue(id) and !config.hasTimeToRecovery()) {
+                config.setNext(id);
+            }
             menuItem.setSubLabel(config.getLabel(id));
             if (Config.I_BATTERY == id or Config.I_DARK_MODE == id) {
                 // Delete all the following menu items, rebuild the menu with only the items required

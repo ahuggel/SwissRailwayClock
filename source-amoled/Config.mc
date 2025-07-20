@@ -62,6 +62,7 @@ class Config {
         I_ACCENT_CYCLE,
         I_BRIGHTNESS,
         I_DM_CONTRAST,
+        I_COMPLICATION_1,
         I_DM_ON, // the first item that is not a list item
         I_DM_OFF, 
         I_ALARMS, // the first toggle item (see defaults)
@@ -70,7 +71,7 @@ class Config {
         I_HEART_RATE,
         I_RECOVERY_TIME,
         I_STEPS,
-        I_CALORIES,
+        I_CALORIES,                // TODO: REMOVE
         I_MOVE_BAR,
         I_BATTERY_PCT, 
         I_BATTERY_DAYS, 
@@ -89,6 +90,7 @@ class Config {
         :AccentCycle, 
         :Brightness,
         :DimmerLevel, 
+        :Complication1,
         :DmOn, 
         :DmOff,
         :Alarms,
@@ -114,6 +116,7 @@ class Config {
         "ay", // I_ACCENT_CYCLE
         "br", // I_BRIGHTNESS
         "dc", // I_DM_CONTRAST
+        "c1", // I_COMPLICATION_1
         "dn", // I_DM_ON
         "df", // I_DM_OFF
         "al", // I_ALARMS
@@ -137,7 +140,8 @@ class Config {
         [:AccentRed, :AccentOrange, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentLtBlue, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
         [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
         [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_BRIGHTNESS
-        [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark] // I_DM_CONTRAST
+        [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_DM_CONTRAST
+        [:Off, :Calories, :HeartRate, :RecoveryTime, :Steps] // I_COMPLICATION_1
      ] as Array< Array<Symbol> >;
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
@@ -148,7 +152,7 @@ class Config {
     // Constructor
     public function initialize() {
         // Default values for toggle items, each bit is one. I_ALARMS and I_CONNECTED are on by default.
-        var defaults = 0x005; // 0b000 0000 0101
+        var defaults = 0x005; // 0b0 0000 0101
 
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasBatteryInDays = (System.Stats has :batteryInDays);
@@ -171,6 +175,10 @@ class Config {
                 if (null == value) { 
                     value = I_DM_CONTRAST == id ? 2 : 0;
                 }
+                // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
+                if (I_COMPLICATION_1 == id and 3 == value and !_hasTimeToRecovery) {
+                    value = 0;
+                } 
             } else { // I_DM_ON or I_DM_OFF
                 if (I_DM_ON == id and (null == value or value < 0 or value > 1439)) {
                     value = 1320; // Default time to turn dark mode on: 22:00
