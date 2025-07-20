@@ -169,7 +169,7 @@ class Config {
                 }
             } else if (id < I_DM_ON) { // list items
                 if (null == value) { 
-                    value = I_DM_CONTRAST == id ? 2 : 0;
+                    value = I_DM_CONTRAST == id ? 2 : 0;  // Default dimmer level
                 }
             } else { // I_DM_ON or I_DM_OFF
                 if (I_DM_ON == id and (null == value or value < 0 or value > 1439)) {

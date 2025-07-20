@@ -35,7 +35,7 @@ This program reflects the progress of my ongoing journey to master [Monkey C] an
 | Dark Mode | **Scheduled**<br/>In&nbsp;DnD&nbsp;Mode<br/>On<br/>Off | Changes the watchface colors to a black background with light foreground. _Scheduled_ enables Dark Mode from the Turn On to the Turn Off time. _In DnD Mode_ couples Dark Mode with the do not disturb mode of the device. | Legacy<br/>Modern |
 | Turn&nbsp;On | Time&nbsp;(**22:00**) | The time when Dark Mode/Dimmer mode is enabled if it is set to _Scheduled_. | Legacy<br/>Modern<br/>Amoled |
 | Turn&nbsp;Off | Time&nbsp;(**07:00**) | The time when Dark Mode/Dimmer mode is disabled if it is set to _Scheduled_. | Legacy<br/>Modern<br/>Amoled |
-| Level | **White**<br/>Silver<br/>Gray<br/>Slate<br/>Dark | Determines the foreground color in Dimmer mode. | Amoled |
+| Level | White<br/>Silver<br/>**Gray**<br/>Slate<br/>Dark | Determines the foreground color in Dimmer mode. | Amoled |
 | Contrast | White<br/>**Light&nbsp;Gray**<br/>Dark&nbsp;Gray | Determines the foreground color in Dark Mode. | Modern |
 | Seconds&nbsp;Disappear | **In&nbsp;Dark&nbsp;Mode**<br/>Always<br/>Never | Disables the second hand in low-power mode, after about 30s to save battery. With the _In Dark Mode_ option, the second hand disappears when Dark Mode is enabled. | Legacy<br/>Modern |
 | Seconds&nbsp;Color | **Red**<br/>Orange<br/>Yellow<br/>Light&nbsp;Green<br/>Green<br/>Light&nbsp;Blue<br/>Blue<br/>Purple<br/>Pink | The color of the second hand. | Legacy<br/>Modern<br/>Amoled |
