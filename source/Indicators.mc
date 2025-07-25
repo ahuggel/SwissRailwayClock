@@ -360,90 +360,37 @@ class Indicators {
         }
 
         // TODO: check if (ActivityMonitor.Info has :timeToRecovery) and all the others?? - if then check in getIndicatorPosition!!
-        // TODO: Heart rate icon on the other side??
-        // TODO: Align heart rate and the other indis, use same function?
+        // TODO: Heart rate icon on the other side?? - No, the recovery one should go to the other side
 
-        // Draw the 4th complication
-        idx = getIndicatorPosition(:complication4);
-        if (-1 != idx) {
-            var value = config.getValue(Config.I_COMPLICATION_4);
-            if (1 == value) {
-                // Determine if and where the heart rate should be drawn, but don't
-                // draw it here. The indicator is drawn in drawHeartRate(), which
-                // needs to be called after this function, once the position is set.
-                // This is done to minimize the work necessary in drawHeartRate(), 
-                // as that is also called in low-power mode, from onPartialUpdate(),
-                // when the position always remains the same.
-                _drawHeartRate = idx;
-            } else {
-                drawIndicator(
-                    dc,
-                    _pos[idx][0],
-                    _pos[idx][1],
-                    // :Off, :HeartRate, :RecoveryTime
-                    ["", "", "R"][value],
-                    true,
-                    [0, 0, activityInfo.timeToRecovery][value]
-                );
-            }
-        }
-
-        // Draw the 3rd complication
-        idx = getIndicatorPosition(:complication3);
-        if (-1 != idx) {
-            var value = config.getValue(Config.I_COMPLICATION_3);
-            if (1 == value) {
-                _drawHeartRate = idx;
-            } else {
-                drawIndicator(
-                    dc,
-                    _pos[idx][0],
-                    _pos[idx][1],
-                    // :Off, :HeartRate, :RecoveryTime
-                    ["", "", "R"][value],
-                    false,
-                    [0, 0, activityInfo.timeToRecovery][value]
-                );
-            }
-        }
-
-        // Draw the 2nd complication
+        _drawHeartRate = -1;
         _complication2Drawn = false;
-        idx = getIndicatorPosition(:complication2);
-        if (-1 != idx) {
-            var value = config.getValue(Config.I_COMPLICATION_2);
-            if (1 == value) {
-                _drawHeartRate = idx;
-                _complication2Drawn = true;  // TODO: REVIEW, maybe needs _heartRateDrawn
-            } else {
-                _complication2Drawn = drawIndicator(
-                    dc,
-                    _pos[idx][0],
-                    _pos[idx][1],
-                    // :Off, :HeartRate, :RecoveryTime, :Calories, :Steps
-                    ["", "", "R", "C", "F"][value],
-                    true,
-                    [0, 0, activityInfo.timeToRecovery, activityInfo.calories, activityInfo.steps][value]
-                );
-            }
-        }
-
-        // Draw the 1st complication
-        idx = getIndicatorPosition(:complication1);
-        if (-1 != idx) {
-            var value = config.getValue(Config.I_COMPLICATION_1);
-            if (1 == value) {
-                _drawHeartRate = idx;
-            } else {
-                drawIndicator(
-                    dc,
-                    _pos[idx][0],
-                    _pos[idx][1],
-                    // :Off, :HeartRate, :RecoveryTime, :Calories, :Steps
-                    ["", "", "R", "C", "F"][value],
-                    true,
-                    [0, 0, activityInfo.timeToRecovery, activityInfo.calories, activityInfo.steps][value]
-                );
+        var complication = [:complication1, :complication2, :complication3, :complication4];
+        var complicationId = [Config.I_COMPLICATION_1, Config.I_COMPLICATION_2, Config.I_COMPLICATION_3, Config.I_COMPLICATION_4];
+        for (var i = 3; i >= 0; i--) {
+            idx = getIndicatorPosition(complication[i]);
+            if (-1 != idx) {
+                var value = config.getValue(complicationId[i]);
+                if (1 == value) {
+                    // Determine if and where the heart rate should be drawn, but don't
+                    // draw it here. The indicator is drawn in drawHeartRate(), which
+                    // needs to be called after this function, once the position is set.
+                    // This is done to minimize the work necessary in drawHeartRate(), 
+                    // as that is also called in low-power mode, from onPartialUpdate(),
+                    // when the position always remains the same.
+                    _drawHeartRate = idx;
+                    if (1 == i) { _complication2Drawn = true; }
+                } else {
+                    var ret = drawIndicator(
+                        dc,
+                        _pos[idx][0],
+                        _pos[idx][1],
+                        // :Off, :HeartRate, :RecoveryTime, :Calories, :Steps
+                        ["", "", "R", "C", "F"][value],
+                        true,
+                        [0, 0, activityInfo.timeToRecovery, activityInfo.calories, activityInfo.steps][value]
+                    );
+                    if (1 == i) { _complication2Drawn = ret; }
+                }
             }
         }
     }
