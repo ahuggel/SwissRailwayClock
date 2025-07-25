@@ -44,7 +44,7 @@ class Indicators {
 
     (:modern) private var _batteryDrawn as Boolean = false;
     (:modern) private var _iconsDrawn as Boolean = false;
-    (:modern) private var _stepsDrawn as Boolean = false;
+    (:modern) private var _complication2Drawn as Boolean = false;
     (:modern) private var _hrat6 as Boolean = false;
     (:modern) private var _dtat6 as Boolean = false;
     (:modern) private var _screenCenter as Array<Number>;
@@ -286,9 +286,9 @@ class Indicators {
     (:modern) public function draw(dc as Dc, deviceSettings as DeviceSettings, isAwake as Boolean) as Void {
         var activityInfo = ActivityMonitor.getInfo();
 
-        // Helper - is the heart rate indicator at 6 o'clock?
+        // Helper - is the 4th complication at 6 o'clock?
         _hrat6 =     :DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)
-                 and config.isEnabled(Config.I_HEART_RATE);
+                 and config.isEnabled(Config.I_COMPLICATION_4);
         // Helper - is the (long) date at 6 o'clock?
         _dtat6 = :DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY);
 
@@ -359,54 +359,92 @@ class Indicators {
             );
         }
 
-        // Determine if and where the heart rate should be drawn, but don't
-        // draw it here. The indicator is drawn in drawHeartRate(), which
-        // needs to be called after this function, once the position is set.
-        // This is done to minimize the work necessary in drawHeartRate(), 
-        // as that is also called in low-power mode, from onPartialUpdate(),
-        // when the position always remains the same.
-        _drawHeartRate = getIndicatorPosition(:heartRate);
+        // TODO: check if (ActivityMonitor.Info has :timeToRecovery) and all the others?? - if then check in getIndicatorPosition!!
+        // TODO: Heart rate icon on the other side??
+        // TODO: Align heart rate and the other indis, use same function?
 
-        // Draw the recovery time indicator
-        idx = getIndicatorPosition(:recoveryTime);
+        // Draw the 4th complication
+        idx = getIndicatorPosition(:complication4);
         if (-1 != idx) {
-            if (ActivityMonitor.Info has :timeToRecovery) {
+            var value = config.getValue(Config.I_COMPLICATION_4);
+            if (1 == value) {
+                // Determine if and where the heart rate should be drawn, but don't
+                // draw it here. The indicator is drawn in drawHeartRate(), which
+                // needs to be called after this function, once the position is set.
+                // This is done to minimize the work necessary in drawHeartRate(), 
+                // as that is also called in low-power mode, from onPartialUpdate(),
+                // when the position always remains the same.
+                _drawHeartRate = idx;
+            } else {
                 drawIndicator(
                     dc,
                     _pos[idx][0],
                     _pos[idx][1],
-                    "R",
-                    false,
-                    activityInfo.timeToRecovery
+                    // :Off, :HeartRate, :RecoveryTime
+                    ["", "", "R"][value],
+                    true,
+                    [0, 0, activityInfo.timeToRecovery][value]
                 );
             }
         }
 
-        // Draw the steps indicator
-        _stepsDrawn = false;
-        idx = getIndicatorPosition(:footsteps);
+        // Draw the 3rd complication
+        idx = getIndicatorPosition(:complication3);
         if (-1 != idx) {
-            _stepsDrawn = drawIndicator(
-                dc,
-                _pos[idx][0],
-                _pos[idx][1],
-                "F",
-                true,
-                activityInfo.steps // since API Level 1.0.0
-            );
+            var value = config.getValue(Config.I_COMPLICATION_3);
+            if (1 == value) {
+                _drawHeartRate = idx;
+            } else {
+                drawIndicator(
+                    dc,
+                    _pos[idx][0],
+                    _pos[idx][1],
+                    // :Off, :HeartRate, :RecoveryTime
+                    ["", "", "R"][value],
+                    false,
+                    [0, 0, activityInfo.timeToRecovery][value]
+                );
+            }
         }
 
-        // Draw the calories indicator
-        idx = getIndicatorPosition(:calories);
+        // Draw the 2nd complication
+        _complication2Drawn = false;
+        idx = getIndicatorPosition(:complication2);
         if (-1 != idx) {
-            drawIndicator(
-                dc,
-                _pos[idx][0],
-                _pos[idx][1],
-                "C",
-                true,
-                activityInfo.calories // since API Level 1.0.0
-            );
+            var value = config.getValue(Config.I_COMPLICATION_2);
+            if (1 == value) {
+                _drawHeartRate = idx;
+                _complication2Drawn = true;  // TODO: REVIEW, maybe needs _heartRateDrawn
+            } else {
+                _complication2Drawn = drawIndicator(
+                    dc,
+                    _pos[idx][0],
+                    _pos[idx][1],
+                    // :Off, :HeartRate, :RecoveryTime, :Calories, :Steps
+                    ["", "", "R", "C", "F"][value],
+                    true,
+                    [0, 0, activityInfo.timeToRecovery, activityInfo.calories, activityInfo.steps][value]
+                );
+            }
+        }
+
+        // Draw the 1st complication
+        idx = getIndicatorPosition(:complication1);
+        if (-1 != idx) {
+            var value = config.getValue(Config.I_COMPLICATION_1);
+            if (1 == value) {
+                _drawHeartRate = idx;
+            } else {
+                drawIndicator(
+                    dc,
+                    _pos[idx][0],
+                    _pos[idx][1],
+                    // :Off, :HeartRate, :RecoveryTime, :Calories, :Steps
+                    ["", "", "R", "C", "F"][value],
+                    true,
+                    [0, 0, activityInfo.timeToRecovery, activityInfo.calories, activityInfo.steps][value]
+                );
+            }
         }
     }
 
@@ -423,11 +461,6 @@ class Indicators {
     (:modern) private function getIndicatorPosition(indicator as Symbol) as Number {
         var idx = -1;
         switch (indicator) {
-            case :recoveryTime:
-                if (config.isEnabled(Config.I_RECOVERY_TIME)) { 
-                    idx = 2; 
-                }
-                break;
             case :battery:
                 if (config.isEnabled(Config.I_BATTERY)) {
                     idx = _iconsDrawn ? 3 : 4;
@@ -451,43 +484,48 @@ class Indicators {
                 break;
             case :longDate:
                 if (:DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)) {
-                    if (config.isEnabled(Config.I_STEPS)) {
-                        idx = _batteryDrawn or config.isEnabled(Config.I_CALORIES) ? 9 : 8;
+                    if (config.isEnabled(Config.I_COMPLICATION_2)) {
+                        idx = _batteryDrawn or config.isEnabled(Config.I_COMPLICATION_1) ? 9 : 8;
                     } else {
-                        idx = _batteryDrawn and config.isEnabled(Config.I_CALORIES) ? 9 : 8;
+                        idx = _batteryDrawn and config.isEnabled(Config.I_COMPLICATION_1) ? 9 : 8;
                     }
                 }
                 break;
-            case :heartRate:
-                if (config.isEnabled(Config.I_HEART_RATE)) {
+            case :complication4:
+                if (config.isEnabled(Config.I_COMPLICATION_4)) {
                     idx = 0;
                     if (:DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)) {
-                        idx = (config.isEnabled(Config.I_STEPS)) ? 12 : 1;
+                        idx = (config.isEnabled(Config.I_COMPLICATION_2)) ? 12 : 1;
                     }
                 }
                 break;
-            case :footsteps:
-                if (config.isEnabled(Config.I_STEPS)) {
+            case :complication3:
+                if (config.isEnabled(Config.I_COMPLICATION_3)) { 
+                    idx = 2; 
+                }
+                break;
+            case :complication2:
+                if (config.isEnabled(Config.I_COMPLICATION_2)) {
                     if (_hrat6 or _dtat6) {
-                        idx = config.isEnabled(Config.I_CALORIES) or _batteryDrawn ? 11 : 3;
+                        idx = config.isEnabled(Config.I_COMPLICATION_1) or _batteryDrawn ? 11 : 3;
                     } else {
-                        idx = config.isEnabled(Config.I_CALORIES) and _batteryDrawn and _iconsDrawn ? 11 : 10;
+                        idx = config.isEnabled(Config.I_COMPLICATION_1) and _batteryDrawn and _iconsDrawn ? 11 : 10;
                     }
                 }
                 break;
-            case :calories:
-                if (config.isEnabled(Config.I_CALORIES)) {
-                    if (!_stepsDrawn) { // place calories where steps would usually be
+            case :complication1:
+                if (config.isEnabled(Config.I_COMPLICATION_1)) {
+                    if (!_complication2Drawn) { // place complication1 where complication2 would usually be
                         if (_hrat6 or _dtat6) {
                             idx = _batteryDrawn ? 11 : 3;
                         } else {
                             idx = 10;
                         }
                     } else {
-                        // if steps are drawn, (mostly) place calories in the upper half of the screen.
-                        // Do not squeeze the calories in the upper half (13), if battery and icons are
-                        // on and only the steps are at the bottom. Instead, draw calories below steps 
-                        // at the bottom then (12).
+                        // if complication2 is drawn, (mostly) place complication1 in the upper half of
+                        // the screen. Do not squeeze complication1 in the upper half (13), if battery 
+                        // and icons are on and only complication2 are at the bottom. Instead, draw
+                        // complication1 below complication2 at the bottom then (12).
                         if (_batteryDrawn) {
                             if (_iconsDrawn) {
                                 idx = _hrat6 or _dtat6 ? 13 : 12;
@@ -600,7 +638,7 @@ class Indicators {
         return ret;
     }
 
-    // Draw a simple indicator, return true if it was drawn. Used for recovery time, steps and calories.
+    // Draw a simple indicator, return true if it was drawn.
     private function drawIndicator(
         dc as Dc,
         xpos as Number, 
