@@ -71,9 +71,9 @@ class Indicators {
 
         // Positions of the various indicators
         _pos = [
-            [(width * 0.73).toNumber(), (b + width * 0.50).toNumber()], //  0: Heart rate indicator at 3 o'clock
-            [(width * 0.48).toNumber(), (b + width * 0.75).toNumber()], //  1: Heart rate indicator at 6 o'clock
-            [(width * 0.23).toNumber(), (b + width * 0.50).toNumber()], //  2: Recovery time indicator at 9 o'clock
+            [(width * 0.73).toNumber(), (b + width * 0.50).toNumber()], //  0: 4th complication at 3 o'clock
+            [(width * 0.50).toNumber(), (b + width * 0.75).toNumber()], //  1: 4th complication at 6 o'clock
+            [(width * 0.27).toNumber(), (b + width * 0.50).toNumber()], //  2: 3rd complication at 9 o'clock
             [(width * 0.50).toNumber(), (b + width * 0.30).toNumber()], //  3: Battery level indicator at 12 o'clock with notifications
             [(width * 0.50).toNumber(), (b + width * 0.25).toNumber()], //  4: Battery level indicator at 12 o'clock w/o notifications
             [(width * 0.50).toNumber(), (b + width * 0.165).toNumber()],//  5: Alarms and notifications at 12 o'clock
@@ -81,11 +81,11 @@ class Indicators {
             [(width * 0.75).toNumber(), (b + width * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
             [(width * 0.50).toNumber(), (b + width * 0.65).toNumber()], //  8: Date (weekday and day format) at 6 o'clock, w/o steps
             [(width * 0.50).toNumber(), (b + width * 0.69).toNumber()], //  9: Date (weekday and day format) at 6 o'clock, with steps
-            [(width * 0.49).toNumber(), (b + width * 0.70).toNumber()], // 10: Steps at 6 o'clock, w/o date (weekday and day format)
-            [(width * 0.49).toNumber(), (b + width * 0.65).toNumber()], // 11: Steps at 6 o'clock, with date (weekday and day format)
-            [(width * 0.49).toNumber(), (b + width * 0.76).toNumber()], // 12: Heart rate indicator at 6 o'clock with steps
-            [(width * 0.49).toNumber(), (b + width * 0.39).toNumber()], // 13: Calories in upper half, with notifications and battery
-            [(width * 0.49).toNumber(), (b + width * 0.35).toNumber()]  // 14: Calories in upper half, w/o notifications but with battery
+            [(width * 0.50).toNumber(), (b + width * 0.70).toNumber()], // 10: 2nd complication at 6 o'clock, w/o date (weekday and day format)
+            [(width * 0.50).toNumber(), (b + width * 0.65).toNumber()], // 11: 2nd complication at 6 o'clock, with date (weekday and day format)
+            [(width * 0.50).toNumber(), (b + width * 0.76).toNumber()], // 12: 4th complication at 6 o'clock with steps
+            [(width * 0.50).toNumber(), (b + width * 0.39).toNumber()], // 13: 1st complication in upper half, with notifications and battery
+            [(width * 0.50).toNumber(), (b + width * 0.35).toNumber()]  // 14: 1st complication in upper half, w/o notifications but with battery
         ] as Array< Array<Number> >;
     }
 
@@ -139,7 +139,7 @@ class Indicators {
         var dateDisplay = config.getOption(Config.I_DATE_DISPLAY);
         if (:DateDisplayDayOnly == dateDisplay) {
             dc.drawText(
-                (_width * 0.75).toNumber(), 
+                (_width * 0.75).toNumber(), // idx = 7
                 (_height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber(), 
                 Graphics.FONT_MEDIUM, 
                 info.day.format("%02d"), 
@@ -169,7 +169,7 @@ class Indicators {
         if (config.isEnabled(Config.I_CONNECTED)) { 
             drawPhoneConnected(
                 dc,
-                w2,
+                w2, // idx = 6
                 _phoneConnectedY,
                 deviceSettings.phoneConnected
             );
@@ -180,12 +180,11 @@ class Indicators {
             var w = 0.73; // idx = 0
             var h = 0.50;
             if (:DateDisplayDayOnly == dateDisplay) {
+                w = 0.50; // idx = 1, 12
                 if (config.isEnabled(Config.I_STEPS)) {
-                    w = 0.49; // idx = 12
-                    h = 0.76;
+                    h = 0.76; // idx = 12
                 } else {
-                    w = 0.48; // idx = 1
-                    h = 0.75;
+                    h = 0.75; // idx = 1
                 }
             }
             drawHeartRate2(
@@ -201,10 +200,9 @@ class Indicators {
             if (ActivityMonitor.Info has :timeToRecovery) {
                 drawIndicator(
                     dc,
-                    (_width * 0.23).toNumber(),
+                    (_width * 0.27).toNumber(), // idx = 2
                     (_height * 0.50).toNumber(),
                     "R",
-                    false,
                     activityInfo.timeToRecovery
                 );
             }
@@ -218,14 +216,12 @@ class Indicators {
 
         // Draw the steps indicator
         if (config.isEnabled(Config.I_STEPS)) {
-            var w = 0.49; // idx = 10, 11
             var h = 0.70; // idx = 10
             if (hrat6 or dtat6) {
                 if (config.isEnabled(Config.I_CALORIES) or batteryDrawn) {
                     h = 0.65; // idx = 11
                 } else {
-                    w = 0.50; // idx = 3
-                    h = 0.30;
+                    h = 0.30; // idx = 3
                 }
             } else {
                 if (config.isEnabled(Config.I_CALORIES) and batteryDrawn and iconsDrawn) {
@@ -234,27 +230,23 @@ class Indicators {
             }
             stepsDrawn = drawIndicator(
                 dc,
-                (_width * w).toNumber(),
+                w2, // idx = 3, 10, 11
                 (_height * h).toNumber(),
                 "F",
-                true,
                 activityInfo.steps // since API Level 1.0.0
             );
         }
 
         // Draw the calories indicator
         if (config.isEnabled(Config.I_CALORIES)) {
-            var w = 0.50; // idx = 3
-            var h = 0.30;
+            var h = 0.30; // idx = 3
             if (!stepsDrawn) { // place calories where steps would usually be
                 if (hrat6 or dtat6) {
                     if (batteryDrawn) {
-                        w = 0.49; // idx = 11
-                        h = 0.65;
+                        h = 0.65; // idx = 11
                     } // else idx = 3
                 } else {
-                    w = 0.49; // idx = 10
-                    h = 0.70;
+                    h = 0.70; // idx = 10
                 }
             } else {
                 // if steps are drawn, (mostly) place calories in the upper half of the screen.
@@ -262,7 +254,6 @@ class Indicators {
                 // on and only the steps are at the bottom. Instead, draw calories below steps 
                 // at the bottom then (12).
                 if (batteryDrawn) {
-                    w = 0.49; // idx = 12, 13, 14
                     if (iconsDrawn) {
                         h = hrat6 or dtat6 ? 0.39 : 0.76; // idx = 13 : 12
                     } else {
@@ -272,10 +263,9 @@ class Indicators {
             }
             drawIndicator(
                 dc,
-                (_width * w).toNumber(),
+                w2, // idx = 3, 10, 11, 12, 13, 14
                 (_height * h).toNumber(),
                 "C",
-                true,
                 activityInfo.calories // since API Level 1.0.0
             );
         }
@@ -386,8 +376,8 @@ class Indicators {
                         _pos[idx][1],
                         // :Off, :HeartRate, :RecoveryTime, :Calories, :Steps
                         ["", "", "R", "C", "F"][value],
-                        true,
-                        [0, 0, activityInfo.timeToRecovery, activityInfo.calories, activityInfo.steps][value]
+                        [0, 0, 888, 1234, 45678][value]
+//                        [0, 0, activityInfo.timeToRecovery, activityInfo.calories, activityInfo.steps][value]
                     );
                     if (1 == i) { _complication2Drawn = ret; }
                 }
@@ -462,17 +452,17 @@ class Indicators {
                 break;
             case :complication1:
                 if (config.isEnabled(Config.I_COMPLICATION_1)) {
-                    if (!_complication2Drawn) { // place complication1 where complication2 would usually be
+                    if (!_complication2Drawn) { // Place the 1st complication where the 2nd complication would usually be
                         if (_hrat6 or _dtat6) {
                             idx = _batteryDrawn ? 11 : 3;
                         } else {
                             idx = 10;
                         }
                     } else {
-                        // if complication2 is drawn, (mostly) place complication1 in the upper half of
-                        // the screen. Do not squeeze complication1 in the upper half (13), if battery 
-                        // and icons are on and only complication2 are at the bottom. Instead, draw
-                        // complication1 below complication2 at the bottom then (12).
+                        // If the 2nd complication is drawn, (mostly) place the 1st complication in the upper
+                        // half of the screen. Do not squeeze the 1st complication in the upper half (13), if 
+                        // battery and icons are on and only the 2nd complication are at the bottom. Instead,
+                        // draw the 1st complication below the 2nd complication at the bottom then (12).
                         if (_batteryDrawn) {
                             if (_iconsDrawn) {
                                 idx = _hrat6 or _dtat6 ? 13 : 12;
@@ -509,32 +499,53 @@ class Indicators {
             }
         }
         if (heartRate != null) {
-            //heartRate = 123;
+            heartRate = 88;
             //heartRate = System.getClockTime().sec + 60;
             var font = Graphics.FONT_TINY;
             var fontHeight = Graphics.getFontHeight(font);
-            var width = (fontHeight * 2.1).toNumber(); // Indicator width
-            var hr = heartRate.format("%d");
+            var width = (fontHeight * 2.4).toNumber(); // Indicator width
+            var xposIcon = xpos;
+            var xposText = xpos;
+            var textAlign = Graphics.TEXT_JUSTIFY_VCENTER;
 
-            dc.setClip(xpos - width*0.48, ypos - fontHeight*0.38, width, fontHeight*0.85);
+            if (xpos < _width * 0.4) { // left align the indicator
+                xposIcon -= heartRate > 99 ? width*5/32 : width*4/32;
+                xposText -= heartRate > 99 ? width*4/32 : width*2/32;
+            } else if (xpos > _width * 0.6) { // right align the indicator
+                xposIcon -= heartRate > 99 ? width*6/32 : 0;
+                xposText -= heartRate > 99 ? width*4/32 : -width*2/32;
+            } else { // center the indicator
+                xposIcon -= heartRate > 99 ? width*6/32 : width*2/32;
+                xposText -= heartRate > 99 ? width*4/32 : 0;
+            }
+
+            dc.setClip(xpos - width*0.51, ypos - fontHeight*0.37, width, fontHeight*0.78);
             dc.setColor(Graphics.COLOR_TRANSPARENT, config.colors[Config.C_BACKGROUND]);
             dc.clear();
             dc.clearClip();
             dc.setColor(config.colors[Config.C_HEART_RATE], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                heartRate > 99 ? xpos - width*2/16 - 1 : xpos, ypos - 1, 
+                xposIcon, 
+                ypos - 1, 
                 iconFont as FontResource, 
-                isAwake ? "H" : "I" as String, 
-                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
+                isAwake ? "H" : "I", 
+                textAlign | Graphics.TEXT_JUSTIFY_RIGHT
             );
             dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                xpos + width/2, 
+                xposText, 
                 ypos,
                 font, 
-                hr, 
-                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
+                heartRate.format("%d"), 
+                textAlign | Graphics.TEXT_JUSTIFY_LEFT
             );
+/*
+            dc.drawRectangle(xpos - width*0.51, ypos - fontHeight*0.37, width, fontHeight*0.78);
+            dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(xpos, ypos - 1, 2);
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(xposIcon, ypos - 1, 2);
+*/
             ret = true;
         }
         return ret;
@@ -591,7 +602,6 @@ class Indicators {
         xpos as Number, 
         ypos as Number,
         icon as String,
-        iconLeft as Boolean,
         value as Number?
     ) as Boolean {
         var ret = false;
@@ -601,23 +611,46 @@ class Indicators {
         if (value != null and value > 0) {
             var font = Graphics.FONT_TINY;
             var fontHeight = Graphics.getFontHeight(font);
-            var width = (fontHeight * 2.1).toNumber(); // Indicator width
+            var width = (fontHeight * 2.1).toNumber(); // some obscure number, not the width of the indicator
             var xposText = xpos;
             var xposIcon = xpos;
             var textAlign = Graphics.TEXT_JUSTIFY_VCENTER;
-            if (iconLeft) {
-                xposText -= value > 999 ? value > 9999 ? width*9/32 : width*6/32 : width*3/32;
-                xposIcon -= value > 999 ? value > 9999 ? width*22/32 : width*19/32 : width*16/32;
-                textAlign |= Graphics.TEXT_JUSTIFY_LEFT;
-            } else {
-                xposText += value > 99 ? width*10/32 : width*4/32;
-                xposIcon += value > 99 ? width*23/32 : width*17/32;
-                textAlign |= Graphics.TEXT_JUSTIFY_RIGHT;
+
+            if (xpos < _width * 0.4) { // left align the indicators
+                xposIcon -= value > 99 ? width*6/32 : width*5/32;
+                xposText -= value > 99 ? width*4/32 : width*3/32;
+            } else if (xpos > _width * 0.6) { // right align the indicators
+                xposIcon -= value > 9 ? value > 99 ? width*6/32 : 0 : -width*7/32;
+                xposText -= value > 9 ? value > 99 ? width*4/32 : -width*2/32 : -width*9/32;
+            } else { // center the indicators
+                xposIcon -= value > 9 ? value > 99 ? value > 999 ? value > 9999 ? width*14/32 : width*10/32 : width*6/32 : width*2/32 : -width*1/32;
+                xposText -= value > 9 ? value > 99 ? value > 999 ? value > 9999 ? width*12/32 : width*8/32 : width*4/32 : 0 : -width*3/32;
             }
+
             dc.setColor(config.colors[Config.C_INDICATOR], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(xposIcon, ypos - 1, iconFont as FontResource, icon as String, textAlign);
+            dc.drawText(
+                xposIcon, 
+                ypos - 1, 
+                iconFont as FontResource, 
+                icon, 
+                textAlign | Graphics.TEXT_JUSTIFY_RIGHT
+            );
             dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(xposText, ypos, font, value.format("%d"), textAlign);
+            dc.drawText(
+                xposText, 
+                ypos, 
+                font, 
+                value.format("%d"), 
+                textAlign | Graphics.TEXT_JUSTIFY_LEFT
+            );
+/*
+            dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(xpos, ypos - 1, 2);
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(xposIcon, ypos - 1, 2);
+            dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(xposText, ypos - 1, 2);
+*/
             ret = true;
         }
         return ret;
