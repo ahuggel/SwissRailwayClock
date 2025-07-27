@@ -11,4 +11,4 @@ char id=77   x=175   y=0     width=35    height=35    xoffset=0     yoffset=0   
 char id=82   x=210   y=0     width=40    height=35    xoffset=0     yoffset=0    xadvance=40    page=0  chnl=15
 char id=67   x=4     y=35    width=26    height=35    xoffset=0     yoffset=0    xadvance=26    page=0  chnl=15
 char id=32   x=35    y=35    width=11    height=35    xoffset=0     yoffset=0    xadvance=11    page=0  chnl=15
-char id=95   x=35    y=35    width=35    height=35    xoffset=0     yoffset=0    xadvance=35    page=0  chnl=15
+char id=126  x=35    y=35    width=6     height=35    xoffset=0     yoffset=0    xadvance=6     page=0  chnl=15

@@ -499,52 +499,53 @@ class Indicators {
             }
         }
         if (heartRate != null) {
-            heartRate = 88;
+            //heartRate = 88;
             //heartRate = System.getClockTime().sec + 60;
+            // Adjust the x-coordinate for the location of the indicator and the value
+            var xpos2 = xpos;
+            var w2 = _width / 2;
+            if (xpos < w2) { // left align the indicator
+                xpos2 += _width * -0.024;
+            } else {
+                var i = heartRate > 99 ? 1 : 0;            
+                if (xpos > w2) { // right align the indicator
+                    xpos2 += _width * [0.022, -0.030][i];
+                } else { // center the indicator
+                    xpos2 += _width * [0.000, -0.026][i];
+                }
+            }
+            // Clear the area for the heart rate indicator
             var font = Graphics.FONT_TINY;
             var fontHeight = Graphics.getFontHeight(font);
             var width = (fontHeight * 2.4).toNumber(); // Indicator width
-            var xposIcon = xpos;
-            var xposText = xpos;
-            var textAlign = Graphics.TEXT_JUSTIFY_VCENTER;
-
-            if (xpos < _width * 0.4) { // left align the indicator
-                xposIcon -= heartRate > 99 ? width*5/32 : width*4/32;
-                xposText -= heartRate > 99 ? width*4/32 : width*2/32;
-            } else if (xpos > _width * 0.6) { // right align the indicator
-                xposIcon -= heartRate > 99 ? width*6/32 : 0;
-                xposText -= heartRate > 99 ? width*4/32 : -width*2/32;
-            } else { // center the indicator
-                xposIcon -= heartRate > 99 ? width*6/32 : width*2/32;
-                xposText -= heartRate > 99 ? width*4/32 : 0;
-            }
-
-            dc.setClip(xpos - width*0.51, ypos - fontHeight*0.37, width, fontHeight*0.78);
+            dc.setClip(xpos - width*0.50, ypos - fontHeight*0.37, width, fontHeight*0.78);
             dc.setColor(Graphics.COLOR_TRANSPARENT, config.colors[Config.C_BACKGROUND]);
             dc.clear();
             dc.clearClip();
+            // Draw the new indicator symbol and its value
             dc.setColor(config.colors[Config.C_HEART_RATE], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                xposIcon, 
+                xpos2, 
                 ypos - 1, 
                 iconFont as FontResource, 
-                isAwake ? "H" : "I", 
-                textAlign | Graphics.TEXT_JUSTIFY_RIGHT
+                isAwake ? "H~" : "I~", 
+                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_RIGHT
             );
             dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                xposText, 
+                xpos2, 
                 ypos,
                 font, 
                 heartRate.format("%d"), 
-                textAlign | Graphics.TEXT_JUSTIFY_LEFT
+                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_LEFT
             );
 /*
-            dc.drawRectangle(xpos - width*0.51, ypos - fontHeight*0.37, width, fontHeight*0.78);
+            // Debug output
+            dc.drawRectangle(xpos - width*0.50, ypos - fontHeight*0.37, width, fontHeight*0.78);
             dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(xpos, ypos - 1, 2);
+            dc.fillCircle(xpos, ypos - 1, 1);
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(xposIcon, ypos - 1, 2);
+            dc.fillCircle(xpos2, ypos - 1, 1);
 */
             ret = true;
         }
