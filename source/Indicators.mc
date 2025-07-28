@@ -376,8 +376,8 @@ class Indicators {
                         _pos[idx][1],
                         // :Off, :HeartRate, :RecoveryTime, :Calories, :Steps
                         ["", "", "R", "C", "F"][value],
-                        [0, 0, 888, 1234, 45678][value]
-//                        [0, 0, activityInfo.timeToRecovery, activityInfo.calories, activityInfo.steps][value]
+                        [0, 0, activityInfo.timeToRecovery, activityInfo.calories, activityInfo.steps][value]
+//                        [0, 0, 888, 3456, 98765][value]
                     );
                     if (1 == i) { _complication2Drawn = ret; }
                 }
@@ -498,19 +498,19 @@ class Indicators {
                 heartRate = sample.heartRate;
             }
         }
+        //heartRate = 238;
+        //heartRate = System.getClockTime().sec + 60;
         if (heartRate != null) {
-            //heartRate = 88;
-            //heartRate = System.getClockTime().sec + 60;
             // Adjust the x-coordinate for the location of the indicator and the value
             var xpos2 = xpos;
             var w2 = _width / 2;
-            if (xpos < w2) { // left align the indicator
+            if (xpos < w2) { // left align the indicator at 9 o'clock
                 xpos2 += _width * -0.024;
             } else {
                 var i = heartRate > 99 ? 1 : 0;            
-                if (xpos > w2) { // right align the indicator
-                    xpos2 += _width * [0.022, -0.030][i];
-                } else { // center the indicator
+                if (xpos > w2) { // right align the indicator at 3 o'clock
+                    xpos2 += _width * [0.019, -0.030][i];
+                } else { // center the indicator if it is on the line from 12 o'clock - 6 o'clock
                     xpos2 += _width * [0.000, -0.026][i];
                 }
             }
@@ -610,47 +610,41 @@ class Indicators {
         //value = 87654;
         //value = 3456;
         if (value != null and value > 0) {
-            var font = Graphics.FONT_TINY;
-            var fontHeight = Graphics.getFontHeight(font);
-            var width = (fontHeight * 2.1).toNumber(); // some obscure number, not the width of the indicator
-            var xposText = xpos;
-            var xposIcon = xpos;
-            var textAlign = Graphics.TEXT_JUSTIFY_VCENTER;
-
-            if (xpos < _width * 0.4) { // left align the indicators
-                xposIcon -= value > 99 ? width*6/32 : width*5/32;
-                xposText -= value > 99 ? width*4/32 : width*3/32;
-            } else if (xpos > _width * 0.6) { // right align the indicators
-                xposIcon -= value > 9 ? value > 99 ? width*6/32 : 0 : -width*7/32;
-                xposText -= value > 9 ? value > 99 ? width*4/32 : -width*2/32 : -width*9/32;
-            } else { // center the indicators
-                xposIcon -= value > 9 ? value > 99 ? value > 999 ? value > 9999 ? width*14/32 : width*10/32 : width*6/32 : width*2/32 : -width*1/32;
-                xposText -= value > 9 ? value > 99 ? value > 999 ? value > 9999 ? width*12/32 : width*8/32 : width*4/32 : 0 : -width*3/32;
+            // Adjust the x-coordinate for the location of the indicator and the value
+            var xpos2 = xpos;
+            var w2 = _width / 2;
+            if (xpos < w2) { // left align the indicator at 9 o'clock
+                xpos2 += _width * -0.024;
+            } else if (xpos > w2) { // right align the indicator at 3 o'clock
+                var i = value > 9 ? value > 99 ? 2 : 1 : 0;            
+                xpos2 += _width * [0.068, 0.019, -0.030][i];
+            } else { // center the indicator if it is on the line from 12 o'clock - 6 o'clock
+                var i = value > 9 ? value > 99 ? value > 999 ? value > 9999 ? 4 : 3 : 2 : 1 : 0;
+                xpos2 += _width * [0.024, 0.000, -0.026, -0.052, -0.076][i];
             }
-
+            // Draw the indicator symbol and its value
             dc.setColor(config.colors[Config.C_INDICATOR], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                xposIcon, 
+                xpos2, 
                 ypos - 1, 
                 iconFont as FontResource, 
-                icon, 
-                textAlign | Graphics.TEXT_JUSTIFY_RIGHT
+                icon + "~", 
+                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_RIGHT
             );
             dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                xposText, 
+                xpos2, 
                 ypos, 
-                font, 
+                Graphics.FONT_TINY,
                 value.format("%d"), 
-                textAlign | Graphics.TEXT_JUSTIFY_LEFT
+                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_LEFT
             );
 /*
+            // Debug output
             dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(xpos, ypos - 1, 2);
+            dc.fillCircle(xpos, ypos - 1, 1);
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(xposIcon, ypos - 1, 2);
-            dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(xposText, ypos - 1, 2);
+            dc.fillCircle(xpos2, ypos - 1, 1);
 */
             ret = true;
         }
