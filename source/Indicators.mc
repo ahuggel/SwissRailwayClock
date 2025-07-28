@@ -349,9 +349,6 @@ class Indicators {
             );
         }
 
-        // TODO: check if (ActivityMonitor.Info has :timeToRecovery) and all the others?? - if then check in getIndicatorPosition!!
-        // TODO: Heart rate icon on the other side?? - No, the recovery one should go to the other side
-
         _drawHeartRate = -1;
         _complication2Drawn = false;
         var complication = [:complication1, :complication2, :complication3, :complication4];
@@ -359,6 +356,7 @@ class Indicators {
         for (var i = 3; i >= 0; i--) {
             idx = getIndicatorPosition(complication[i]);
             if (-1 != idx) {
+                var ret = false;
                 var value = config.getValue(complicationId[i]);
                 if (1 == value) {
                     // Determine if and where the heart rate should be drawn, but don't
@@ -368,20 +366,30 @@ class Indicators {
                     // as that is also called in low-power mode, from onPartialUpdate(),
                     // when the position always remains the same.
                     _drawHeartRate = idx;
-                    if (1 == i) { _complication2Drawn = true; }
+                    ret = true;
                 } else {
-                    var timeToRecovery = config.hasTimeToRecovery() ? activityInfo.timeToRecovery : 0;
-                    var ret = drawIndicator(
+                    ret = drawIndicator(
                         dc,
                         _pos[idx][0],
                         _pos[idx][1],
-                        // :Off, :HeartRate, :RecoveryTime, :Calories, :Steps
-                        ["", "", "R", "C", "F"][value],
-                        [0, 0, timeToRecovery, activityInfo.calories, activityInfo.steps][value]
+                        [
+                            "",  // :Off
+                            "",  // :HeartRate
+                            "R", // :RecoveryTime
+                            "C", // :Calories
+                            "F"  // :Steps
+                        ][value],
+                        [
+                            null,
+                            null,
+                            config.hasTimeToRecovery() ? activityInfo.timeToRecovery : null, 
+                            activityInfo.calories, 
+                            activityInfo.steps
+                        ][value]
 //                        [0, 0, 888, 3456, 98765][value]
                     );
-                    if (1 == i) { _complication2Drawn = ret; }
                 }
+                if (1 == i) { _complication2Drawn = ret; }
             }
         }
     }
