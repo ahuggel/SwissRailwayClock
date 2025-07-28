@@ -44,7 +44,7 @@ class Indicators {
 
     (:modern) private var _batteryDrawn as Boolean = false;
     (:modern) private var _iconsDrawn as Boolean = false;
-    (:modern) private var _stepsDrawn as Boolean = false;
+    (:modern) private var _complication2Drawn as Boolean = false;
     (:modern) private var _hrat6 as Boolean = false;
     (:modern) private var _dtat6 as Boolean = false;
     (:modern) private var _screenCenter as Array<Number>;
@@ -71,9 +71,9 @@ class Indicators {
 
         // Positions of the various indicators
         _pos = [
-            [(width * 0.73).toNumber(), (b + width * 0.50).toNumber()], //  0: Heart rate indicator at 3 o'clock
-            [(width * 0.48).toNumber(), (b + width * 0.75).toNumber()], //  1: Heart rate indicator at 6 o'clock
-            [(width * 0.23).toNumber(), (b + width * 0.50).toNumber()], //  2: Recovery time indicator at 9 o'clock
+            [(width * 0.73).toNumber(), (b + width * 0.50).toNumber()], //  0: 4th complication at 3 o'clock
+            [(width * 0.50).toNumber(), (b + width * 0.75).toNumber()], //  1: 4th complication at 6 o'clock
+            [(width * 0.27).toNumber(), (b + width * 0.50).toNumber()], //  2: 3rd complication at 9 o'clock
             [(width * 0.50).toNumber(), (b + width * 0.30).toNumber()], //  3: Battery level indicator at 12 o'clock with notifications
             [(width * 0.50).toNumber(), (b + width * 0.25).toNumber()], //  4: Battery level indicator at 12 o'clock w/o notifications
             [(width * 0.50).toNumber(), (b + width * 0.165).toNumber()],//  5: Alarms and notifications at 12 o'clock
@@ -81,11 +81,11 @@ class Indicators {
             [(width * 0.75).toNumber(), (b + width * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber()], // 7: Date (day format) at 3 o'clock
             [(width * 0.50).toNumber(), (b + width * 0.65).toNumber()], //  8: Date (weekday and day format) at 6 o'clock, w/o steps
             [(width * 0.50).toNumber(), (b + width * 0.69).toNumber()], //  9: Date (weekday and day format) at 6 o'clock, with steps
-            [(width * 0.49).toNumber(), (b + width * 0.70).toNumber()], // 10: Steps at 6 o'clock, w/o date (weekday and day format)
-            [(width * 0.49).toNumber(), (b + width * 0.65).toNumber()], // 11: Steps at 6 o'clock, with date (weekday and day format)
-            [(width * 0.49).toNumber(), (b + width * 0.76).toNumber()], // 12: Heart rate indicator at 6 o'clock with steps
-            [(width * 0.49).toNumber(), (b + width * 0.39).toNumber()], // 13: Calories in upper half, with notifications and battery
-            [(width * 0.49).toNumber(), (b + width * 0.35).toNumber()]  // 14: Calories in upper half, w/o notifications but with battery
+            [(width * 0.50).toNumber(), (b + width * 0.70).toNumber()], // 10: 2nd complication at 6 o'clock, w/o date (weekday and day format)
+            [(width * 0.50).toNumber(), (b + width * 0.65).toNumber()], // 11: 2nd complication at 6 o'clock, with date (weekday and day format)
+            [(width * 0.50).toNumber(), (b + width * 0.76).toNumber()], // 12: 4th complication at 6 o'clock with steps
+            [(width * 0.50).toNumber(), (b + width * 0.39).toNumber()], // 13: 1st complication in upper half, with notifications and battery
+            [(width * 0.50).toNumber(), (b + width * 0.35).toNumber()]  // 14: 1st complication in upper half, w/o notifications but with battery
         ] as Array< Array<Number> >;
     }
 
@@ -139,7 +139,7 @@ class Indicators {
         var dateDisplay = config.getOption(Config.I_DATE_DISPLAY);
         if (:DateDisplayDayOnly == dateDisplay) {
             dc.drawText(
-                (_width * 0.75).toNumber(), 
+                (_width * 0.75).toNumber(), // idx = 7
                 (_height * 0.50 - Graphics.getFontHeight(Graphics.FONT_MEDIUM)/2 - 1).toNumber(), 
                 Graphics.FONT_MEDIUM, 
                 info.day.format("%02d"), 
@@ -169,7 +169,7 @@ class Indicators {
         if (config.isEnabled(Config.I_CONNECTED)) { 
             drawPhoneConnected(
                 dc,
-                w2,
+                w2, // idx = 6
                 _phoneConnectedY,
                 deviceSettings.phoneConnected
             );
@@ -180,12 +180,11 @@ class Indicators {
             var w = 0.73; // idx = 0
             var h = 0.50;
             if (:DateDisplayDayOnly == dateDisplay) {
+                w = 0.50; // idx = 1, 12
                 if (config.isEnabled(Config.I_STEPS)) {
-                    w = 0.49; // idx = 12
-                    h = 0.76;
+                    h = 0.76; // idx = 12
                 } else {
-                    w = 0.48; // idx = 1
-                    h = 0.75;
+                    h = 0.75; // idx = 1
                 }
             }
             drawHeartRate2(
@@ -201,10 +200,9 @@ class Indicators {
             if (ActivityMonitor.Info has :timeToRecovery) {
                 drawIndicator(
                     dc,
-                    (_width * 0.23).toNumber(),
+                    (_width * 0.27).toNumber(), // idx = 2
                     (_height * 0.50).toNumber(),
                     "R",
-                    false,
                     activityInfo.timeToRecovery
                 );
             }
@@ -218,14 +216,12 @@ class Indicators {
 
         // Draw the steps indicator
         if (config.isEnabled(Config.I_STEPS)) {
-            var w = 0.49; // idx = 10, 11
             var h = 0.70; // idx = 10
             if (hrat6 or dtat6) {
                 if (config.isEnabled(Config.I_CALORIES) or batteryDrawn) {
                     h = 0.65; // idx = 11
                 } else {
-                    w = 0.50; // idx = 3
-                    h = 0.30;
+                    h = 0.30; // idx = 3
                 }
             } else {
                 if (config.isEnabled(Config.I_CALORIES) and batteryDrawn and iconsDrawn) {
@@ -234,27 +230,23 @@ class Indicators {
             }
             stepsDrawn = drawIndicator(
                 dc,
-                (_width * w).toNumber(),
+                w2, // idx = 3, 10, 11
                 (_height * h).toNumber(),
                 "F",
-                true,
                 activityInfo.steps // since API Level 1.0.0
             );
         }
 
         // Draw the calories indicator
         if (config.isEnabled(Config.I_CALORIES)) {
-            var w = 0.50; // idx = 3
-            var h = 0.30;
+            var h = 0.30; // idx = 3
             if (!stepsDrawn) { // place calories where steps would usually be
                 if (hrat6 or dtat6) {
                     if (batteryDrawn) {
-                        w = 0.49; // idx = 11
-                        h = 0.65;
+                        h = 0.65; // idx = 11
                     } // else idx = 3
                 } else {
-                    w = 0.49; // idx = 10
-                    h = 0.70;
+                    h = 0.70; // idx = 10
                 }
             } else {
                 // if steps are drawn, (mostly) place calories in the upper half of the screen.
@@ -262,7 +254,6 @@ class Indicators {
                 // on and only the steps are at the bottom. Instead, draw calories below steps 
                 // at the bottom then (12).
                 if (batteryDrawn) {
-                    w = 0.49; // idx = 12, 13, 14
                     if (iconsDrawn) {
                         h = hrat6 or dtat6 ? 0.39 : 0.76; // idx = 13 : 12
                     } else {
@@ -272,10 +263,9 @@ class Indicators {
             }
             drawIndicator(
                 dc,
-                (_width * w).toNumber(),
+                w2, // idx = 3, 10, 11, 12, 13, 14
                 (_height * h).toNumber(),
                 "C",
-                true,
                 activityInfo.calories // since API Level 1.0.0
             );
         }
@@ -286,9 +276,9 @@ class Indicators {
     (:modern) public function draw(dc as Dc, deviceSettings as DeviceSettings, isAwake as Boolean) as Void {
         var activityInfo = ActivityMonitor.getInfo();
 
-        // Helper - is the heart rate indicator at 6 o'clock?
+        // Helper - is the 4th complication at 6 o'clock?
         _hrat6 =     :DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)
-                 and config.isEnabled(Config.I_HEART_RATE);
+                 and config.isEnabled(Config.I_COMPLICATION_4);
         // Helper - is the (long) date at 6 o'clock?
         _dtat6 = :DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY);
 
@@ -359,54 +349,49 @@ class Indicators {
             );
         }
 
-        // Determine if and where the heart rate should be drawn, but don't
-        // draw it here. The indicator is drawn in drawHeartRate(), which
-        // needs to be called after this function, once the position is set.
-        // This is done to minimize the work necessary in drawHeartRate(), 
-        // as that is also called in low-power mode, from onPartialUpdate(),
-        // when the position always remains the same.
-        _drawHeartRate = getIndicatorPosition(:heartRate);
-
-        // Draw the recovery time indicator
-        idx = getIndicatorPosition(:recoveryTime);
-        if (-1 != idx) {
-            if (ActivityMonitor.Info has :timeToRecovery) {
-                drawIndicator(
-                    dc,
-                    _pos[idx][0],
-                    _pos[idx][1],
-                    "R",
-                    false,
-                    activityInfo.timeToRecovery
-                );
+        // Draw the complications
+        _drawHeartRate = -1;
+        _complication2Drawn = false;
+        var complication = [:complication1, :complication2, :complication3, :complication4];
+        var complicationId = [Config.I_COMPLICATION_1, Config.I_COMPLICATION_2, Config.I_COMPLICATION_3, Config.I_COMPLICATION_4];
+        for (var i = 3; i >= 0; i--) {
+            idx = getIndicatorPosition(complication[i]);
+            if (-1 != idx) {
+                var ret = false;
+                var value = config.getValue(complicationId[i]);
+                if (1 == value) {
+                    // Determine if and where the heart rate should be drawn, but don't
+                    // draw it here. The indicator is drawn in drawHeartRate(), which
+                    // needs to be called after this function, once the position is set.
+                    // This is done to minimize the work necessary in drawHeartRate(), 
+                    // as that is also called in low-power mode, from onPartialUpdate(),
+                    // when the position always remains the same.
+                    _drawHeartRate = idx;
+                    ret = true;
+                } else {
+                    ret = drawIndicator(
+                        dc,
+                        _pos[idx][0],
+                        _pos[idx][1],
+                        [
+                            "",  // :Off
+                            "",  // :HeartRate
+                            "R", // :RecoveryTime
+                            "C", // :Calories
+                            "F"  // :Steps
+                        ][value],
+                        [
+                            null,
+                            null,
+                            config.hasTimeToRecovery() ? activityInfo.timeToRecovery : null, 
+                            activityInfo.calories, 
+                            activityInfo.steps
+                        ][value]
+//                        [0, 0, 888, 3456, 98765][value]
+                    );
+                }
+                if (1 == i) { _complication2Drawn = ret; }
             }
-        }
-
-        // Draw the steps indicator
-        _stepsDrawn = false;
-        idx = getIndicatorPosition(:footsteps);
-        if (-1 != idx) {
-            _stepsDrawn = drawIndicator(
-                dc,
-                _pos[idx][0],
-                _pos[idx][1],
-                "F",
-                true,
-                activityInfo.steps // since API Level 1.0.0
-            );
-        }
-
-        // Draw the calories indicator
-        idx = getIndicatorPosition(:calories);
-        if (-1 != idx) {
-            drawIndicator(
-                dc,
-                _pos[idx][0],
-                _pos[idx][1],
-                "C",
-                true,
-                activityInfo.calories // since API Level 1.0.0
-            );
         }
     }
 
@@ -423,11 +408,6 @@ class Indicators {
     (:modern) private function getIndicatorPosition(indicator as Symbol) as Number {
         var idx = -1;
         switch (indicator) {
-            case :recoveryTime:
-                if (config.isEnabled(Config.I_RECOVERY_TIME)) { 
-                    idx = 2; 
-                }
-                break;
             case :battery:
                 if (config.isEnabled(Config.I_BATTERY)) {
                     idx = _iconsDrawn ? 3 : 4;
@@ -451,43 +431,48 @@ class Indicators {
                 break;
             case :longDate:
                 if (:DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)) {
-                    if (config.isEnabled(Config.I_STEPS)) {
-                        idx = _batteryDrawn or config.isEnabled(Config.I_CALORIES) ? 9 : 8;
+                    if (config.isEnabled(Config.I_COMPLICATION_2)) {
+                        idx = _batteryDrawn or config.isEnabled(Config.I_COMPLICATION_1) ? 9 : 8;
                     } else {
-                        idx = _batteryDrawn and config.isEnabled(Config.I_CALORIES) ? 9 : 8;
+                        idx = _batteryDrawn and config.isEnabled(Config.I_COMPLICATION_1) ? 9 : 8;
                     }
                 }
                 break;
-            case :heartRate:
-                if (config.isEnabled(Config.I_HEART_RATE)) {
+            case :complication4:
+                if (config.isEnabled(Config.I_COMPLICATION_4)) {
                     idx = 0;
                     if (:DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)) {
-                        idx = (config.isEnabled(Config.I_STEPS)) ? 12 : 1;
+                        idx = (config.isEnabled(Config.I_COMPLICATION_2)) ? 12 : 1;
                     }
                 }
                 break;
-            case :footsteps:
-                if (config.isEnabled(Config.I_STEPS)) {
+            case :complication3:
+                if (config.isEnabled(Config.I_COMPLICATION_3)) { 
+                    idx = 2; 
+                }
+                break;
+            case :complication2:
+                if (config.isEnabled(Config.I_COMPLICATION_2)) {
                     if (_hrat6 or _dtat6) {
-                        idx = config.isEnabled(Config.I_CALORIES) or _batteryDrawn ? 11 : 3;
+                        idx = config.isEnabled(Config.I_COMPLICATION_1) or _batteryDrawn ? 11 : 3;
                     } else {
-                        idx = config.isEnabled(Config.I_CALORIES) and _batteryDrawn and _iconsDrawn ? 11 : 10;
+                        idx = config.isEnabled(Config.I_COMPLICATION_1) and _batteryDrawn and _iconsDrawn ? 11 : 10;
                     }
                 }
                 break;
-            case :calories:
-                if (config.isEnabled(Config.I_CALORIES)) {
-                    if (!_stepsDrawn) { // place calories where steps would usually be
+            case :complication1:
+                if (config.isEnabled(Config.I_COMPLICATION_1)) {
+                    if (!_complication2Drawn) { // Place the 1st complication where the 2nd complication would usually be
                         if (_hrat6 or _dtat6) {
                             idx = _batteryDrawn ? 11 : 3;
                         } else {
                             idx = 10;
                         }
                     } else {
-                        // if steps are drawn, (mostly) place calories in the upper half of the screen.
-                        // Do not squeeze the calories in the upper half (13), if battery and icons are
-                        // on and only the steps are at the bottom. Instead, draw calories below steps 
-                        // at the bottom then (12).
+                        // If the 2nd complication is drawn, (mostly) place the 1st complication in the upper
+                        // half of the screen. Do not squeeze the 1st complication in the upper half (13), if 
+                        // battery and icons are on and only the 2nd complication are at the bottom. Instead,
+                        // draw the 1st complication below the 2nd complication at the bottom then (12).
                         if (_batteryDrawn) {
                             if (_iconsDrawn) {
                                 idx = _hrat6 or _dtat6 ? 13 : 12;
@@ -523,33 +508,55 @@ class Indicators {
                 heartRate = sample.heartRate;
             }
         }
+        //heartRate = 238;
+        //heartRate = System.getClockTime().sec + 60;
         if (heartRate != null) {
-            //heartRate = 123;
-            //heartRate = System.getClockTime().sec + 60;
+            // Adjust the x-coordinate for the location of the indicator and the value
+            var xpos2 = xpos;
+            var w2 = _width / 2;
+            if (xpos < w2) { // left align the indicator at 9 o'clock
+                xpos2 += _width * -0.024;
+            } else {
+                var i = heartRate > 99 ? 1 : 0;            
+                if (xpos > w2) { // right align the indicator at 3 o'clock
+                    xpos2 += _width * [0.019, -0.030][i];
+                } else { // center the indicator if it is on the line from 12 o'clock - 6 o'clock
+                    xpos2 += _width * [0.000, -0.026][i];
+                }
+            }
+            // Clear the area for the heart rate indicator
             var font = Graphics.FONT_TINY;
             var fontHeight = Graphics.getFontHeight(font);
-            var width = (fontHeight * 2.1).toNumber(); // Indicator width
-            var hr = heartRate.format("%d");
-
-            dc.setClip(xpos - width*0.48, ypos - fontHeight*0.38, width, fontHeight*0.85);
+            var width = (fontHeight * 2.4).toNumber(); // Indicator width
+            dc.setClip(xpos - width*0.50, ypos - fontHeight*0.37, width, fontHeight*0.78);
             dc.setColor(Graphics.COLOR_TRANSPARENT, config.colors[Config.C_BACKGROUND]);
             dc.clear();
             dc.clearClip();
+            // Draw the new indicator symbol and its value
             dc.setColor(config.colors[Config.C_HEART_RATE], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                heartRate > 99 ? xpos - width*2/16 - 1 : xpos, ypos - 1, 
+                xpos2, 
+                ypos - 1, 
                 iconFont as FontResource, 
-                isAwake ? "H" : "I" as String, 
-                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
+                isAwake ? "H~" : "I~", 
+                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_RIGHT
             );
             dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
-                xpos + width/2, 
+                xpos2, 
                 ypos,
                 font, 
-                hr, 
-                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
+                heartRate.format("%d"), 
+                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_LEFT
             );
+/*
+            // Debug output
+            dc.drawRectangle(xpos - width*0.50, ypos - fontHeight*0.37, width, fontHeight*0.78);
+            dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(xpos, ypos - 1, 1);
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(xpos2, ypos - 1, 1);
+*/
             ret = true;
         }
         return ret;
@@ -600,13 +607,12 @@ class Indicators {
         return ret;
     }
 
-    // Draw a simple indicator, return true if it was drawn. Used for recovery time, steps and calories.
+    // Draw a simple indicator, return true if it was drawn.
     private function drawIndicator(
         dc as Dc,
         xpos as Number, 
         ypos as Number,
         icon as String,
-        iconLeft as Boolean,
         value as Number?
     ) as Boolean {
         var ret = false;
@@ -614,25 +620,42 @@ class Indicators {
         //value = 87654;
         //value = 3456;
         if (value != null and value > 0) {
-            var font = Graphics.FONT_TINY;
-            var fontHeight = Graphics.getFontHeight(font);
-            var width = (fontHeight * 2.1).toNumber(); // Indicator width
-            var xposText = xpos;
-            var xposIcon = xpos;
-            var textAlign = Graphics.TEXT_JUSTIFY_VCENTER;
-            if (iconLeft) {
-                xposText -= value > 999 ? value > 9999 ? width*9/32 : width*6/32 : width*3/32;
-                xposIcon -= value > 999 ? value > 9999 ? width*22/32 : width*19/32 : width*16/32;
-                textAlign |= Graphics.TEXT_JUSTIFY_LEFT;
-            } else {
-                xposText += value > 99 ? width*10/32 : width*4/32;
-                xposIcon += value > 99 ? width*23/32 : width*17/32;
-                textAlign |= Graphics.TEXT_JUSTIFY_RIGHT;
+            // Adjust the x-coordinate for the location of the indicator and the value
+            var xpos2 = xpos;
+            var w2 = _width / 2;
+            if (xpos < w2) { // left align the indicator at 9 o'clock
+                xpos2 += _width * -0.024;
+            } else if (xpos > w2) { // right align the indicator at 3 o'clock
+                var i = value > 9 ? value > 99 ? 2 : 1 : 0;            
+                xpos2 += _width * [0.068, 0.019, -0.030][i];
+            } else { // center the indicator if it is on the line from 12 o'clock - 6 o'clock
+                var i = value > 9 ? value > 99 ? value > 999 ? value > 9999 ? 4 : 3 : 2 : 1 : 0;
+                xpos2 += _width * [0.024, 0.000, -0.026, -0.052, -0.076][i];
             }
+            // Draw the indicator symbol and its value
             dc.setColor(config.colors[Config.C_INDICATOR], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(xposIcon, ypos - 1, iconFont as FontResource, icon as String, textAlign);
+            dc.drawText(
+                xpos2, 
+                ypos - 1, 
+                iconFont as FontResource, 
+                icon + "~", 
+                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_RIGHT
+            );
             dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(xposText, ypos, font, value.format("%d"), textAlign);
+            dc.drawText(
+                xpos2, 
+                ypos, 
+                Graphics.FONT_TINY,
+                value.format("%d"), 
+                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_LEFT
+            );
+/*
+            // Debug output
+            dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(xpos, ypos - 1, 1);
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(xpos2, ypos - 1, 1);
+*/
             ret = true;
         }
         return ret;

@@ -62,15 +62,15 @@ class Config {
         I_ACCENT_CYCLE,
         I_BRIGHTNESS,
         I_DM_CONTRAST,
+        I_COMPLICATION_1,
+        I_COMPLICATION_2,
+        I_COMPLICATION_3,
+        I_COMPLICATION_4,
         I_DM_ON, // the first item that is not a list item
         I_DM_OFF, 
         I_ALARMS, // the first toggle item (see defaults)
         I_NOTIFICATIONS,
         I_CONNECTED,
-        I_HEART_RATE,
-        I_RECOVERY_TIME,
-        I_STEPS,
-        I_CALORIES,
         I_MOVE_BAR,
         I_BATTERY_PCT, 
         I_BATTERY_DAYS, 
@@ -89,15 +89,15 @@ class Config {
         :AccentCycle, 
         :Brightness,
         :DimmerLevel, 
+        :Complication1,
+        :Complication2,
+        :Complication3,
+        :Complication4,
         :DmOn, 
         :DmOff,
         :Alarms,
         :Notifications,
         :Connected,
-        :HeartRate,
-        :RecoveryTime,
-        :Steps,
-        :Calories,
         :MoveBar,
         :BatteryPct, 
         :BatteryDays
@@ -114,15 +114,15 @@ class Config {
         "ay", // I_ACCENT_CYCLE
         "br", // I_BRIGHTNESS
         "dc", // I_DM_CONTRAST
+        "c1", // I_COMPLICATION_1
+        "c2", // I_COMPLICATION_2
+        "c3", // I_COMPLICATION_3
+        "c4", // I_COMPLICATION_4
         "dn", // I_DM_ON
         "df", // I_DM_OFF
         "al", // I_ALARMS
         "no", // I_NOTIFICATIONS
         "co", // I_CONNECTED
-        "hr", // I_HEART_RATE
-        "rt", // I_RECOVERY_TIME
-        "st", // I_STEPS
-        "ca", // I_CALORIES
         "mb", // I_MOVE_BAR
         "bp", // I_BATTERY_PCT
         "bd"  // I_BATTERY_DAYS
@@ -137,7 +137,11 @@ class Config {
         [:AccentRed, :AccentOrange, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentLtBlue, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
         [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
         [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_BRIGHTNESS
-        [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark] // I_DM_CONTRAST
+        [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_DM_CONTRAST
+        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps], // I_COMPLICATION_1
+        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps], // I_COMPLICATION_2
+        [:Off, :HeartRate, :RecoveryTime], // I_COMPLICATION_3
+        [:Off, :HeartRate, :RecoveryTime]  // I_COMPLICATION_4
      ] as Array< Array<Symbol> >;
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
@@ -148,7 +152,7 @@ class Config {
     // Constructor
     public function initialize() {
         // Default values for toggle items, each bit is one. I_ALARMS and I_CONNECTED are on by default.
-        var defaults = 0x005; // 0b000 0000 0101
+        var defaults = 0x005; // 0b0000 0101
 
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasBatteryInDays = (System.Stats has :batteryInDays);
@@ -164,13 +168,19 @@ class Config {
                 if (I_BATTERY_DAYS == id and !_hasBatteryInDays) { 
                     value = 0;
                 }
-                if (I_RECOVERY_TIME == id and !_hasTimeToRecovery) {
-                    value = 0;
-                }
             } else if (id < I_DM_ON) { // list items
                 if (null == value) { 
                     value = I_DM_CONTRAST == id ? 2 : 0;  // Default dimmer level
                 }
+                // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
+                if (   I_COMPLICATION_1 == id 
+                    or I_COMPLICATION_2 == id
+                    or I_COMPLICATION_3 == id
+                    or I_COMPLICATION_4 == id) {
+                    if (2 == value and !_hasTimeToRecovery) {
+                        value = 0;
+                    }
+                } 
             } else { // I_DM_ON or I_DM_OFF
                 if (I_DM_ON == id and (null == value or value < 0 or value > 1439)) {
                     value = 1320; // Default time to turn dark mode on: 22:00

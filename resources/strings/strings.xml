@@ -18,6 +18,10 @@
     <string id="Dimmer">Dimmer</string>
     <string id="DmContrast">Contrast</string>
     <string id="DimmerLevel">Level</string>
+    <string id="Complication1">1st Indicator</string>
+    <string id="Complication2">2nd Indicator</string>
+    <string id="Complication3">3rd Indicator</string>
+    <string id="Complication4">4th Indicator</string>
     <string id="HideSeconds">Seconds Disappear</string>
     <string id="AccentColor">Seconds Color</string>
     <string id="AccentCycle">Change Color</string>
