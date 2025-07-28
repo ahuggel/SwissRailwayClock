@@ -370,13 +370,14 @@ class Indicators {
                     _drawHeartRate = idx;
                     if (1 == i) { _complication2Drawn = true; }
                 } else {
+                    var timeToRecovery = config.hasTimeToRecovery() ? activityInfo.timeToRecovery : 0;
                     var ret = drawIndicator(
                         dc,
                         _pos[idx][0],
                         _pos[idx][1],
                         // :Off, :HeartRate, :RecoveryTime, :Calories, :Steps
                         ["", "", "R", "C", "F"][value],
-                        [0, 0, activityInfo.timeToRecovery, activityInfo.calories, activityInfo.steps][value]
+                        [0, 0, timeToRecovery, activityInfo.calories, activityInfo.steps][value]
 //                        [0, 0, 888, 3456, 98765][value]
                     );
                     if (1 == i) { _complication2Drawn = ret; }
