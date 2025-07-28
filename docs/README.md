@@ -25,22 +25,26 @@ This program reflects the progress of my ongoing journey to master [Monkey C] an
 | Alarms | **On**<br/>Off | Shows an alarm symbol when an alarm is set on the device. | Legacy<br/>Modern<br/>Amoled |
 | Notifications | On<br/>**Off** | Shows a notification symbol when there are active notifications. | Legacy<br/>Modern<br/>Amoled |
 | Phone&nbsp;Connection | **On**<br/>Off | Shows a Bluetooth symbol on the 6 o'clock tickmark when the phone connection is established. | Legacy<br/>Modern<br/>Amoled |
-| Heart&nbsp;Rate | On<br/>**Off** | Shows the heart rate in beats per minute (bpm). | Legacy<br/>Modern<br/>Amoled |
-| Recovery&nbsp;Time** | On<br/>**Off** | Shows the time to recovery from the last activity, in hours. | Legacy<br/>Modern<br/>Amoled |
-| Steps | On<br/>**Off** | Shows the step count since midnight for the current day in number of steps. | Legacy<br/>Modern<br/>Amoled |
-| Calories | On<br/>**Off** | Shows the calories burned so far for the current day in kilocalories (kCal). | Legacy<br/>Modern<br/>Amoled |
+| 1st&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>**Off** | Shows the selected indicator:<br/>- Heart rate in beats per minute (bpm);<br/>- Time to recovery from the last activity, in hours**;<br/>- Calories burned so far for the current day in kilocalories (kCal);<br/>- Step count since midnight for the current day in number of steps. | Modern<br/>Amoled |
+| 2nd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
+| 3rd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
+| 4th&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
+| Heart&nbsp;Rate | On<br/>**Off** | Shows the heart rate in beats per minute (bpm). | Legacy |
+| Recovery&nbsp;Time** | On<br/>**Off** | Shows the time to recovery from the last activity, in hours. | Legacy |
+| Steps | On<br/>**Off** | Shows the step count since midnight for the current day in number of steps. | Legacy |
+| Calories | On<br/>**Off** | Shows the calories burned so far for the current day in kilocalories (kCal). | Legacy |
 | Move&nbsp;Bar | On<br/>**Off** | Enables the Move Bar. | Modern<br/>Amoled |
 | Brightness | **White**<br/>Silver<br/>Gray<br/>Slate<br/>Dark | Adjusts the brightness of the foreground color. | Amoled |
 | Dimmer | **Scheduled**<br/>In&nbsp;DnD&nbsp;Mode<br/>Off | Allows for a second configuration of the foreground color. _Scheduled_ enables Dimmer mode from the Turn On to the Turn Off time. _In DnD Mode_ couples Dimmer mode with the do not disturb mode of the device. | Amoled |
 | Dark Mode | **Scheduled**<br/>In&nbsp;DnD&nbsp;Mode<br/>On<br/>Off | Changes the watchface colors to a black background with light foreground. _Scheduled_ enables Dark Mode from the Turn On to the Turn Off time. _In DnD Mode_ couples Dark Mode with the do not disturb mode of the device. | Legacy<br/>Modern |
-| Turn&nbsp;On | Time&nbsp;(**22:00**) | The time when Dark Mode/Dimmer mode is enabled if it is set to _Scheduled_. | Legacy<br/>Modern<br/>Amoled |
-| Turn&nbsp;Off | Time&nbsp;(**07:00**) | The time when Dark Mode/Dimmer mode is disabled if it is set to _Scheduled_. | Legacy<br/>Modern<br/>Amoled |
+| Turn&nbsp;On | _Time_&nbsp;(**22:00**) | The time when Dark Mode/Dimmer mode is enabled if it is set to _Scheduled_. | Legacy<br/>Modern<br/>Amoled |
+| Turn&nbsp;Off | _Time_&nbsp;(**07:00**) | The time when Dark Mode/Dimmer mode is disabled if it is set to _Scheduled_. | Legacy<br/>Modern<br/>Amoled |
 | Level | White<br/>Silver<br/>**Gray**<br/>Slate<br/>Dark | Determines the foreground color in Dimmer mode. | Amoled |
 | Contrast | White<br/>**Light&nbsp;Gray**<br/>Dark&nbsp;Gray | Determines the foreground color in Dark Mode. | Modern |
 | Seconds&nbsp;Disappear | **In&nbsp;Dark&nbsp;Mode**<br/>Always<br/>Never | Disables the second hand in low-power mode, after about 30s to save battery. With the _In Dark Mode_ option, the second hand disappears when Dark Mode is enabled. | Legacy<br/>Modern |
 | Seconds&nbsp;Color | **Red**<br/>Orange<br/>Yellow<br/>Light&nbsp;Green<br/>Green<br/>Light&nbsp;Blue<br/>Blue<br/>Purple<br/>Pink | The color of the second hand. | Legacy<br/>Modern<br/>Amoled |
 | Change&nbsp;Color | Hourly<br/>Every&nbsp;Minute<br/>Every&nbsp;Second<br/>**Off** | Cycles the second hand color _Hourly_, _Every Minute_ or _Every Second_. | Legacy<br/>Modern<br/>Amoled |
-| 3D&nbsp;Effects** | On<br/>**Off** | Shows a semi-transparent shadow for the watch hands. | Modern |
+| 3D&nbsp;Effects** | **On**<br/>Off | Shows a semi-transparent shadow for the watch hands. | Modern |
 
 \* The default value is highlighted in **bold**.\
 ** On devices with support for the required system functionality.
