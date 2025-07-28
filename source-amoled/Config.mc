@@ -152,7 +152,7 @@ class Config {
     // Constructor
     public function initialize() {
         // Default values for toggle items, each bit is one. I_ALARMS and I_CONNECTED are on by default.
-        var defaults = 0x005; // 0b0 0000 0101
+        var defaults = 0x005; // 0b0000 0101
 
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasBatteryInDays = (System.Stats has :batteryInDays);

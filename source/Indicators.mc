@@ -349,6 +349,7 @@ class Indicators {
             );
         }
 
+        // Draw the complications
         _drawHeartRate = -1;
         _complication2Drawn = false;
         var complication = [:complication1, :complication2, :complication3, :complication4];
