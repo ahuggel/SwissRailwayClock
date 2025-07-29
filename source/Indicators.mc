@@ -205,7 +205,8 @@ class Indicators {
                     dc,
                     (_width * 0.27).toNumber(), // idx = 2
                     (_height * 0.50).toNumber(),
-                    ["R", v.format("%d")]
+                    "R", 
+                    v.format("%d")
                 );
             }
         }
@@ -236,7 +237,8 @@ class Indicators {
                     dc,
                     w2, // idx = 3, 10, 11
                     (_height * h).toNumber(),
-                    ["F", v.format("%d")]
+                    "F", 
+                    v.format("%d")
                 );
             }
         }
@@ -271,7 +273,8 @@ class Indicators {
                     dc,
                     w2, // idx = 3, 10, 11, 12, 13, 14
                     (_height * h).toNumber(),
-                    ["C", v.format("%d")]
+                    "C", 
+                    v.format("%d")
                 );
             }
         }
@@ -375,11 +378,13 @@ class Indicators {
                     _drawHeartRate = idx;
                     ret = true;
                 } else {
+                    var val = getDisplayValues(option, activityMonitorInfo, deviceSettings);
                     ret = drawIndicator(
                         dc,
                         _pos[idx][0],
                         _pos[idx][1],
-                        getDisplayValues(option, activityMonitorInfo, deviceSettings)
+                        val[0],
+                        val[1]
                     );
                 }
                 if (:dfComplication2 == dataField[i]) { _complication2Drawn = ret; }
@@ -541,13 +546,14 @@ class Indicators {
         dc as Dc,
         xpos as Number, 
         ypos as Number,
-        values as [String, String]
+        icon as String,
+        value as String
     ) as Boolean {
         var ret = false;
-        //value = 123;
-        //value = 87654;
-        //value = 3456;
-        var len = values[1].length();
+        //value = "123";
+        //value = "87654";
+        //value = "3456";
+        var len = value.length();
         if (len > 0) {
             // Adjust the position for the location of the indicator and the length of the value
             var xpos2 = xpos;
@@ -565,7 +571,7 @@ class Indicators {
                 xpos2, 
                 ypos - 1, 
                 iconFont as FontResource, 
-                values[0] + "~", 
+                icon + "~", 
                 Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_RIGHT
             );
             dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
@@ -573,7 +579,7 @@ class Indicators {
                 xpos2, 
                 ypos, 
                 Graphics.FONT_TINY,
-                values[1], 
+                value, 
                 Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_LEFT
             );
 /*
