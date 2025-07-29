@@ -197,14 +197,15 @@ class Indicators {
         }
 
         // Draw the recovery time indicator
-        if (config.isEnabled(Config.I_RECOVERY_TIME)) { 
-            if (ActivityMonitor.Info has :timeToRecovery) {
+        // TODO: Does the Legacy code need Config.hasTimeToRecovery()? Check all devices
+        if (config.isEnabled(Config.I_RECOVERY_TIME) and ActivityMonitor.Info has :timeToRecovery) {
+            var v = activityMonitorInfo.timeToRecovery;
+            if (v != null and v > 0) {
                 drawIndicator(
                     dc,
                     (_width * 0.27).toNumber(), // idx = 2
                     (_height * 0.50).toNumber(),
-                    "R",
-                    activityMonitorInfo.timeToRecovery
+                    ["R", v.format("%d")]
                 );
             }
         }
@@ -229,13 +230,15 @@ class Indicators {
                     h = 0.65; // idx = 11
                 } // else idx = 10
             }
-            stepsDrawn = drawIndicator(
-                dc,
-                w2, // idx = 3, 10, 11
-                (_height * h).toNumber(),
-                "F",
-                activityMonitorInfo.steps // since API Level 1.0.0
-            );
+            var v = activityMonitorInfo.steps; // since API Level 1.0.0
+            if (v != null and v > 0) {
+                stepsDrawn = drawIndicator(
+                    dc,
+                    w2, // idx = 3, 10, 11
+                    (_height * h).toNumber(),
+                    ["F", v.format("%d")]
+                );
+            }
         }
 
         // Draw the calories indicator
@@ -262,13 +265,15 @@ class Indicators {
                     }
                 } // else idx = 3
             }
-            drawIndicator(
-                dc,
-                w2, // idx = 3, 10, 11, 12, 13, 14
-                (_height * h).toNumber(),
-                "C",
-                activityMonitorInfo.calories // since API Level 1.0.0
-            );
+            var v = activityMonitorInfo.calories; // since API Level 1.0.0
+            if (v != null and v > 0) {
+                drawIndicator(
+                    dc,
+                    w2, // idx = 3, 10, 11, 12, 13, 14
+                    (_height * h).toNumber(),
+                    ["C", v.format("%d")]
+                );
+            }
         }
     }
 
@@ -350,12 +355,6 @@ class Indicators {
             );
         }
 
-        // Get the altitude.
-        // TODO: Should only be done if it's actually required and shouldn't be present in the legacy code :(
-        // TODO: drawIndicator() should take a preformatted string value
-        // TODO: Change the symbols here and in getIndicatorPosition() to those that correspond to the config items
-        //       Or just use the I_* ids? But they don't match 1:1 -> Maybe introduce something new, with a prefix
-
         // Draw the complications
         _drawHeartRate = -1;
         _complication2Drawn = false;
@@ -380,15 +379,7 @@ class Indicators {
                         dc,
                         _pos[idx][0],
                         _pos[idx][1],
-                        [
-                            "",  // :Off
-                            "",  // :HeartRate
-                            "R", // :RecoveryTime
-                            "C", // :Calories
-                            "F", // :Steps
-                            "E"  // :Elevation
-                        ][config.getValue(complicationId[i])], // TODO: HACK! Requires an array that is sync'd with the options
-                        getDisplayValue(option, activityMonitorInfo, deviceSettings)
+                        getDisplayValues(option, activityMonitorInfo, deviceSettings)
                     );
                 }
                 if (:dfComplication2 == dataField[i]) { _complication2Drawn = ret; }
@@ -396,59 +387,13 @@ class Indicators {
         }
     }
 
-    // Return the current value of the given indicator formatted as a string, ready to be displayed
-    (:modern) public function getDisplayValue(
-        option as Symbol, 
-        activityMonitorInfo as ActivityMonitor.Info,
-        deviceSettings as DeviceSettings
-    ) as String {
-        var value = "";
-        var v = null;
-        switch (option) {
-            case :RecoveryTime:
-                v = config.hasTimeToRecovery() ? activityMonitorInfo.timeToRecovery : null;
-                break;
-            case :Calories:
-                v = activityMonitorInfo.calories;
-                break;
-            case :Steps:
-                v = activityMonitorInfo.steps;
-                break;
-            case :Elevation:
-                var altitude = null;
-                var activityInfo = Activity.getActivityInfo();
-                if (activityInfo != null) {
-                    altitude = activityInfo.altitude;
-                }
-                if (null == altitude) {
-                    var sample = SensorHistory.getElevationHistory({:period => 1, :order => SensorHistory.ORDER_NEWEST_FIRST}).next();
-			        if (sample != null) {
-				        altitude = sample.data;
-			        }
-                }
-		        if (altitude != null) {
-                    if (System.UNIT_STATUTE == deviceSettings.elevationUnits) {
-			            altitude *= 3.28084; // convert meters to feet
-                    }
-                    altitude = (altitude + 0.5).toNumber();
-                    value = altitude.format("%d");
-                }
-                break;
-            default:
-                System.println("ERROR: Indicators.getDisplayValue() is not implemented for option = " + option);
-                break;
-        }
-        if (value.equals("") and v != null and v > 0) {
-            value = v.format("%d");
-        }
-        return value;
-    }
-
     // Draw the heart rate if it is available, return true if it was drawn.
     // Modern devices call this every few seconds, also in low-power mode.
     (:modern) public function drawHeartRate(dc as Dc, isAwake as Boolean) as Boolean {
         return -1 == _drawHeartRate ? false : drawHeartRate2(dc, _pos[_drawHeartRate][0], _pos[_drawHeartRate][1], isAwake);
     }
+
+    // TODO: Add a prefix df to the symbols used in getDataFieldPosition() 
 
     // Determine if a given data field should be drawn and its position on the screen. 
     // This function exists to have all decisions regarding data field placing, some of which
@@ -541,19 +486,70 @@ class Indicators {
         return idx;
     }
 
+    // Return the character for the indicator icon and the current value of the indicator formatted as a string
+    (:modern) private function getDisplayValues(
+        option as Symbol, 
+        activityMonitorInfo as ActivityMonitor.Info,
+        deviceSettings as DeviceSettings
+    ) as [String, String] {
+        var icon = "";
+        var value = "";
+        var v = null;
+        switch (option) {
+            case :RecoveryTime:
+                icon = "R";
+                v = config.hasTimeToRecovery() ? activityMonitorInfo.timeToRecovery : null;
+                break;
+            case :Calories:
+                icon = "C";
+                v = activityMonitorInfo.calories;
+                break;
+            case :Steps:
+                icon = "F";
+                v = activityMonitorInfo.steps;
+                break;
+            case :Elevation:
+                icon = "E";
+                var altitude = null;
+                var activityInfo = Activity.getActivityInfo();
+                if (activityInfo != null) {
+                    altitude = activityInfo.altitude;
+                }
+                if (null == altitude) {
+                    var sample = SensorHistory.getElevationHistory({:period => 1, :order => SensorHistory.ORDER_NEWEST_FIRST}).next();
+			        if (sample != null) {
+				        altitude = sample.data;
+			        }
+                }
+		        if (altitude != null) {
+                    if (System.UNIT_STATUTE == deviceSettings.elevationUnits) {
+			            altitude *= 3.28084; // convert meters to feet
+                    }
+                    value = altitude.format("%d"); // Can be 0 or negative
+                }
+                break;
+            default:
+                System.println("ERROR: Indicators.getDisplayValue() is not implemented for option = " + option);
+                break;
+        }
+        if (value.equals("") and v != null and v > 0) {
+            value = v.format("%d");
+        }
+        return [icon, value];
+    }
+
     // Draw a simple indicator, return true if it was drawn.
     private function drawIndicator(
         dc as Dc,
         xpos as Number, 
         ypos as Number,
-        icon as String,
-        value as String
+        values as [String, String]
     ) as Boolean {
         var ret = false;
         //value = 123;
         //value = 87654;
         //value = 3456;
-        var len = value.length();
+        var len = values[1].length();
         if (len > 0) {
             // Adjust the position for the location of the indicator and the length of the value
             var xpos2 = xpos;
@@ -563,7 +559,7 @@ class Indicators {
             } else if (xpos > w2) { // right align the indicator at 3 o'clock
                 xpos2 += _width * [0.068, 0.019, -0.030][(len > 3 ? 3 : len) - 1];
             } else { // center the indicator if it is on the line from 12 o'clock - 6 o'clock
-                xpos2 += _width * [0.024, 0.000, -0.026, -0.052, -0.076][(len > 5 ? 5 : len) - 1];
+                xpos2 += _width * [0.024, 0.000, -0.026, -0.048, -0.074][(len > 5 ? 5 : len) - 1];
             }
             // Draw the indicator symbol and its value
             dc.setColor(config.colors[Config.C_INDICATOR], Graphics.COLOR_TRANSPARENT);
@@ -571,7 +567,7 @@ class Indicators {
                 xpos2, 
                 ypos - 1, 
                 iconFont as FontResource, 
-                icon + "~", 
+                values[0] + "~", 
                 Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_RIGHT
             );
             dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
@@ -579,7 +575,7 @@ class Indicators {
                 xpos2, 
                 ypos, 
                 Graphics.FONT_TINY,
-                value, 
+                values[1], 
                 Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_LEFT
             );
 /*
