@@ -288,7 +288,7 @@ class Indicators {
         // Helper - is the (long) date at 6 o'clock?
         _dtat6 = :DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY);
 
-        // Draw the move bar (at a fixed position, so we don't need getIndicatorPosition() here)
+        // Draw the move bar (at a fixed position, so we don't need getDataFieldPosition() here)
         if (config.isEnabled(Config.I_MOVE_BAR)) {
             drawMoveBar(dc, _screenCenter[0], _screenCenter[1], _clockRadius, activityMonitorInfo.moveBarLevel);
         }
@@ -296,7 +296,7 @@ class Indicators {
         // Draw alarm and notification indicators
         _iconsDrawn = false;
         var idx = -1;
-        idx = getDataFieldPosition(:icons);
+        idx = getDataFieldPosition(:dfIcons);
         if (-1 != idx) {
             _iconsDrawn = drawIcons(
                 dc,
@@ -309,7 +309,7 @@ class Indicators {
 
         // Draw the battery level indicator
         _batteryDrawn = false;
-        idx = getDataFieldPosition(:battery);
+        idx = getDataFieldPosition(:dfBattery);
         if (-1 != idx) {
             _batteryDrawn = _batteryLevel.draw(
                 dc,
@@ -321,7 +321,7 @@ class Indicators {
         // Draw the date string
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
         dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
-        idx = getDataFieldPosition(:longDate);
+        idx = getDataFieldPosition(:dfLongDate);
         if (-1 != idx) {
             dc.drawText(
                 _pos[idx][0], 
@@ -332,7 +332,7 @@ class Indicators {
             );
         }
         else {
-            idx = getDataFieldPosition(:shortDate);
+            idx = getDataFieldPosition(:dfShortDate);
             if (-1 != idx) {
                 dc.drawText(
                     _pos[idx][0], 
@@ -345,7 +345,7 @@ class Indicators {
         }
 
         // Draw the phone connection indicator on the 6 o'clock tick mark
-        idx = getDataFieldPosition(:phoneConnected);
+        idx = getDataFieldPosition(:dfPhoneConnected);
         if (-1 != idx) {
             drawPhoneConnected(
                 dc,
@@ -359,11 +359,11 @@ class Indicators {
         _drawHeartRate = -1;
         _complication2Drawn = false;
         var dataField = [:dfComplication1, :dfComplication2, :dfComplication3, :dfComplication4];
-        var complicationId = [Config.I_COMPLICATION_1, Config.I_COMPLICATION_2, Config.I_COMPLICATION_3, Config.I_COMPLICATION_4];
         for (var i = 3; i >= 0; i--) {
             idx = getDataFieldPosition(dataField[i]);
             if (-1 != idx) {
                 var ret = false;
+                var complicationId = [Config.I_COMPLICATION_1, Config.I_COMPLICATION_2, Config.I_COMPLICATION_3, Config.I_COMPLICATION_4];
                 var option = config.getOption(complicationId[i]) as Symbol;
                 if (:HeartRate == option) {
                     // Determine if and where the heart rate should be drawn, but don't
@@ -393,8 +393,6 @@ class Indicators {
         return -1 == _drawHeartRate ? false : drawHeartRate2(dc, _pos[_drawHeartRate][0], _pos[_drawHeartRate][1], isAwake);
     }
 
-    // TODO: Add a prefix df to the symbols used in getDataFieldPosition() 
-
     // Determine if a given data field should be drawn and its position on the screen. 
     // This function exists to have all decisions regarding data field placing, some of which
     // are interdependent, in one place.
@@ -402,28 +400,28 @@ class Indicators {
     (:modern) private function getDataFieldPosition(dataField as Symbol) as Number {
         var idx = -1;
         switch (dataField) {
-            case :battery:
+            case :dfBattery:
                 if (config.isEnabled(Config.I_BATTERY)) {
                     idx = _iconsDrawn ? 3 : 4;
                 }
                 break;
-            case :icons:
+            case :dfIcons:
                 if (   config.isEnabled(Config.I_ALARMS)
                     or config.isEnabled(Config.I_NOTIFICATIONS)) {
                     idx = 5;
                 }
                 break;
-            case :phoneConnected:
+            case :dfPhoneConnected:
                 if (config.isEnabled(Config.I_CONNECTED)) { 
                     idx = 6; 
                 }
                 break;
-            case :shortDate:
+            case :dfShortDate:
                 if (:DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)) { 
                     idx = 7; 
                 }
                 break;
-            case :longDate:
+            case :dfLongDate:
                 if (:DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)) {
                     if (config.isEnabled(Config.I_COMPLICATION_2)) {
                         idx = _batteryDrawn or config.isEnabled(Config.I_COMPLICATION_1) ? 9 : 8;
