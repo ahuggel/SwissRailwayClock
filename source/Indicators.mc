@@ -112,6 +112,7 @@ class Indicators {
         var iconsDrawn = false;
         var batteryDrawn = false;
         var stepsDrawn = false;
+        var indicatorColor = config.colors[Config.C_INDICATOR];
 
         // Draw alarm and notification indicators
         if (config.isEnabled(Config.I_ALARMS) or config.isEnabled(Config.I_NOTIFICATIONS)) {
@@ -188,27 +189,37 @@ class Indicators {
                     h = 0.75; // idx = 1
                 }
             }
-            drawHeartRate2(
-                dc, 
-                (_width * w).toNumber(), 
+            var heartRate = null;
+            var activityInfo = Activity.getActivityInfo();
+            if (activityInfo != null) {
+                heartRate = activityInfo.currentHeartRate;
+            }
+            if (null == heartRate) {
+                var sample = ActivityMonitor.getHeartRateHistory(1, true).next();
+                if (sample != null and sample.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) { 
+                    heartRate = sample.heartRate;
+                }
+            }
+            drawIndicator(
+                dc,
+                (_width * w).toNumber(),
                 (_height * h).toNumber(),
-                isAwake
+                isAwake ? "H" : "I", 
+                config.colors[Config.C_HEART_RATE],
+                heartRate
             );
         }
 
         // Draw the recovery time indicator
-        // TODO: Does the Legacy code need Config.hasTimeToRecovery()? Check all devices
         if (config.isEnabled(Config.I_RECOVERY_TIME) and ActivityMonitor.Info has :timeToRecovery) {
-            var v = activityMonitorInfo.timeToRecovery;
-            if (v != null and v > 0) {
-                drawIndicator(
-                    dc,
-                    (_width * 0.27).toNumber(), // idx = 2
-                    (_height * 0.50).toNumber(),
-                    "R", 
-                    v.format("%d")
-                );
-            }
+            drawIndicator(
+                dc,
+                (_width * 0.27).toNumber(), // idx = 2
+                (_height * 0.50).toNumber(),
+                "R", 
+                indicatorColor,
+                activityMonitorInfo.timeToRecovery
+            );
         }
 
         // Helper - is the heart rate indicator at 6 o'clock?
@@ -231,16 +242,14 @@ class Indicators {
                     h = 0.65; // idx = 11
                 } // else idx = 10
             }
-            var v = activityMonitorInfo.steps; // since API Level 1.0.0
-            if (v != null and v > 0) {
-                stepsDrawn = drawIndicator(
-                    dc,
-                    w2, // idx = 3, 10, 11
-                    (_height * h).toNumber(),
-                    "F", 
-                    v.format("%d")
-                );
-            }
+            stepsDrawn = drawIndicator(
+                dc,
+                w2, // idx = 3, 10, 11
+                (_height * h).toNumber(),
+                "F", 
+                indicatorColor,
+                activityMonitorInfo.steps // since API Level 1.0.0
+            );
         }
 
         // Draw the calories indicator
@@ -267,17 +276,70 @@ class Indicators {
                     }
                 } // else idx = 3
             }
-            var v = activityMonitorInfo.calories; // since API Level 1.0.0
-            if (v != null and v > 0) {
-                drawIndicator(
-                    dc,
-                    w2, // idx = 3, 10, 11, 12, 13, 14
-                    (_height * h).toNumber(),
-                    "C", 
-                    v.format("%d")
-                );
-            }
+            drawIndicator(
+                dc,
+                w2, // idx = 3, 10, 11, 12, 13, 14
+                (_height * h).toNumber(),
+                "C", 
+                indicatorColor,
+                activityMonitorInfo.calories  // since API Level 1.0.0
+            );
         }
+    }
+
+    // Draw a simple indicator, return true if it was drawn. Legacy version for a fixed number of indicators
+    (:legacy) private function drawIndicator(
+        dc as Dc,
+        xpos as Number, 
+        ypos as Number,
+        icon as String,
+        color as ColorType,
+        value as Number?
+    ) as Boolean {
+        var ret = false;
+        //value = "123";
+        //value = "87654";
+        //value = "3456";
+        if (value != null and value > 0) {
+            // Adjust the x-coordinate for the location of the indicator and the value
+            var xpos2 = xpos;
+            var w2 = _width / 2;
+            if (xpos < w2) { // left align the indicator at 9 o'clock
+                xpos2 += _width * -0.024;
+            } else if (xpos > w2) { // right align the indicator at 3 o'clock
+                var i = value > 9 ? value > 99 ? 2 : 1 : 0;            
+                xpos2 += _width * [0.068, 0.019, -0.030][i];
+            } else { // center the indicator if it is on the line from 12 o'clock - 6 o'clock
+                var i = value > 9 ? value > 99 ? value > 999 ? value > 9999 ? 4 : 3 : 2 : 1 : 0;
+                xpos2 += _width * [0.024, 0.000, -0.026, -0.048, -0.074][i];
+            }
+            // Draw the indicator symbol and its value
+            dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(
+                xpos2, 
+                ypos - 1, 
+                iconFont as FontResource, 
+                icon + "~", 
+                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_RIGHT
+            );
+            dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
+            dc.drawText(
+                xpos2, 
+                ypos, 
+                Graphics.FONT_TINY,
+                value.format("%d"), 
+                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_LEFT
+            );
+/*
+            // Debug output
+            dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(xpos, ypos - 1, 1);
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(xpos2, ypos - 1, 1);
+*/
+            ret = true;
+        }
+        return ret;
     }
 
     // Draw all the indicators, which are updated once a minute (all except the heart rate).
@@ -362,11 +424,11 @@ class Indicators {
         _drawHeartRate = -1;
         _complication2Drawn = false;
         var dataField = [:dfComplication1, :dfComplication2, :dfComplication3, :dfComplication4];
+        var complicationId = [Config.I_COMPLICATION_1, Config.I_COMPLICATION_2, Config.I_COMPLICATION_3, Config.I_COMPLICATION_4];
         for (var i = 3; i >= 0; i--) {
             idx = getDataFieldPosition(dataField[i]);
             if (-1 != idx) {
                 var ret = false;
-                var complicationId = [Config.I_COMPLICATION_1, Config.I_COMPLICATION_2, Config.I_COMPLICATION_3, Config.I_COMPLICATION_4];
                 var option = config.getOption(complicationId[i]) as Symbol;
                 if (:HeartRate == option) {
                     // Determine if and where the heart rate should be drawn, but don't
@@ -546,7 +608,7 @@ class Indicators {
     }
 
     // Draw a simple indicator, return true if it was drawn.
-    private function drawIndicator(
+    (:modern) private function drawIndicator(
         dc as Dc,
         xpos as Number, 
         ypos as Number,
@@ -599,9 +661,8 @@ class Indicators {
     }
 
     // Draw the heart rate if it is available, return true if it was drawn.
-    // This private function is used by both, the legacy and modern code.
     // Note: Sets and clears the clipping region of the device context.
-    private function drawHeartRate2(dc as Dc, xpos as Number, ypos as Number, isAwake as Boolean) as Boolean {
+    (:modern) private function drawHeartRate2(dc as Dc, xpos as Number, ypos as Number, isAwake as Boolean) as Boolean {
         var ret = false;
         var heartRate = null;
         var activityInfo = Activity.getActivityInfo();
@@ -799,16 +860,17 @@ class BatteryLevel {
     private var _cT3 as Number;
 
     public function initialize(clockRadius as Number) {
+        var cdpct = clockRadius / 50.0;
         // Radius of the modern battery indicator circle in pixels
-        _mRadius = (3.2 * clockRadius / 50.0 + 0.5).toNumber();
+        _mRadius = (3.2 * cdpct + 0.5).toNumber();
         // Dimensions of the classic battery level indicator in pixels, calculated from percentages of the clock diameter
-        _cPw = (1.2 * clockRadius / 50.0 + 0.5).toNumber(); // pen size for the battery rectangle 
+        _cPw = (1.2 * cdpct + 0.5).toNumber(); // pen size for the battery rectangle 
         if (0 == _cPw % 2) { _cPw += 1; }                   // make sure pen size is an odd number
-        _cBw = (1.9 * clockRadius / 50.0 + 0.5).toNumber(); // width of the battery level segments
-        _cBh = (4.2 * clockRadius / 50.0 + 0.5).toNumber(); // height of the battery level segments
-        _cTs = (0.4 * clockRadius / 50.0 + 0.5).toNumber(); // tiny space around everything
+        _cBw = (1.9 * cdpct + 0.5).toNumber(); // width of the battery level segments
+        _cBh = (4.2 * cdpct + 0.5).toNumber(); // height of the battery level segments
+        _cTs = (0.4 * cdpct + 0.5).toNumber(); // tiny space around everything
         _cCw = _cPw;                                        // width of the little knob on the right side of the battery
-        _cCh = (2.3 * clockRadius / 50.0 + 0.5).toNumber(); // height of the little knob
+        _cCh = (2.3 * cdpct + 0.5).toNumber(); // height of the little knob
         _cWidth = 5*_cBw + 6*_cTs + _cPw+1;
         _cHeight = _cBh + 2*_cTs + _cPw+1;
         if (1 == _cHeight % 2 and 0 == _cCh % 2) { _cCh += 1; } // make sure both, the battery rectangle height and the knob 
