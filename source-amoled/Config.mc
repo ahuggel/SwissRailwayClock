@@ -138,10 +138,10 @@ class Config {
         [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
         [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_BRIGHTNESS
         [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_DM_CONTRAST
-        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :Elevation], // I_COMPLICATION_1
-        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :Elevation], // I_COMPLICATION_2
-        [:Off, :HeartRate, :RecoveryTime], // I_COMPLICATION_3
-        [:Off, :HeartRate, :RecoveryTime]  // I_COMPLICATION_4
+        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation], // I_COMPLICATION_1
+        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation], // I_COMPLICATION_2
+        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed], // I_COMPLICATION_3
+        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed]  // I_COMPLICATION_4
      ] as Array< Array<Symbol> >;
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items

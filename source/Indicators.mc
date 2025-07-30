@@ -511,6 +511,10 @@ class Indicators {
                 icon = "F";
                 v = activityMonitorInfo.steps;
                 break;
+            case :FloorsClimbed:
+                icon = "S";   // TODO: Switch S and F icons in all fonts
+                v = activityMonitorInfo.floorsClimbed;
+                break;
             case :Elevation:
                 icon = "E";
                 var altitude = null;
