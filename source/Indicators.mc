@@ -565,7 +565,7 @@ class Indicators {
             if (xpos < w2) { // left align the indicator at 9 o'clock
                 xpos2 += _width * -0.024;
             } else if (xpos > w2) { // right align the indicator at 3 o'clock
-                xpos2 += _width * [0.068, 0.019, -0.030][(len > 3 ? 3 : len) - 1];
+                xpos2 += _width * [0.068, 0.019, -0.030, -0.070][(len > 4 ? 4 : len) - 1];
             } else { // center the indicator if it is on the line from 12 o'clock - 6 o'clock
                 xpos2 += _width * [0.024, 0.000, -0.026, -0.048, -0.074][(len > 5 ? 5 : len) - 1];
             }
