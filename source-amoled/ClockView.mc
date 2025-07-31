@@ -209,7 +209,7 @@ class ClockView extends WatchUi.WatchFace {
         }
 
         // Draw the indicators
-        _indicators.draw(dc, deviceSettings, _isAwake);
+        _indicators.draw(dc, deviceSettings);
         _indicators.drawHeartRate(dc, _isAwake);
 
         // Draw the hour and minute hands
