@@ -23,6 +23,7 @@ import Toybox.ActivityMonitor;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
+import Toybox.SensorHistory;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
@@ -106,11 +107,12 @@ class Indicators {
 
     // Draw all indicators. The legacy version checks settings and determines positions within this function as well.
     (:legacy) public function draw(dc as Dc, deviceSettings as DeviceSettings, isAwake as Boolean) as Void {
-        var activityInfo = ActivityMonitor.getInfo();
+        var activityMonitorInfo = ActivityMonitor.getInfo();
         var w2 = (_width * 0.50).toNumber();
         var iconsDrawn = false;
         var batteryDrawn = false;
         var stepsDrawn = false;
+        var indicatorColor = config.colors[Config.C_INDICATOR];
 
         // Draw alarm and notification indicators
         if (config.isEnabled(Config.I_ALARMS) or config.isEnabled(Config.I_NOTIFICATIONS)) {
@@ -187,25 +189,37 @@ class Indicators {
                     h = 0.75; // idx = 1
                 }
             }
-            drawHeartRate2(
-                dc, 
-                (_width * w).toNumber(), 
+            var heartRate = null;
+            var activityInfo = Activity.getActivityInfo();
+            if (activityInfo != null) {
+                heartRate = activityInfo.currentHeartRate;
+            }
+            if (null == heartRate) {
+                var sample = ActivityMonitor.getHeartRateHistory(1, true).next();
+                if (sample != null and sample.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) { 
+                    heartRate = sample.heartRate;
+                }
+            }
+            drawIndicator(
+                dc,
+                (_width * w).toNumber(),
                 (_height * h).toNumber(),
-                isAwake
+                config.colors[Config.C_HEART_RATE],
+                isAwake ? "H" : "I", 
+                heartRate
             );
         }
 
         // Draw the recovery time indicator
-        if (config.isEnabled(Config.I_RECOVERY_TIME)) { 
-            if (ActivityMonitor.Info has :timeToRecovery) {
-                drawIndicator(
-                    dc,
-                    (_width * 0.27).toNumber(), // idx = 2
-                    (_height * 0.50).toNumber(),
-                    "R",
-                    activityInfo.timeToRecovery
-                );
-            }
+        if (config.isEnabled(Config.I_RECOVERY_TIME) and ActivityMonitor.Info has :timeToRecovery) {
+            drawIndicator(
+                dc,
+                (_width * 0.27).toNumber(), // idx = 2
+                (_height * 0.50).toNumber(),
+                indicatorColor,
+                "R", 
+                activityMonitorInfo.timeToRecovery
+            );
         }
 
         // Helper - is the heart rate indicator at 6 o'clock?
@@ -232,8 +246,9 @@ class Indicators {
                 dc,
                 w2, // idx = 3, 10, 11
                 (_height * h).toNumber(),
-                "F",
-                activityInfo.steps // since API Level 1.0.0
+                indicatorColor,
+                "F", 
+                activityMonitorInfo.steps // since API Level 1.0.0
             );
         }
 
@@ -265,16 +280,73 @@ class Indicators {
                 dc,
                 w2, // idx = 3, 10, 11, 12, 13, 14
                 (_height * h).toNumber(),
-                "C",
-                activityInfo.calories // since API Level 1.0.0
+                indicatorColor,
+                "C", 
+                activityMonitorInfo.calories  // since API Level 1.0.0
             );
         }
     }
 
-    // Draw all the indicators, which are updated once a minute (all except the heart rate).
+    // Draw a simple indicator, return true if it was drawn. Legacy version for a fixed number of indicators
+    (:legacy) private function drawIndicator(
+        dc as Dc,
+        xpos as Number, 
+        ypos as Number,
+        color as ColorType,
+        icon as String,
+        value as Number?
+    ) as Boolean {
+        var ret = false;
+        //value = "123";
+        //value = "87654";
+        //value = "3456";
+        if (value != null and value > 0) {
+            // Adjust the x-coordinate for the location of the indicator and the value
+            var xpos2 = xpos;
+            var w2 = _width / 2;
+            if (xpos < w2) { // left align the indicator at 9 o'clock
+                xpos2 += _width * -0.024;
+            } else if (xpos > w2) { // right align the indicator at 3 o'clock
+                var i = value > 9 ? value > 99 ? 2 : 1 : 0;            
+                xpos2 += _width * [0.068, 0.019, -0.030][i];
+            } else { // center the indicator if it is on the line from 12 o'clock - 6 o'clock
+                var i = value > 9 ? value > 99 ? value > 999 ? value > 9999 ? 4 : 3 : 2 : 1 : 0;
+                xpos2 += _width * [0.024, 0.000, -0.026, -0.048, -0.074][i];
+            }
+            // Draw the indicator symbol and its value
+            dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(
+                xpos2, 
+                ypos - 1, 
+                iconFont as FontResource, 
+                icon + "~", 
+                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_RIGHT
+            );
+            dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
+            dc.drawText(
+                xpos2, 
+                ypos, 
+                Graphics.FONT_TINY,
+                value.format("%d"), 
+                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_LEFT
+            );
+/*
+            // Debug output
+            dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(xpos, ypos - 1, 1);
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(xpos2, ypos - 1, 1);
+*/
+            ret = true;
+        }
+        return ret;
+    }
+
+    // Draw all the indicators, which are updated when the watch is awake ot once a minute 
+    // (all except the heart rate).
     // The modern version uses a helper function to determine if and where each indicator is drawn.
-    (:modern) public function draw(dc as Dc, deviceSettings as DeviceSettings, isAwake as Boolean) as Void {
-        var activityInfo = ActivityMonitor.getInfo();
+    (:modern) public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
+        var activityMonitorInfo = ActivityMonitor.getInfo();
 
         // Helper - is the 4th complication at 6 o'clock?
         _hrat6 =     :DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)
@@ -282,15 +354,15 @@ class Indicators {
         // Helper - is the (long) date at 6 o'clock?
         _dtat6 = :DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY);
 
-        // Draw the move bar (at a fixed position, so we don't need getIndicatorPosition() here)
+        // Draw the move bar (at a fixed position, so we don't need getDataFieldPosition() here)
         if (config.isEnabled(Config.I_MOVE_BAR)) {
-            drawMoveBar(dc, _screenCenter[0], _screenCenter[1], _clockRadius, activityInfo.moveBarLevel);
+            drawMoveBar(dc, _screenCenter[0], _screenCenter[1], _clockRadius, activityMonitorInfo.moveBarLevel);
         }
 
         // Draw alarm and notification indicators
         _iconsDrawn = false;
         var idx = -1;
-        idx = getIndicatorPosition(:icons);
+        idx = getDataFieldPosition(:dfIcons);
         if (-1 != idx) {
             _iconsDrawn = drawIcons(
                 dc,
@@ -303,7 +375,7 @@ class Indicators {
 
         // Draw the battery level indicator
         _batteryDrawn = false;
-        idx = getIndicatorPosition(:battery);
+        idx = getDataFieldPosition(:dfBattery);
         if (-1 != idx) {
             _batteryDrawn = _batteryLevel.draw(
                 dc,
@@ -315,7 +387,7 @@ class Indicators {
         // Draw the date string
         var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
         dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
-        idx = getIndicatorPosition(:longDate);
+        idx = getDataFieldPosition(:dfLongDate);
         if (-1 != idx) {
             dc.drawText(
                 _pos[idx][0], 
@@ -326,7 +398,7 @@ class Indicators {
             );
         }
         else {
-            idx = getIndicatorPosition(:shortDate);
+            idx = getDataFieldPosition(:dfShortDate);
             if (-1 != idx) {
                 dc.drawText(
                     _pos[idx][0], 
@@ -339,7 +411,7 @@ class Indicators {
         }
 
         // Draw the phone connection indicator on the 6 o'clock tick mark
-        idx = getIndicatorPosition(:phoneConnected);
+        idx = getDataFieldPosition(:dfPhoneConnected);
         if (-1 != idx) {
             drawPhoneConnected(
                 dc,
@@ -352,14 +424,15 @@ class Indicators {
         // Draw the complications
         _drawHeartRate = -1;
         _complication2Drawn = false;
-        var complication = [:complication1, :complication2, :complication3, :complication4];
+        var dataField = [:dfComplication1, :dfComplication2, :dfComplication3, :dfComplication4];
         var complicationId = [Config.I_COMPLICATION_1, Config.I_COMPLICATION_2, Config.I_COMPLICATION_3, Config.I_COMPLICATION_4];
+        var indicatorColor = config.colors[Config.C_INDICATOR];
         for (var i = 3; i >= 0; i--) {
-            idx = getIndicatorPosition(complication[i]);
+            idx = getDataFieldPosition(dataField[i]);
             if (-1 != idx) {
                 var ret = false;
-                var value = config.getValue(complicationId[i]);
-                if (1 == value) {
+                var option = config.getOption(complicationId[i]) as Symbol;
+                if (:HeartRate == option) {
                     // Determine if and where the heart rate should be drawn, but don't
                     // draw it here. The indicator is drawn in drawHeartRate(), which
                     // needs to be called after this function, once the position is set.
@@ -369,28 +442,17 @@ class Indicators {
                     _drawHeartRate = idx;
                     ret = true;
                 } else {
+                    var val = getDisplayValues(option, activityMonitorInfo, deviceSettings);
                     ret = drawIndicator(
                         dc,
                         _pos[idx][0],
                         _pos[idx][1],
-                        [
-                            "",  // :Off
-                            "",  // :HeartRate
-                            "R", // :RecoveryTime
-                            "C", // :Calories
-                            "F"  // :Steps
-                        ][value],
-                        [
-                            null,
-                            null,
-                            config.hasTimeToRecovery() ? activityInfo.timeToRecovery : null, 
-                            activityInfo.calories, 
-                            activityInfo.steps
-                        ][value]
-//                        [0, 0, 888, 3456, 98765][value]
+                        indicatorColor,
+                        val[0],
+                        val[1]
                     );
                 }
-                if (1 == i) { _complication2Drawn = ret; }
+                if (:dfComplication2 == dataField[i]) { _complication2Drawn = ret; }
             }
         }
     }
@@ -398,38 +460,65 @@ class Indicators {
     // Draw the heart rate if it is available, return true if it was drawn.
     // Modern devices call this every few seconds, also in low-power mode.
     (:modern) public function drawHeartRate(dc as Dc, isAwake as Boolean) as Boolean {
-        return -1 == _drawHeartRate ? false : drawHeartRate2(dc, _pos[_drawHeartRate][0], _pos[_drawHeartRate][1], isAwake);
+        var ret = false; 
+        if (_drawHeartRate != -1) {
+            // Doing this here instead of in getDisplayValues() to save a function call
+            var heartRate = null;
+            var activityInfo = Activity.getActivityInfo();
+            if (activityInfo != null) {
+                heartRate = activityInfo.currentHeartRate;
+            }
+            if (null == heartRate) {
+                var sample = ActivityMonitor.getHeartRateHistory(1, true).next();
+                if (sample != null and sample.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) { 
+                    heartRate = sample.heartRate;
+                }
+            }
+            //heartRate = 8888;
+            //heartRate = System.getClockTime().sec + 60;
+            if (heartRate != null) {
+                ret = drawIndicator(
+                    dc,
+                    _pos[_drawHeartRate][0], 
+                    _pos[_drawHeartRate][1],
+                    config.colors[Config.C_HEART_RATE],
+                    isAwake ? "H" : "I",
+                    heartRate.format("%d")
+                );
+            }
+        }
+        return ret;
     }
 
-    // Determine if a given indicator should be shown and its position on the screen. 
-    // This function exists to have all decisions regarding indicator placing, some of which are 
-    // interdependent, in one place.
-    // The position returned is an index into _pos. -1 means the indicator should not be drawn.
-    (:modern) private function getIndicatorPosition(indicator as Symbol) as Number {
+    // Determine if a given data field should be drawn and its position on the screen. 
+    // This function exists to have all decisions regarding data field placing, some of which
+    // are interdependent, in one place.
+    // The position returned is an index into _pos. -1 means the data field should not be drawn.
+    (:modern) private function getDataFieldPosition(dataField as Symbol) as Number {
         var idx = -1;
-        switch (indicator) {
-            case :battery:
+        switch (dataField) {
+            case :dfBattery:
                 if (config.isEnabled(Config.I_BATTERY)) {
                     idx = _iconsDrawn ? 3 : 4;
                 }
                 break;
-            case :icons:
+            case :dfIcons:
                 if (   config.isEnabled(Config.I_ALARMS)
                     or config.isEnabled(Config.I_NOTIFICATIONS)) {
                     idx = 5;
                 }
                 break;
-            case :phoneConnected:
+            case :dfPhoneConnected:
                 if (config.isEnabled(Config.I_CONNECTED)) { 
                     idx = 6; 
                 }
                 break;
-            case :shortDate:
+            case :dfShortDate:
                 if (:DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)) { 
                     idx = 7; 
                 }
                 break;
-            case :longDate:
+            case :dfLongDate:
                 if (:DateDisplayWeekdayAndDay == config.getOption(Config.I_DATE_DISPLAY)) {
                     if (config.isEnabled(Config.I_COMPLICATION_2)) {
                         idx = _batteryDrawn or config.isEnabled(Config.I_COMPLICATION_1) ? 9 : 8;
@@ -438,7 +527,7 @@ class Indicators {
                     }
                 }
                 break;
-            case :complication4:
+            case :dfComplication4:
                 if (config.isEnabled(Config.I_COMPLICATION_4)) {
                     idx = 0;
                     if (:DateDisplayDayOnly == config.getOption(Config.I_DATE_DISPLAY)) {
@@ -446,12 +535,12 @@ class Indicators {
                     }
                 }
                 break;
-            case :complication3:
+            case :dfComplication3:
                 if (config.isEnabled(Config.I_COMPLICATION_3)) { 
                     idx = 2; 
                 }
                 break;
-            case :complication2:
+            case :dfComplication2:
                 if (config.isEnabled(Config.I_COMPLICATION_2)) {
                     if (_hrat6 or _dtat6) {
                         idx = config.isEnabled(Config.I_COMPLICATION_1) or _batteryDrawn ? 11 : 3;
@@ -460,7 +549,7 @@ class Indicators {
                     }
                 }
                 break;
-            case :complication1:
+            case :dfComplication1:
                 if (config.isEnabled(Config.I_COMPLICATION_1)) {
                     if (!_complication2Drawn) { // Place the 1st complication where the 2nd complication would usually be
                         if (_hrat6 or _dtat6) {
@@ -486,72 +575,133 @@ class Indicators {
                 }
                 break;
             default:
-                System.println("ERROR: Indicators.getIndicatorPos() is not implemented for indicator = " + indicator);
+                System.println("ERROR: Indicators.getDataFieldPos() is not implemented for data field = " + dataField);
                 break;
         }
         return idx;
     }
 
-    // Draw the heart rate if it is available, return true if it was drawn.
-    // This private function is used by both, the legacy and modern code.
+    // Return the character for the indicator icon and the current value of the indicator formatted as a string
+    (:modern) private function getDisplayValues(
+        option as Symbol, 
+        activityMonitorInfo as ActivityMonitor.Info,
+        deviceSettings as DeviceSettings
+    ) as [String, String] {
+        var icon = "";
+        var value = "";
+        var v = null;
+        switch (option) {
+            case :RecoveryTime:
+                icon = "R";
+                //v = 8888;
+                v = config.hasRequiredFeature(option) ? activityMonitorInfo.timeToRecovery : null;
+                break;
+            case :Calories:
+                icon = "C";
+                //v = 88888;
+                v = activityMonitorInfo.calories;
+                break;
+            case :Steps:
+                icon = "F";
+                //v = 88888;
+                v = activityMonitorInfo.steps;
+                break;
+            case :FloorsClimbed:
+                icon = "S";   // TODO: Switch S and F icons in all fonts
+                v = config.hasRequiredFeature(option) ? activityMonitorInfo.floorsClimbed : null;
+                break;
+            case :Elevation:
+                icon = "E";
+                var altitude = null;
+                var activityInfo = Activity.getActivityInfo();
+                if (activityInfo != null) {
+                    altitude = activityInfo.altitude;
+                }
+                if (null == altitude and SensorHistory has :getElevationHistory) {
+                    var sample = SensorHistory.getElevationHistory({:period => 1, :order => SensorHistory.ORDER_NEWEST_FIRST}).next();
+			        if (sample != null) {
+				        altitude = sample.data;
+			        }
+                }
+		        if (altitude != null) {
+                    if (System.UNIT_STATUTE == deviceSettings.elevationUnits) {
+			            altitude *= 3.28084; // convert meters to feet
+                    }
+                    value = altitude.format("%d"); // Can be 0 or negative
+                }
+                break;
+            default:
+                System.println("ERROR: Indicators.getDisplayValue() is not implemented for option = " + option);
+                break;
+        }
+        if (value.equals("") and v != null and v > 0) {
+            value = v.format("%d");
+        }
+        return [icon, value];
+    }
+
+    // Draw a simple indicator, return true if it was drawn.
     // Note: Sets and clears the clipping region of the device context.
-    private function drawHeartRate2(dc as Dc, xpos as Number, ypos as Number, isAwake as Boolean) as Boolean {
+    (:modern) private function drawIndicator(
+        dc as Dc,
+        xpos as Number, 
+        ypos as Number,
+        color as ColorType,
+        icon as String,
+        value as String
+    ) as Boolean {
         var ret = false;
-        var heartRate = null;
-        var activityInfo = Activity.getActivityInfo();
-        if (activityInfo != null) {
-            heartRate = activityInfo.currentHeartRate;
-        }
-        if (null == heartRate) {
-            var sample = ActivityMonitor.getHeartRateHistory(1, true).next();
-            if (sample != null and sample.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) { 
-                heartRate = sample.heartRate;
-            }
-        }
-        //heartRate = 238;
-        //heartRate = System.getClockTime().sec + 60;
-        if (heartRate != null) {
-            // Adjust the x-coordinate for the location of the indicator and the value
-            var xpos2 = xpos;
+        //value = "123";
+        //value = "87654";
+        //value = "3456";
+        var len = value.length();
+        if (len > 0) {
+            // Adjust the position for the location of the indicator and the length of the value
+            var xpos2 = xpos; // adjusted x position for the current value
+            var xpos3 = xpos; // x position for the largest value
+            var maxLen = 4; // length of the largest value
             var w2 = _width / 2;
             if (xpos < w2) { // left align the indicator at 9 o'clock
                 xpos2 += _width * -0.024;
-            } else {
-                var i = heartRate > 99 ? 1 : 0;            
-                if (xpos > w2) { // right align the indicator at 3 o'clock
-                    xpos2 += _width * [0.019, -0.030][i];
-                } else { // center the indicator if it is on the line from 12 o'clock - 6 o'clock
-                    xpos2 += _width * [0.000, -0.026][i];
-                }
+                xpos3 = xpos2;
+            } else if (xpos > w2) { // right align the indicator at 3 o'clock
+                xpos2 += _width * [0.068, 0.019, -0.030, -0.070][(len > maxLen ? maxLen : len) - 1];
+                xpos3 += _width * -0.070;
+            } else { // center the indicator if it is on the line from 12 o'clock - 6 o'clock
+                maxLen = 5;
+                xpos2 += _width * [0.024, 0.000, -0.026, -0.048, -0.074][(len > maxLen ? maxLen : len) - 1];
+                xpos3 += _width * -0.074;
             }
-            // Clear the area for the heart rate indicator
+            // Clear the indicator area
+            icon += "~";
+            var wl = dc.getTextWidthInPixels(icon, iconFont as FontResource);
             var font = Graphics.FONT_TINY;
-            var fontHeight = Graphics.getFontHeight(font);
-            var width = (fontHeight * 2.4).toNumber(); // Indicator width
-            dc.setClip(xpos - width*0.50, ypos - fontHeight*0.37, width, fontHeight*0.78);
+            var wr = dc.getTextWidthInPixels("8", font) * maxLen;
+            var h = dc.getFontHeight(iconFont as FontResource); 
+            dc.setClip(xpos3 - wl, ypos - h*0.5, wl + wr, h);
             dc.setColor(Graphics.COLOR_TRANSPARENT, config.colors[Config.C_BACKGROUND]);
             dc.clear();
             dc.clearClip();
-            // Draw the new indicator symbol and its value
-            dc.setColor(config.colors[Config.C_HEART_RATE], Graphics.COLOR_TRANSPARENT);
+            // Draw the indicator symbol and its value
+            dc.setColor(color, Graphics.COLOR_TRANSPARENT);
             dc.drawText(
                 xpos2, 
                 ypos - 1, 
                 iconFont as FontResource, 
-                isAwake ? "H~" : "I~", 
+                icon, 
                 Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_RIGHT
             );
             dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(
                 xpos2, 
-                ypos,
-                font, 
-                heartRate.format("%d"), 
+                ypos, 
+                font,
+                value, 
                 Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_LEFT
             );
 /*
             // Debug output
-            dc.drawRectangle(xpos - width*0.50, ypos - fontHeight*0.37, width, fontHeight*0.78);
+            dc.drawRectangle(xpos3 - wl, ypos - h*0.5, wl + wr, h);
             dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(xpos, ypos - 1, 1);
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
@@ -602,60 +752,6 @@ class Indicators {
         if (phoneConnected) {
             dc.setColor(config.colors[Config.C_PHONECONN], Graphics.COLOR_TRANSPARENT);
             dc.drawText(xpos, ypos, iconFont as FontResource, "B" as String, Graphics.TEXT_JUSTIFY_CENTER);
-            ret = true;
-        }
-        return ret;
-    }
-
-    // Draw a simple indicator, return true if it was drawn.
-    private function drawIndicator(
-        dc as Dc,
-        xpos as Number, 
-        ypos as Number,
-        icon as String,
-        value as Number?
-    ) as Boolean {
-        var ret = false;
-        //value = 123;
-        //value = 87654;
-        //value = 3456;
-        if (value != null and value > 0) {
-            // Adjust the x-coordinate for the location of the indicator and the value
-            var xpos2 = xpos;
-            var w2 = _width / 2;
-            if (xpos < w2) { // left align the indicator at 9 o'clock
-                xpos2 += _width * -0.024;
-            } else if (xpos > w2) { // right align the indicator at 3 o'clock
-                var i = value > 9 ? value > 99 ? 2 : 1 : 0;            
-                xpos2 += _width * [0.068, 0.019, -0.030][i];
-            } else { // center the indicator if it is on the line from 12 o'clock - 6 o'clock
-                var i = value > 9 ? value > 99 ? value > 999 ? value > 9999 ? 4 : 3 : 2 : 1 : 0;
-                xpos2 += _width * [0.024, 0.000, -0.026, -0.052, -0.076][i];
-            }
-            // Draw the indicator symbol and its value
-            dc.setColor(config.colors[Config.C_INDICATOR], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(
-                xpos2, 
-                ypos - 1, 
-                iconFont as FontResource, 
-                icon + "~", 
-                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_RIGHT
-            );
-            dc.setColor(config.colors[Config.C_TEXT], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(
-                xpos2, 
-                ypos, 
-                Graphics.FONT_TINY,
-                value.format("%d"), 
-                Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_LEFT
-            );
-/*
-            // Debug output
-            dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(xpos, ypos - 1, 1);
-            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(xpos2, ypos - 1, 1);
-*/
             ret = true;
         }
         return ret;
@@ -747,16 +843,17 @@ class BatteryLevel {
     private var _cT3 as Number;
 
     public function initialize(clockRadius as Number) {
+        var cdpct = clockRadius / 50.0;
         // Radius of the modern battery indicator circle in pixels
-        _mRadius = (3.2 * clockRadius / 50.0 + 0.5).toNumber();
+        _mRadius = (3.2 * cdpct + 0.5).toNumber();
         // Dimensions of the classic battery level indicator in pixels, calculated from percentages of the clock diameter
-        _cPw = (1.2 * clockRadius / 50.0 + 0.5).toNumber(); // pen size for the battery rectangle 
+        _cPw = (1.2 * cdpct + 0.5).toNumber(); // pen size for the battery rectangle 
         if (0 == _cPw % 2) { _cPw += 1; }                   // make sure pen size is an odd number
-        _cBw = (1.9 * clockRadius / 50.0 + 0.5).toNumber(); // width of the battery level segments
-        _cBh = (4.2 * clockRadius / 50.0 + 0.5).toNumber(); // height of the battery level segments
-        _cTs = (0.4 * clockRadius / 50.0 + 0.5).toNumber(); // tiny space around everything
+        _cBw = (1.9 * cdpct + 0.5).toNumber(); // width of the battery level segments
+        _cBh = (4.2 * cdpct + 0.5).toNumber(); // height of the battery level segments
+        _cTs = (0.4 * cdpct + 0.5).toNumber(); // tiny space around everything
         _cCw = _cPw;                                        // width of the little knob on the right side of the battery
-        _cCh = (2.3 * clockRadius / 50.0 + 0.5).toNumber(); // height of the little knob
+        _cCh = (2.3 * cdpct + 0.5).toNumber(); // height of the little knob
         _cWidth = 5*_cBw + 6*_cTs + _cPw+1;
         _cHeight = _cBh + 2*_cTs + _cPw+1;
         if (1 == _cHeight % 2 and 0 == _cCh % 2) { _cCh += 1; } // make sure both, the battery rectangle height and the knob 

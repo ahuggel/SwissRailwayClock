@@ -262,12 +262,11 @@ class ClockView extends WatchUi.WatchFace {
         var hour = clockTime.hour; // Using local variables for these saves a bit of memory
         var minute = clockTime.min;
         var second = clockTime.sec;
+        var deviceSettings = System.getDeviceSettings();
 
         // Only re-draw the watch face if the minute changed since the last time
         if (_lastDrawnMin != minute) { 
             _lastDrawnMin = minute;
-
-            var deviceSettings = System.getDeviceSettings();
 
             // Determine all colors based on the relevant settings
             var colorMode = config.setColors(_isAwake, deviceSettings.doNotDisturb, hour, minute);
@@ -303,9 +302,6 @@ class ClockView extends WatchUi.WatchFace {
                 _backgroundDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
             }
 
-            // Draw the indicators (those which are updated every minute) on the background layer
-            _indicators.draw(_backgroundDc, deviceSettings, _isAwake);
-
             // Clear the layer used for the hour and minute hands
             _hourMinuteDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
             _hourMinuteDc.clear();
@@ -338,7 +334,9 @@ class ClockView extends WatchUi.WatchFace {
         } // if (_lastDrawnMin != minute)
 
         if (_isAwake or _doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand)) {
-            // Draw the heart rate indicator, every time onUpdate() is called
+            // Draw the indicators and the heart rate on the background layer, 
+            // every time onUpdate() is called and the second hand is drawn
+            _indicators.draw(_backgroundDc, deviceSettings);
             _indicators.drawHeartRate(_backgroundDc, _isAwake);
 
             // Clear the clip of the second layer to delete the second hand
