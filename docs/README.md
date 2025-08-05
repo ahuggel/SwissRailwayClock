@@ -16,7 +16,9 @@ This program reflects the progress of my ongoing journey to master [Monkey C] an
 
 ### Settings
 
-| Name | Values* | Description | [Architecture](#compatible-devices) |
+This table details the available on-device settings and their options. The settings differ slightly between the three classes of supported devices. Use the [Compatible devices](#compatible-devices) table below to find out which architecture each device uses.
+
+| Name | Values* | Description | Architecture |
 | --- | --- | --- | ---|
 | Battery&nbsp;Level | Classic<br/>Modern<br/>Classic&nbsp;Warnings<br/>Modern&nbsp;Warnings<br/>**Off** | _Classic_ refers to a battery-shaped indicator with colored bars for the remaining battery life. _Modern_ shows just a colored solid circle. With _Warnings_, the indicator is only displayed if the remaining battery life is less than the warning threshold of 40%. If the battery life is less than 10% the color is red, if less than 20% it is orange, else green. | Legacy<br/>Modern<br/>Amoled |
 | Battery&nbsp;Percentage | On<br/>**Off** | Adds the battery life as a percentage to the left of the battery indicator. | Legacy<br/>Modern<br/>Amoled |
@@ -25,7 +27,7 @@ This program reflects the progress of my ongoing journey to master [Monkey C] an
 | Alarms | **On**<br/>Off | Shows an alarm symbol when an alarm is set on the device. | Legacy<br/>Modern<br/>Amoled |
 | Notifications | On<br/>**Off** | Shows a notification symbol when there are active notifications. | Legacy<br/>Modern<br/>Amoled |
 | Phone&nbsp;Connection | **On**<br/>Off | Shows a Bluetooth symbol on the 6 o'clock tickmark when the phone connection is established. | Legacy<br/>Modern<br/>Amoled |
-| 1st&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>**Off** | Shows the selected indicator:<br/>- Heart rate in beats per minute (bpm);<br/>- Time to recovery from the last activity, in hours**;<br/>- Calories burned so far for the current day in kilocalories (kCal);<br/>- Step count since midnight for the current day in number of steps. | Modern<br/>Amoled |
+| 1st&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>**Off** | Shows the selected indicator:<br/>- Heart rate in beats per minute (bpm);<br/>- Time to recovery from the last activity, in hours**;<br/>- Calories burned so far for the current day in kilocalories (kCal);<br/>- Step count since midnight for the current day in number of steps;<br/>- The number of floors climbed for the current day;<br/>- The altitude above mean sea level in meters (m) or feet (ft). | Modern<br/>Amoled |
 | 2nd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
 | 3rd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
 | 4th&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
