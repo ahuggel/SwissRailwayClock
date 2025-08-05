@@ -27,10 +27,10 @@ This table details the available on-device settings and their options. The setti
 | Alarms | **On**<br/>Off | Shows an alarm symbol when an alarm is set on the device. | Legacy<br/>Modern<br/>Amoled |
 | Notifications | On<br/>**Off** | Shows a notification symbol when there are active notifications. | Legacy<br/>Modern<br/>Amoled |
 | Phone&nbsp;Connection | **On**<br/>Off | Shows a Bluetooth symbol on the 6 o'clock tickmark when the phone connection is established. | Legacy<br/>Modern<br/>Amoled |
-| 1st&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>**Off** | Shows the selected indicator:<br/>- Heart rate in beats per minute (bpm);<br/>- Time to recovery from the last activity, in hours**;<br/>- Calories burned so far for the current day in kilocalories (kCal);<br/>- Step count since midnight for the current day in number of steps;<br/>- The number of floors climbed for the current day;<br/>- The altitude above mean sea level in meters (m) or feet (ft). | Modern<br/>Amoled |
-| 2nd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
-| 3rd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
-| 4th&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
+| 1st&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>Floors&nbsp;Climbed**<br/>Altitude<br/>**Off** | Shows the selected indicator:<br/>- Heart rate in beats per minute (bpm);<br/>- Time to recovery from the last activity, in hours**;<br/>- Calories burned so far for the current day in kilocalories (kCal);<br/>- Step count since midnight for the current day in number of steps;<br/>- The number of floors climbed for the current day;<br/>- The altitude above mean sea level in meters (m) or feet (ft). | Modern<br/>Amoled |
+| 2nd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>Floors&nbsp;Climbed**<br/>Altitude<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
+| 3rd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Floors&nbsp;Climbed**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
+| 4th&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Floors&nbsp;Climbed**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
 | Heart&nbsp;Rate | On<br/>**Off** | Shows the heart rate in beats per minute (bpm). | Legacy |
 | Recovery&nbsp;Time** | On<br/>**Off** | Shows the time to recovery from the last activity, in hours. | Legacy |
 | Steps | On<br/>**Off** | Shows the step count since midnight for the current day in number of steps. | Legacy |
