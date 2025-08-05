@@ -191,7 +191,8 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
                 or Config.I_COMPLICATION_2 == id
                 or Config.I_COMPLICATION_3 == id
                 or Config.I_COMPLICATION_4 == id) {
-                if (2 == config.getValue(id) and !config.hasTimeToRecovery()) {
+                // Skip options that are not supported by the device
+                while (!config.hasRequiredFeature(config.getOption(id) as Symbol)) {
                     config.setNext(id);
                 }
             }

@@ -594,7 +594,7 @@ class Indicators {
             case :RecoveryTime:
                 icon = "R";
                 //v = 8888;
-                v = config.hasTimeToRecovery() ? activityMonitorInfo.timeToRecovery : null;
+                v = config.hasRequiredFeature(option) ? activityMonitorInfo.timeToRecovery : null;
                 break;
             case :Calories:
                 icon = "C";
@@ -608,7 +608,7 @@ class Indicators {
                 break;
             case :FloorsClimbed:
                 icon = "S";   // TODO: Switch S and F icons in all fonts
-                v = activityMonitorInfo.floorsClimbed;
+                v = config.hasRequiredFeature(option) ? activityMonitorInfo.floorsClimbed : null;
                 break;
             case :Elevation:
                 icon = "E";
@@ -617,7 +617,7 @@ class Indicators {
                 if (activityInfo != null) {
                     altitude = activityInfo.altitude;
                 }
-                if (null == altitude) {
+                if (null == altitude and SensorHistory has :getElevationHistory) {
                     var sample = SensorHistory.getElevationHistory({:period => 1, :order => SensorHistory.ORDER_NEWEST_FIRST}).next();
 			        if (sample != null) {
 				        altitude = sample.data;

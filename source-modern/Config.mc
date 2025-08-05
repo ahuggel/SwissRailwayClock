@@ -152,6 +152,7 @@ class Config {
     private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the 3D effects
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
     private var _hasTimeToRecovery as Boolean; // Indicates if the device provides recovery time
+    private var _hasFloorsClimbed as Boolean; // Indicates if the device provides climbed floors
 
     // Constructor
     public function initialize() {
@@ -161,6 +162,7 @@ class Config {
         _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
         _hasBatteryInDays = (System.Stats has :batteryInDays);
         _hasTimeToRecovery = (ActivityMonitor.Info has :timeToRecovery);
+        _hasFloorsClimbed = (ActivityMonitor.Info has :floorsClimbed);
         // Read the configuration values from persistent storage 
         for (var id = 0; id < I_SIZE; id++) {
             var value = Storage.getValue(_itemLabels[id]) as Number or Null;
@@ -184,7 +186,8 @@ class Config {
                     or I_COMPLICATION_2 == id
                     or I_COMPLICATION_3 == id
                     or I_COMPLICATION_4 == id) {
-                    if (2 == value and !_hasTimeToRecovery) {
+                    var opts = _options[id];
+                    if (!hasRequiredFeature(opts[value])) {
                         value = 0;
                     }
                 } 
@@ -281,9 +284,19 @@ class Config {
         return _hasBatteryInDays;
     }
 
-    // Returns true if the device provides recovery time, false if not.
-    public function hasTimeToRecovery() as Boolean {
-        return _hasTimeToRecovery;
+    // Check if the device supports the required feature and return true if it does, else false.
+    // The default return value for options without any special treatment is true.
+    public function hasRequiredFeature(option as Symbol) as Boolean {
+        var ret = true;
+        switch (option) {
+            case :RecoveryTime:
+                ret = _hasTimeToRecovery;
+            break;
+            case :FloorsClimbed:
+                ret = _hasFloorsClimbed;
+            break;
+        }
+        return ret;
     }
 
     // Return the color (shade of gray) for the current I_DM_CONTRAST setting  
