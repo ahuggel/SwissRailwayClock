@@ -580,6 +580,29 @@ class Indicators {
         return idx;
     }
 
+    // To add a new indicator for amoled and modern watches:
+    //
+    // - Choose a new symbol name for the new indicator (like :Elevation, :Pressure).
+    //
+    // resources*/strings/strings.xml
+    // - Add string resources for the new symbol.
+    //
+    // resources*/fonts/swissrailwayclock-icons-*
+    // - Create one or more icons and add them to the Icons font.
+    //
+    // source-{amoled,modern}/Config.mc
+    // - Add the new symbol to the Config._options arrays for the four complications. 
+    //   (Complications 1 and 2 are for indicators with up to 5 digits, the other two only
+    //   accommodate up to 4 digits.)
+    // - In Config.hasRequiredFeature(), add a check if the new indicator is not available on all 
+    //   supported devices.
+    //
+    // source/Indicators.mc
+    // - In Indicators.getDisplayValues(), implement the logic to determine the value and an icon
+    //   for the new indicator.
+    //
+    // Voilà.
+
     // Return the character for the indicator icon and the current value of the indicator formatted as a string
     (:modern) private function getDisplayValues(
         option as Symbol, 
@@ -627,6 +650,54 @@ class Indicators {
 			            altitude *= 3.28084; // convert meters to feet
                     }
                     value = altitude.format("%d"); // Can be 0 or negative
+                }
+                break;
+            case :Pressure:
+                // The current atmospheric pressure value and an icon that shows the recent pressure trend.
+                // The trend line emulates Garmin's own definition:
+                // "The barometer trend line considers the last 6 hours, broken into two 3 hour segments.
+                // If there is a 2.3 millibar change over the 3-hour segment, the line will curve up or 
+                // down depending on the direction of change."
+                // Source: https://support.garmin.com/en-GB/?faq=agZJiZRjhX2adgWkBVOHI9
+                if (SensorHistory has :getPressureHistory) {
+                    var pressureHistory = SensorHistory.getPressureHistory({:period => 1, :order => SensorHistory.ORDER_NEWEST_FIRST});
+                    var sample1 = pressureHistory.next();
+                    pressureHistory = SensorHistory.getPressureHistory({:period => new Time.Duration(10300), :order => SensorHistory.ORDER_OLDEST_FIRST});
+                    var sample2 = pressureHistory.next();
+                    pressureHistory = SensorHistory.getPressureHistory({:period => new Time.Duration(21600), :order => SensorHistory.ORDER_OLDEST_FIRST});
+                    var sample3 = pressureHistory.next();
+                    if (    sample1 != null and sample1.data != null
+                        and sample2 != null and sample2.data != null
+                        and sample3 != null and sample3.data != null) {
+
+                        // Select the icon for the trend line. Sample data is in Pascals (Pa). 1 mbar = 100 Pa.
+                        var d1 = sample1.data - sample2.data;
+                        var i1 = d1 >= -230 ? d1 >= 230 ? 0 : 1 : 2; // up, level, down
+                        var d2 = sample2.data - sample3.data;
+                        var i2 = d2 >= -230 ? d2 >= 230 ? 0 : 1 : 2;
+                        // icon = ["0","1","2","3","4","5","6","7","8"][i2*3 + i1];
+                        icon = (i2*3 + i1).format("%d");
+
+                        // Current pressure value as an integer in mbar. TODO: Support other units 
+                        // TODO: The cast is required due to what seems a type checker bug (sdk-8.2.2)
+                        value = (sample1.data as Number or Float / 100.0 + 0.5).toNumber().format("%d");
+
+                        // Debug output
+/*                      var sec = System.getClockTime().sec;
+                        icon = ((sec / 3).toNumber() % 9).format("%d");
+*/
+/*                      var gi = Gregorian.info(sample1.when, Time.FORMAT_MEDIUM);
+                        var whenStr = Lang.format("$1$:$2$:$3$ $4$-$5$-$6$", [gi.hour, gi.min, gi.sec, gi.day, gi.month, gi.year]);
+                        System.println("sample1: data = " + sample1.data + ", when = " + whenStr);
+                        gi = Gregorian.info(sample2.when, Time.FORMAT_MEDIUM);
+                        whenStr = Lang.format("$1$:$2$:$3$ $4$-$5$-$6$", [gi.hour, gi.min, gi.sec, gi.day, gi.month, gi.year]);
+                        System.println("sample2: data = " + sample2.data + ", when = " + whenStr);
+                        gi = Gregorian.info(sample3.when, Time.FORMAT_MEDIUM);
+                        whenStr = Lang.format("$1$:$2$:$3$ $4$-$5$-$6$", [gi.hour, gi.min, gi.sec, gi.day, gi.month, gi.year]);
+                        System.println("sample3: data = " + sample3.data + ", when = " + whenStr);
+                        System.println("d1 = " + d1 + ", d2 = " + d2 + ", icon = " + icon + ", value = " + value);
+*/
+                    }
                 }
                 break;
             default:

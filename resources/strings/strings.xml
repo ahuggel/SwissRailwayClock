@@ -14,6 +14,7 @@
     <string id="Calories">Calories</string>
     <string id="FloorsClimbed">Floors Climbed</string>
     <string id="Elevation">Altitude</string>
+    <string id="Pressure">Atmospheric Pressure</string>
     <string id="MoveBar">Move Bar</string>
     <string id="DarkMode">Dark Mode</string>
     <string id="Brightness">Brightness</string>

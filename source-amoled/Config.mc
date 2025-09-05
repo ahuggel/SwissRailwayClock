@@ -22,6 +22,7 @@ import Toybox.ActivityMonitor;
 import Toybox.Application.Storage;
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.SensorHistory;
 import Toybox.System;
 import Toybox.WatchUi;
 
@@ -138,10 +139,10 @@ class Config {
         [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
         [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_BRIGHTNESS
         [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_DM_CONTRAST
-        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation], // I_COMPLICATION_1
-        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation], // I_COMPLICATION_2
-        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed], // I_COMPLICATION_3
-        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed]  // I_COMPLICATION_4
+        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure], // I_COMPLICATION_1
+        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure], // I_COMPLICATION_2
+        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure], // I_COMPLICATION_3
+        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure]  // I_COMPLICATION_4
      ] as Array< Array<Symbol> >;
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
@@ -149,6 +150,7 @@ class Config {
     private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
     private var _hasTimeToRecovery as Boolean; // Indicates if the device provides recovery time
     private var _hasFloorsClimbed as Boolean; // Indicates if the device provides climbed floors
+    private var _hasPressure as Boolean; // Indicates if the device provides pressure
 
     // Constructor
     public function initialize() {
@@ -159,6 +161,7 @@ class Config {
         _hasBatteryInDays = (System.Stats has :batteryInDays);
         _hasTimeToRecovery = (ActivityMonitor.Info has :timeToRecovery);
         _hasFloorsClimbed = (ActivityMonitor.Info has :floorsClimbed);
+        _hasPressure = (SensorHistory has :getPressureHistory);
         // Read the configuration values from persistent storage 
         for (var id = 0; id < I_SIZE; id++) {
             var value = Storage.getValue(_itemLabels[id]) as Number or Null;
@@ -285,6 +288,9 @@ class Config {
             break;
             case :FloorsClimbed:
                 ret = _hasFloorsClimbed;
+            break;
+            case :Pressure:
+                ret = _hasPressure;
             break;
         }
         return ret;
