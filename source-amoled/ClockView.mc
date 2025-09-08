@@ -223,7 +223,7 @@ class ClockView extends WatchUi.WatchFace {
             dc.fillPolygon(minuteHandCoords);
         } else { // draw only the outline of the hands
             var pw = 3;
-            if (config.hasAlpha()) {
+            if (config.hasCapability(:Alpha)) {
                 dc.setStroke(Graphics.createColor(0x80, 0x80, 0x80, 0x80));
             } else {
                 dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
