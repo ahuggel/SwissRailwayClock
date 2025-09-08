@@ -70,7 +70,7 @@ class ClockView extends WatchUi.WatchFace {
     public function initialize() {
         WatchFace.initialize();
 
-        if (config.hasAlpha()) { _shadowColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
+        if (config.hasCapability(:Alpha)) { _shadowColor = Graphics.createColor(0x80, 0x80, 0x80, 0x80); }
         var deviceSettings = System.getDeviceSettings();
         _screenShape = deviceSettings.screenShape;
         var width = deviceSettings.screenWidth;
@@ -321,7 +321,7 @@ class ClockView extends WatchUi.WatchFace {
                 _hourMinuteDc.fillPolygon(minuteHandCoords);
             } else {
                 var pw = 3;
-                if (config.hasAlpha()) {
+                if (config.hasCapability(:Alpha)) {
                     _hourMinuteDc.setStroke(_shadowColor);
                 } else {
                     _hourMinuteDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);

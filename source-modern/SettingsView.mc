@@ -56,7 +56,7 @@ class SettingsView extends WatchUi.Menu2 {
                 // Add menu items for the battery label options only if battery is not set to "Off"
                 if (config.isEnabled(Config.I_BATTERY)) {
                     addToggleMenuItem(Config.I_BATTERY_PCT);
-                    if (config.hasBatteryInDays()) { 
+                    if (config.hasCapability(:BatteryInDays)) { 
                         addToggleMenuItem(Config.I_BATTERY_DAYS); 
                     }
                 }
@@ -96,7 +96,7 @@ class SettingsView extends WatchUi.Menu2 {
                     {}
                 ));
                 addMenuItem(Config.I_ACCENT_CYCLE);
-                if (config.hasAlpha()) {
+                if (config.hasCapability(:Alpha)) {
                     addToggleMenuItem(Config.I_3D_EFFECTS); 
                 }
                 Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.Done, Rez.Strings.DoneLabel, Config.I_DONE, {}));
@@ -190,7 +190,7 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
                 or Config.I_COMPLICATION_3 == id
                 or Config.I_COMPLICATION_4 == id) {
                 // Skip options that are not supported by the device
-                while (!config.hasRequiredFeature(config.getOption(id) as Symbol)) {
+                while (!config.hasCapability(config.getOption(id) as Symbol)) {
                     config.setNext(id);
                 }
             }
