@@ -22,6 +22,7 @@ import Toybox.ActivityMonitor;
 import Toybox.Application.Storage;
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.SensorHistory;
 import Toybox.System;
 import Toybox.WatchUi;
 
@@ -138,27 +139,35 @@ class Config {
         [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
         [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_BRIGHTNESS
         [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_DM_CONTRAST
-        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation], // I_COMPLICATION_1
-        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation], // I_COMPLICATION_2
-        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed], // I_COMPLICATION_3
-        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed]  // I_COMPLICATION_4
+        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure], // I_COMPLICATION_1
+        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure], // I_COMPLICATION_2
+        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure], // I_COMPLICATION_3
+        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure]  // I_COMPLICATION_4
      ] as Array< Array<Symbol> >;
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
-    private var _hasAlpha as Boolean; // Indicates if the device supports an alpha channel; required for the wire hands
-    private var _hasBatteryInDays as Boolean; // Indicates if the device provides battery in days estimates
-    private var _hasTimeToRecovery as Boolean; // Indicates if the device provides recovery time
-    private var _hasFloorsClimbed as Boolean; // Indicates if the device provides climbed floors
+    private var _hasCapability as Dictionary<Symbol, Boolean>; // Device capabilities
 
     // Constructor
     public function initialize() {
         // Default values for toggle items, each bit is one. I_ALARMS and I_CONNECTED are on by default.
         var defaults = 0x005; // 0b0000 0101
 
-        _hasAlpha = (Graphics has :createColor) and (Graphics.Dc has :setFill); // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor
-        _hasBatteryInDays = (System.Stats has :batteryInDays);
-        _hasTimeToRecovery = (ActivityMonitor.Info has :timeToRecovery);
-        _hasFloorsClimbed = (ActivityMonitor.Info has :floorsClimbed);
+        // Tests for device capabilities. For complications, the symbol here must be the same as the complication option.
+        _hasCapability = {
+            // Indicates if the device supports an alpha channel; required for the wire hands.
+            // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor.
+            :Alpha => (Graphics has :createColor) and (Graphics.Dc has :setFill),
+            // Indicates if the device provides battery in days estimates 
+            :BatteryInDays => (System.Stats has :batteryInDays), 
+            // Indicates if the device provides recovery time
+            :RecoveryTime => (ActivityMonitor.Info has :timeToRecovery), 
+            // Indicates if the device provides climbed floors
+            :FloorsClimbed => (ActivityMonitor.Info has :floorsClimbed),
+            // Indicates if the device provides pressure 
+            :Pressure => (SensorHistory has :getPressureHistory) 
+        };
+        
         // Read the configuration values from persistent storage 
         for (var id = 0; id < I_SIZE; id++) {
             var value = Storage.getValue(_itemLabels[id]) as Number or Null;
@@ -167,7 +176,7 @@ class Config {
                     value = (defaults & (1 << (id - I_ALARMS))) >> (id - I_ALARMS);
                 }
                 // Make sure the value is compatible with the device capabilities, so the watchface code can rely on getValue() alone.
-                if (I_BATTERY_DAYS == id and !_hasBatteryInDays) { 
+                if (I_BATTERY_DAYS == id and !hasCapability(:BatteryInDays)) { 
                     value = 0;
                 }
             } else if (id < I_DM_ON) { // list items
@@ -180,7 +189,7 @@ class Config {
                     or I_COMPLICATION_3 == id
                     or I_COMPLICATION_4 == id) {
                     var opts = _options[id];
-                    if (!hasRequiredFeature(opts[value])) {
+                    if (!hasCapability(opts[value])) {
                         value = 0;
                     }
                 }
@@ -265,27 +274,12 @@ class Config {
         Storage.setValue(_itemLabels[id], value);
     }
 
-    // Returns true if the device supports an alpha channel, false if not.
-    public function hasAlpha() as Boolean {
-        return _hasAlpha;
-    }
-
-    // Returns true if the device provides battery in days estimates, false if not.
-    public function hasBatteryInDays() as Boolean {
-        return _hasBatteryInDays;
-    }
-
     // Check if the device supports the required feature and return true if it does, else false.
     // The default return value for options without any special treatment is true.
-    public function hasRequiredFeature(option as Symbol) as Boolean {
-        var ret = true;
-        switch (option) {
-            case :RecoveryTime:
-                ret = _hasTimeToRecovery;
-            break;
-            case :FloorsClimbed:
-                ret = _hasFloorsClimbed;
-            break;
+    public function hasCapability(option as Symbol) as Boolean {
+        var ret = _hasCapability[option];
+        if (null == ret) {
+            ret = true;
         }
         return ret;
     }
