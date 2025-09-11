@@ -697,52 +697,6 @@ class Indicators {
                     System.println("sample3: data = " + sample3.data + ", when = " + whenStr);
                     System.println("d1 = " + d1 + ", d2 = " + d2 + ", icon = " + icon + ", value = " + value);
 */
-
-/*
-                var pressureHistory = SensorHistory.getPressureHistory({:period => new Time.Duration(21600), :order => SensorHistory.ORDER_NEWEST_FIRST});
-                var sample = pressureHistory.next();
-                if (sample != null and sample.data != null) {
-                    var sample1 = sample;
-                    var t1 = sample.when.subtract(new Time.Duration(10800)) as Time.Moment; // three hours earlier
-                    // The following would be nicer as a do {} while () loop, but the type checker doesn't let me do that
-                    sample = pressureHistory.next();
-                    while (sample != null and sample.when.greaterThan(t1)) {
-                        sample = pressureHistory.next();
-                    }
-                    if (sample != null and sample.data != null) {
-                        var sample2 = sample;
-                        var sample3;
-                        do {
-                            sample3 = sample;
-                            sample = pressureHistory.next();
-                        } while (sample != null);
-                        if (sample3.data != null) {
-                            // Select the icon for the trend line. Sample data is in Pascals (Pa). 1 mbar = 100 Pa.
-                            var d1 = sample1.data - sample2.data;
-                            var i1 = d1 >= -230 ? d1 >= 230 ? 0 : 1 : 2; // up, level, down
-                            var d2 = sample2.data - sample3.data;
-                            var i2 = d2 >= -230 ? d2 >= 230 ? 0 : 1 : 2;
-                            icon = (i2*3 + i1).format("%d");
-                            // Current pressure value as an integer in mbar. TODO: Support other units 
-                            // TODO: The cast is required due to what seems a type checker bug (sdk-8.2.2)
-                            value = (sample1.data as Number or Float / 100.0 + 0.5).toNumber().format("%d");
-  */
-  /*
-                            var gi = Gregorian.info(sample1.when, Time.FORMAT_MEDIUM);
-                            var whenStr = Lang.format("$1$:$2$:$3$ $4$-$5$-$6$", [gi.hour, gi.min, gi.sec, gi.day, gi.month, gi.year]);
-                            System.println("sample1: data = " + sample1.data + ", when = " + whenStr);
-                            gi = Gregorian.info(sample2.when, Time.FORMAT_MEDIUM);
-                            whenStr = Lang.format("$1$:$2$:$3$ $4$-$5$-$6$", [gi.hour, gi.min, gi.sec, gi.day, gi.month, gi.year]);
-                            System.println("sample2: data = " + sample2.data + ", when = " + whenStr);
-                            gi = Gregorian.info(sample3.when, Time.FORMAT_MEDIUM);
-                            whenStr = Lang.format("$1$:$2$:$3$ $4$-$5$-$6$", [gi.hour, gi.min, gi.sec, gi.day, gi.month, gi.year]);
-                            System.println("sample3: data = " + sample3.data + ", when = " + whenStr);
-                            System.println("d1 = " + d1 + ", d2 = " + d2 + ", icon = " + icon + ", value = " + value);
-*/
-/*
-                        }
-                    }
-*/
                 }
                 break;
             default:
