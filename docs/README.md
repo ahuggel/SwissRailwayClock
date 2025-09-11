@@ -6,7 +6,7 @@
 
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with an always-on second hand on watches with a MIP display;
 - The operation differs from the original Swiss railway clock in that the second hand ticks like that of a quartz watch, rather than sweeps, and it does not pause at 12 o'clock;
-- On-device settings (a settings menu on the watch itself) allow the configuration of a battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a [Move Bar] and various other options. The "Configurable Clutter" clip above shows some of them and section [Settings](#settings) has the complete list;
+- On-device settings (a settings menu on the watch itself) allow the configuration of a battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a "Move Bar" and various other options. The "Configurable Clutter" clip above shows some of them and section [Settings](#settings) has the complete list;
 - On watches with an AMOLED display, the background is always black and there are two independent brightness settings, replacing the contrast and dark mode options of MIP watches. Always-on (low-power) mode uses the darkest dimmer level and has no second hand[^1];
 - On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955, fēnix 7 and 8 series, Enduro 2 and 3 and all AMOLED watches).
 
@@ -27,15 +27,15 @@ This table details the available on-device settings and their options. The setti
 | Alarms | **On**<br/>Off | Shows an alarm symbol when an alarm is set on the device. | Legacy<br/>Modern<br/>Amoled |
 | Notifications | On<br/>**Off** | Shows a notification symbol when there are active notifications. | Legacy<br/>Modern<br/>Amoled |
 | Phone&nbsp;Connection | **On**<br/>Off | Shows a Bluetooth symbol on the 6 o'clock tickmark when the phone connection is established. | Legacy<br/>Modern<br/>Amoled |
-| 1st&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>Floors&nbsp;Climbed**<br/>Altitude<br/>**Off** | Shows the selected indicator:<br/>- Heart rate in beats per minute (bpm);<br/>- Time to recovery from the last activity, in hours**;<br/>- Calories burned so far for the current day in kilocalories (kCal);<br/>- Step count since midnight for the current day in number of steps;<br/>- The number of floors climbed for the current day;<br/>- The altitude above mean sea level in meters (m) or feet (ft). | Modern<br/>Amoled |
-| 2nd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>Floors&nbsp;Climbed**<br/>Altitude<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
-| 3rd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Floors&nbsp;Climbed**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
-| 4th&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Floors&nbsp;Climbed**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
+| 1st&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>Floors&nbsp;Climbed**<br/>Altitude<br/>Pressure**<br/>**Off** | Shows the selected indicator:<br/>- Heart rate in beats per minute (bpm);<br/>- Time to recovery from the last activity, in hours**;<br/>- Calories burned so far for the current day in kilocalories (kCal);<br/>- Step count since midnight for the current day in number of steps;<br/>- The number of floors climbed for the current day;<br/>- The altitude above mean sea level in meters (m) or feet (ft);<br/>- The atmospheric pressure value in millibar (mbar) and an arrow showing the recent pressure trend. | Modern<br/>Amoled |
+| 2nd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>Floors&nbsp;Climbed**<br/>Altitude<br/>Pressure**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
+| 3rd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Floors&nbsp;Climbed**<br/>Pressure**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
+| 4th&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Floors&nbsp;Climbed**<br/>Pressure**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
 | Heart&nbsp;Rate | On<br/>**Off** | Shows the heart rate in beats per minute (bpm). | Legacy |
 | Recovery&nbsp;Time** | On<br/>**Off** | Shows the time to recovery from the last activity, in hours. | Legacy |
 | Steps | On<br/>**Off** | Shows the step count since midnight for the current day in number of steps. | Legacy |
 | Calories | On<br/>**Off** | Shows the calories burned so far for the current day in kilocalories (kCal). | Legacy |
-| Move&nbsp;Bar | On<br/>**Off** | Enables the Move Bar. | Modern<br/>Amoled |
+| Move&nbsp;Bar | On<br/>**Off** | Enables the Move Bar. The move bar reminds you to keep moving. After one hour of inactivity, the move bar appears. Additional segments appear after every 15 minutes of inactivity. You can reset the move bar by walking a short distance.| Modern<br/>Amoled |
 | Brightness | **White**<br/>Silver<br/>Gray<br/>Slate<br/>Dark | Adjusts the brightness of the foreground color. | Amoled |
 | Dimmer | **Scheduled**<br/>In&nbsp;DnD&nbsp;Mode<br/>Off | Allows for a second configuration of the foreground color. _Scheduled_ enables Dimmer mode from the Turn On to the Turn Off time. _In DnD Mode_ couples Dimmer mode with the do not disturb mode of the device. | Amoled |
 | Dark Mode | **Scheduled**<br/>In&nbsp;DnD&nbsp;Mode<br/>On<br/>Off | Changes the watchface colors to a black background with light foreground. _Scheduled_ enables Dark Mode from the Turn On to the Turn Off time. _In DnD Mode_ couples Dark Mode with the do not disturb mode of the device. | Legacy<br/>Modern |
@@ -260,7 +260,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 [CC 3.0 BY]: https://creativecommons.org/licenses/by/3.0/
 [Flaticon license]: https://www.freepikcompany.com/legal?&_ga=2.78543444.1954543656.1683086561-616594141.1683086561&_gl=1*4sgkt0*test_ga*NjE2NTk0MTQxLjE2ODMwODY1NjE.*test_ga_523JXC6VL7*MTY4MzEyNDUwMi4yLjEuMTY4MzEyNDg0OS41NC4wLjA.*fp_ga*NjE2NTk0MTQxLjE2ODMwODY1NjE.*fp_ga_1ZY8468CQB*MTY4MzEyNDUzMi4yLjEuMTY4MzEyNDg0OS41NC4wLjA.#nav-flaticon
 [Prettier Monkey C]: https://marketplace.visualstudio.com/items?itemName=markw65.prettier-extension-monkeyc
-[Move Bar]: https://support.garmin.com/en-US/?faq=JwIMwaMTTV0t7r0mvkdA08
 [compatible devices]: https://developer.garmin.com/connect-iq/compatible-devices/
 [on-device menu]: https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/Menu2.html
 [picker]: https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/Picker.html
