@@ -6,7 +6,7 @@
 
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with an always-on second hand on watches with a MIP display;
 - The operation differs from the original Swiss railway clock in that the second hand ticks like that of a quartz watch, rather than sweeps, and it does not pause at 12 o'clock;
-- On-device settings (a settings menu on the watch itself) allow the configuration of a battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a "Move Bar" and various other options. The "Configurable Clutter" clip above shows some of them and section [Settings](#settings) has the complete list;
+- On-device settings (a settings menu on the watch itself) allow the configuration of a battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a "Move Bar" and various other options. The "Configurable Clutter" clip above shows some of them, section [Settings](#settings) has the complete list and section [Adding a new Indicator](#adding-a-new-indicator) explains how you can add more indicators;
 - On watches with an AMOLED display, the background is always black and there are two independent brightness settings, replacing the contrast and dark mode options of MIP watches. Always-on (low-power) mode uses the darkest dimmer level and has no second hand[^1];
 - On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955, fēnix 7 and 8 series, Enduro 2 and 3 and all AMOLED watches).
 
@@ -91,6 +91,29 @@ Garmin smartwatches are constrained devices with limited processing power, memor
 
 To start, I highly recommend using [Prettier Monkey C], an extension for Visual Studio Code, which does a great job at optimizing the memory usage of the generated program. From my experience, for legacy watches, for which the memory usage is now really close to the limit, Prettier Monkey C allows me to keep the source code more maintainable (I can keep the ```enum```s for example) while reducing the size of the application code and data by around 12%.
 
+## Adding a new Indicator
+
+On AMOLED and Modern watches, four complications are available and each can display one of a list of supported indicators. New indicators can be added with minimal code changes. These are the steps to add a new indicator for AMOLED and Modern watches[^4]:
+
+- Choose a new symbol name for the new indicator (like `:Elevation`, `:Pressure`).
+
+In `resources*/strings/strings.xml`
+- Add string resources for the new symbol.
+
+In `resources*/fonts/swissrailwayclock-icons-*`
+- Create one or more icons for the new indicator and add them to the Icons font.
+
+In `source-{amoled,modern}/Config.mc`
+- Add the new symbol to the `Config._options` arrays for the four complications. (Complications 1 and 2 are for indicators with up to 5 digits, the other two only have space for up to 4 digits.)
+- Add a check to `Config._hasCapability` if the new indicator is not available on all supported devices.
+
+In `source/Indicators.mc`
+- Implement the logic to determine the value and icon for the new indicator in `Indicators.getDisplayValues()`.
+
+Voilà.
+
+[^4]: Due to memory constraints, legacy watches have only four indicators, which are individually turned on or off (Heart rate, Recovery time, Steps, Calories). The quickest way to make changes to this would be to replace one of these existing indicators with a new one.
+
 ### Performance optimizations
 
 The first optimization needed for the Swiss Railway Clock watchface was not about memory though, but to reduce the execution time to stay within Garmin's execution time limits when updating the screen in low-power mode. The goal for this is to minimize the time it takes to run ```WatchFace.onPartialUpdate()```. This function is called every second when the device is in low-power mode. Its main task is to delete the [second hand] and redraw it at the next position, which requires calculating the new coordinates for the hand and for the smallest rectangle around it and calling the relevant Garmin graphics functions.
@@ -105,9 +128,9 @@ After much experimenting and tweaking, the resulting code now meets the executio
 
 For devices with sufficient memory the optimization goes one step further and all required coordinates for every second are only calculated once, when the app is started. They are kept in an array and the time critical code then only needs to lookup the coordinates for the current second.
 
-To measure the efficiency of performance optimizations, Garmin's simulator provides a "Watchface Diagnostics" tool that shows the time spent in ```onPartialUpdate()```[^4] and a Profiler to analyze the program's performance in more detail.
+To measure the efficiency of performance optimizations, Garmin's simulator provides a "Watchface Diagnostics" tool that shows the time spent in ```onPartialUpdate()```[^5] and a Profiler to analyze the program's performance in more detail.
 
-[^4]: This tool would be even more useful if it also showed the (running) *average* partial update execution time, i.e., the actual metric that is limited.
+[^5]: This tool would be even more useful if it also showed the (running) *average* partial update execution time, i.e., the actual metric that is limited.
 
 ### Memory optimizations
 
