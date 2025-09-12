@@ -580,29 +580,6 @@ class Indicators {
         return idx;
     }
 
-    // To add a new indicator for amoled and modern watches:
-    //
-    // - Choose a new symbol name for the new indicator (like :Elevation, :Pressure).
-    //
-    // resources*/strings/strings.xml
-    // - Add string resources for the new symbol.
-    //
-    // resources*/fonts/swissrailwayclock-icons-*
-    // - Create one or more icons and add them to the Icons font.
-    //
-    // source-{amoled,modern}/Config.mc
-    // - Add the new symbol to the Config._options arrays for the four complications. 
-    //   (Complications 1 and 2 are for indicators with up to 5 digits, the other two only
-    //   accommodate up to 4 digits.)
-    // - Add a check to Config._hasCapability if the new indicator is not available on all 
-    //   supported devices.
-    //
-    // source/Indicators.mc
-    // - In Indicators.getDisplayValues(), implement the logic to determine the value and an icon
-    //   for the new indicator.
-    //
-    // Voilà.
-
     // Return the character for the indicator icon and the current value of the indicator formatted as a string.
     // This function is only called when the device has the relevant capability, so there's no need to check 
     // for that here anymore. 
@@ -651,7 +628,7 @@ class Indicators {
                     if (System.UNIT_STATUTE == deviceSettings.elevationUnits) {
 			            altitude *= 3.28084; // convert meters to feet
                     }
-                    value = altitude.format("%d"); // Can be 0 or negative
+                    value = Math.round(altitude).format("%d"); // Can be 0 or negative
                 }
                 break;
             case :Pressure:
