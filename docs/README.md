@@ -91,9 +91,40 @@ Garmin smartwatches are constrained devices with limited processing power, memor
 
 To start, I highly recommend using [Prettier Monkey C], an extension for Visual Studio Code, which does a great job at optimizing the memory usage of the generated program. From my experience, for legacy watches, for which the memory usage is now really close to the limit, Prettier Monkey C allows me to keep the source code more maintainable (I can keep the ```enum```s for example) while reducing the size of the application code and data by around 12%.
 
+### Performance optimizations
+
+The first optimization needed for the Swiss Railway Clock watchface was not about memory though, but to reduce the execution time to stay within Garmin's execution time limits when updating the screen in low-power mode. The goal for this is to minimize the time it takes to run ```WatchFace.onPartialUpdate()```. This function is called every second when the device is in low-power mode. Its main task is to delete the [second hand] and redraw it at the next position, which requires calculating the new coordinates for the hand and for the smallest rectangle around it and calling the relevant Garmin graphics functions.
+
+Optimizing these calculations involved
+- relocating code to eliminate unnecessarily repeated computations;
+- removing any not strictly required statements;
+- inlining functions; and 
+- unrolling loops.
+
+After much experimenting and tweaking, the resulting code now meets the execution time limits, but is no longer easy to read and understand. If you're just looking for a basic example of code to rotate coordinates and set the clipping regions for a second hand, you may be better off checking out Garmin's sample analog watchface application first.
+
+For devices with sufficient memory the optimization goes one step further and all required coordinates for every second are only calculated once, when the app is started. They are kept in an array and the time critical code then only needs to lookup the coordinates for the current second.
+
+To measure the efficiency of performance optimizations, Garmin's simulator provides a "Watchface Diagnostics" tool that shows the time spent in ```onPartialUpdate()```[^4] and a Profiler to analyze the program's performance in more detail.
+
+[^4]: This tool would be even more useful if it also showed the (running) *average* partial update execution time, i.e., the actual metric that is limited.
+
+### Memory optimizations
+
+As the number of supported optional indicators (or "Configurable Clutter") grew, memory became a constraint on older devices. Optimizing memory usage involved
+- removing some functionality from legacy devices;
+- minimizing the number of classes, class variables and functions;
+- replacing ```switch``` constructs with ```if``` statements;
+- replacing more complex variable types with simpler ones (e.g., use array instead of dictionary); and
+- introducing local variables to avoid repeating any, even minor, repeated expressions (e.g., instead of ```a=b+c+2; d=e+c+2;```, write ```var f=c+2; a=b+f; d=e+f;```).
+
+For more ideas how to save memory, search the [Garmin Developer forum]. Also, keep in mind that the resulting optimized design and code to save a few bytes here and there often violates common software development best practices. The optimized design and code may not look right.
+
+Memory optimizations can be measured with the simulator's "Active Memory" utility, which reports the size of the application code and data as well as other useful information.
+
 ## Adding a new Indicator
 
-On AMOLED and Modern watches, four complications are available and each can display one of a list of supported indicators. New indicators can be added with minimal code changes. These are the steps to add a new indicator for AMOLED and Modern watches[^4]:
+On AMOLED and Modern watches, four complications are available and each can display one of a list of supported indicators. New indicators can be added with minimal code changes. These are the steps to add a new indicator for AMOLED and Modern watches[^5]:
 
 - Choose a new symbol name for the new indicator (like `:Elevation`, `:Pressure`).
 
@@ -112,38 +143,7 @@ In `source/Indicators.mc`
 
 Voilà.
 
-[^4]: Due to memory constraints, legacy watches have only four indicators, which are individually turned on or off (Heart rate, Recovery time, Steps, Calories). The quickest way to make changes to this would be to replace one of these existing indicators with a new one.
-
-### Performance optimizations
-
-The first optimization needed for the Swiss Railway Clock watchface was not about memory though, but to reduce the execution time to stay within Garmin's execution time limits when updating the screen in low-power mode. The goal for this is to minimize the time it takes to run ```WatchFace.onPartialUpdate()```. This function is called every second when the device is in low-power mode. Its main task is to delete the [second hand] and redraw it at the next position, which requires calculating the new coordinates for the hand and for the smallest rectangle around it and calling the relevant Garmin graphics functions.
-
-Optimizing these calculations involved
-- relocating code to eliminate unnecessarily repeated computations;
-- removing any not strictly required statements;
-- inlining functions; and 
-- unrolling loops.
-
-After much experimenting and tweaking, the resulting code now meets the execution time limits, but is no longer easy to read and understand. If you're just looking for a basic example of code to rotate coordinates and set the clipping regions for a second hand, you may be better off checking out Garmin's sample analog watchface application first.
-
-For devices with sufficient memory the optimization goes one step further and all required coordinates for every second are only calculated once, when the app is started. They are kept in an array and the time critical code then only needs to lookup the coordinates for the current second.
-
-To measure the efficiency of performance optimizations, Garmin's simulator provides a "Watchface Diagnostics" tool that shows the time spent in ```onPartialUpdate()```[^5] and a Profiler to analyze the program's performance in more detail.
-
-[^5]: This tool would be even more useful if it also showed the (running) *average* partial update execution time, i.e., the actual metric that is limited.
-
-### Memory optimizations
-
-As the number of supported optional indicators (or "Configurable Clutter") grew, memory became a constraint on older devices. Optimizing memory usage involved
-- removing some functionality from legacy devices;
-- minimizing the number of classes, class variables and functions;
-- replacing ```switch``` constructs with ```if``` statements;
-- replacing more complex variable types with simpler ones (e.g., use array instead of dictionary); and
-- introducing local variables to avoid repeating any, even minor, repeated expressions (e.g., instead of ```a=b+c+2; d=e+c+2;```, write ```var f=c+2; a=b+f; d=e+f;```).
-
-For more ideas how to save memory, search the [Garmin Developer forum]. Also, keep in mind that the resulting optimized design and code to save a few bytes here and there often violates common software development best practices. The optimized design and code may not look right.
-
-Memory optimizations can be measured with the simulator's "Active Memory" utility, which reports the size of the application code and data as well as other useful information.
+[^5]: Due to memory constraints, legacy watches have only four indicators, which are individually turned on or off (Heart rate, Recovery time, Steps, Calories). The quickest way to make changes to this would be to replace one of these existing indicators with a new one.
 
 ## Compatible devices
 
