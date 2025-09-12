@@ -657,7 +657,7 @@ class Indicators {
 
                     // Current pressure value as an integer in mbar. TODO: Support other units 
                     // TODO: The cast is required due to what seems a type checker bug (sdk-8.2.2)
-                    value = (sample1.data as Number or Float / 100.0 + 0.5).toNumber().format("%d");
+                    v = (sample1.data as Number or Float / 100.0 + 0.5).toNumber();
 
                     // Debug output
 /*                  var sec = System.getClockTime().sec;
@@ -672,7 +672,7 @@ class Indicators {
                     gi = Gregorian.info(sample3.when, Time.FORMAT_MEDIUM);
                     whenStr = Lang.format("$1$:$2$:$3$ $4$-$5$-$6$", [gi.hour, gi.min, gi.sec, gi.day, gi.month, gi.year]);
                     System.println("sample3: data = " + sample3.data + ", when = " + whenStr);
-                    System.println("d1 = " + d1 + ", d2 = " + d2 + ", icon = " + icon + ", value = " + value);
+                    System.println("d1 = " + d1 + ", d2 = " + d2 + ", icon = " + icon + ", v = " + v);
 */
                 }
                 break;
