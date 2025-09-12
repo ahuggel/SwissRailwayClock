@@ -162,9 +162,10 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | fēnix® 7X PRO | fenix7xpro | Modern |
 | fēnix® 7X Pro - Solar Edition (no Wi-Fi) | fenix7xpronowifi | Modern |
 | fēnix® 8 43mm | fenix843mm | Amoled |
-| fēnix® 8 47mm / 51mm | fenix847mm | Amoled |
+| fēnix® 8 47mm / 51mm / tactix® 8 47mm / 51mm / quatix® 8 47mm / 51mm | fenix847mm | Amoled |
+| fēnix® 8 Pro 47mm / 51mm / MicroLED | fenix8pro47mm | Amoled |
 | fēnix® 8 Solar 47mm | fenix8solar47mm | Modern |
-| fēnix® 8 Solar 51mm | fenix8solar51mm | Modern |
+| fēnix® 8 Solar 51mm / tactix® 8 Solar 51mm | fenix8solar51mm | Modern |
 | fēnix® E | fenixe | Amoled |
 | First Avenger | legacyherofirstavenger | Modern |
 | Forerunner® 165 | fr165 | Amoled |
