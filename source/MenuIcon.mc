@@ -49,8 +49,9 @@ import Toybox.WatchUi;
         var length = width < height ? width : height;
         var sx0 = (width - length)/2;
         var sy0 = (height - length)/2;
-        dc.setColor(_bgColor, _bgColor);
+        dc.setAntiAlias(true); // Graphics.Dc has :setAntiAlias since API Level 3.2.0
         dc.setClip(sx0, sy0, length, length);
+        dc.setColor(_bgColor, _bgColor);
         dc.clear();
         dc.setColor(_fgColor, _fgColor);
         if (T_CIRCLE == _type) {
