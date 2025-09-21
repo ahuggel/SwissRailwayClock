@@ -68,6 +68,7 @@ class Config {
         I_COMPLICATION_2,
         I_COMPLICATION_3,
         I_COMPLICATION_4,
+        I_PRESSURE_UNIT,
         I_DM_ON, // the first item that is not a list item
         I_DM_OFF, 
         I_ALARMS, // the first toggle item (see defaults)
@@ -96,6 +97,7 @@ class Config {
         :Complication2,
         :Complication3,
         :Complication4,
+        :PressureUnit,
         :DmOn, 
         :DmOff,
         :Alarms,
@@ -122,6 +124,7 @@ class Config {
         "c2", // I_COMPLICATION_2
         "c3", // I_COMPLICATION_3
         "c4", // I_COMPLICATION_4
+        "pu", // I_PRESSURE_UNIT
         "dn", // I_DM_ON
         "df", // I_DM_OFF
         "al", // I_ALARMS
@@ -146,7 +149,8 @@ class Config {
         [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure], // I_COMPLICATION_1
         [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure], // I_COMPLICATION_2
         [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure], // I_COMPLICATION_3
-        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure]  // I_COMPLICATION_4
+        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure], // I_COMPLICATION_4
+        [:PressureUnitMbar, :PressureUnitMmHg, :PressureUnitInHg, :PressureUnitAtm] // I_PRESSURE_UNIT
      ] as Array< Array<Symbol> >;
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items

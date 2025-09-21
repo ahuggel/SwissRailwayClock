@@ -655,9 +655,11 @@ class Indicators {
                     var i2 = d2 >= -230 ? d2 >= 230 ? 0 : 1 : 2;
                     icon = (i2*3 + i1).format("%d");
 
-                    // Current pressure value as an integer in mbar. TODO: Support other units 
-                    // TODO: The cast is required due to what seems a type checker bug (sdk-8.2.2)
-                    v = (sample1.data as Number or Float / 100.0 + 0.5).toNumber();
+                    // Current pressure value in the selected pressure unit with an adequate number of decimals.
+                    var pu = config.getValue(Config.I_PRESSURE_UNIT);
+                    // The cast is required due to what seems a type checker bug (sdk-8.2.2)
+                    v = sample1.data as Number or Float / [100.0, 133.322, 3386.39, 101325.0][pu];
+                    value = v.format("%." + ["0", "0", "2", "3"][pu] + "f");
 
                     // Debug output
 /*                  var sec = System.getClockTime().sec;
