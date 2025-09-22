@@ -68,6 +68,9 @@ class SettingsView extends WatchUi.Menu2 {
                 addMenuItem(Config.I_COMPLICATION_2);
                 addMenuItem(Config.I_COMPLICATION_3);
                 addMenuItem(Config.I_COMPLICATION_4);
+                if (config.hasCapability(:Pressure)) {
+                    addMenuItem(Config.I_PRESSURE_UNIT);
+                }
                 addToggleMenuItem(Config.I_MOVE_BAR);
                 addMenuItem(Config.I_DARK_MODE);
                 //Fallthrough
@@ -118,6 +121,7 @@ class SettingsView extends WatchUi.Menu2 {
                 deleteAnyItem(Config.I_COMPLICATION_2);
                 deleteAnyItem(Config.I_COMPLICATION_3);
                 deleteAnyItem(Config.I_COMPLICATION_4);
+                deleteAnyItem(Config.I_PRESSURE_UNIT);
                 deleteAnyItem(Config.I_MOVE_BAR);
                 deleteAnyItem(Config.I_DARK_MODE);
                 // Fallthrough

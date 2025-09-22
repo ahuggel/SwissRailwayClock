@@ -25,6 +25,7 @@
     <string id="Complication2">2. Anzeige</string>
     <string id="Complication3">3. Anzeige</string>
     <string id="Complication4">4. Anzeige</string>
+    <string id="PressureUnit">Druckeinheit</string>
     <string id="HideSeconds">Sekunden ausblenden</string>
     <string id="AccentColor">Sekunden Farbe</string>
     <string id="AccentCycle">Farbe wechseln</string>
@@ -53,6 +54,10 @@
     <string id="DimmerLevelMedium">Grau</string>
     <string id="DimmerLevelSlate">Schiefer</string>
     <string id="DimmerLevelDark">Dunkel</string>
+    <string id="PressureUnitMbar">mbar</string>
+    <string id="PressureUnitMmHg">mmHg</string>
+    <string id="PressureUnitInHg">inHg</string>
+    <string id="PressureUnitAtm">atm</string>
     <string id="HideSecondsInDm">Im Dunkelmodus</string>
     <string id="HideSecondsAlways">Immer</string>
     <string id="HideSecondsNever">Nie</string>
