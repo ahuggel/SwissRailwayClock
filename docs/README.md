@@ -23,7 +23,7 @@ This table details the available on-device settings and their options. The setti
 | Battery&nbsp;Level | Classic<br/>Modern<br/>Classic&nbsp;Warnings<br/>Modern&nbsp;Warnings<br/>**Off** | _Classic_ refers to a battery-shaped indicator with colored bars for the remaining battery life. _Modern_ shows just a colored solid circle. With _Warnings_, the indicator is only displayed if the remaining battery life is less than the warning threshold of 40%. If the battery life is less than 10% the color is red, if less than 20% it is orange, else green. | Legacy<br/>Modern<br/>Amoled |
 | Battery&nbsp;Percentage | On<br/>**Off** | Adds the battery life as a percentage to the left of the battery indicator. | Legacy<br/>Modern<br/>Amoled |
 | Battery&nbsp;Days** | On<br/>**Off** | Adds the remaining battery life in days to the right of the battery indicator. | Legacy<br/>Modern<br/>Amoled |
-| Date&nbsp;Display | Day&nbsp;Only<br/>Weekday&nbsp;and&nbsp;Day<br/>**Off** | Displays the date, either as a two digit number for the day of the month or the abbreviated weekday and day ot the month. | Legacy<br/>Modern<br/>Amoled |
+| Date&nbsp;Display | Day&nbsp;Only<br/>Weekday&nbsp;and&nbsp;Day<br/>**Off** | Displays the date, either as a two digit number for the day of the month or the abbreviated weekday and day of the month. | Legacy<br/>Modern<br/>Amoled |
 | Alarms | **On**<br/>Off | Shows an alarm symbol when an alarm is set on the device. | Legacy<br/>Modern<br/>Amoled |
 | Notifications | On<br/>**Off** | Shows a notification symbol when there are active notifications. | Legacy<br/>Modern<br/>Amoled |
 | Phone&nbsp;Connection | **On**<br/>Off | Shows a Bluetooth symbol on the 6 o'clock tickmark when the phone connection is established. | Legacy<br/>Modern<br/>Amoled |
@@ -156,7 +156,7 @@ In `source-*/Config.mc`
 - Toggle items have a default value set in the local variable `defaults` in `Config.initialize()`.
 
 In `resources*/strings/strings.xml`
-- Add string resources for the new symbols, which become the setting and option labels in the menu.
+- Add string resources for the new symbols (they become the setting and option labels in the menu).
 
 In `source-*/Settings.mc`
 - Add a menu item for the new setting to the menu in `SettingsView.buildMenu()`. Use `SettingsView.addToggleMenuItem()` for toggle items and `SettingsView.addMenuItem()` for simple list items (without an icon);
