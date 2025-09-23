@@ -6,7 +6,7 @@
 
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with an always-on second hand on watches with a MIP display;
 - The operation differs from the original Swiss railway clock in that the second hand ticks like that of a quartz watch, rather than sweeps, and it does not pause at 12 o'clock;
-- On-device settings (a settings menu on the watch itself) allow the configuration of a battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a "Move Bar" and various other options. The "Configurable Clutter" clip above shows some of them, section [Settings](#settings) has the complete list and section [Adding a new Indicator](#adding-a-new-indicator) explains how you can add more indicators;
+- On-device settings (a settings menu on the watch itself) allow the configuration of a battery level indicator (a classic battery shaped one or a modern one), date display, dark mode, 3D effects, a "Move Bar" and various other options. The "Configurable Clutter" clip above shows some of them, section [Settings](#settings) has the complete list and sections [Adding a new Indicator](#adding-a-new-indicator) and [Adding a new Application Setting](#adding-a-new-application-setting) explain how you can add your own;
 - On watches with an AMOLED display, the background is always black and there are two independent brightness settings, replacing the contrast and dark mode options of MIP watches. Always-on (low-power) mode uses the darkest dimmer level and has no second hand[^1];
 - On some of the newest watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported on the Forerunner 255, 955, fēnix 7 and 8 series, Enduro 2 and 3 and all AMOLED watches).
 
@@ -31,7 +31,7 @@ This table details the available on-device settings and their options. The setti
 | 2nd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Calories<br/>Steps<br/>Floors&nbsp;Climbed**<br/>Altitude<br/>Pressure**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
 | 3rd&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Floors&nbsp;Climbed**<br/>Pressure**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
 | 4th&nbsp;Complication | Heart&nbsp;Rate<br/>Recovery&nbsp;Time**<br/>Floors&nbsp;Climbed**<br/>Pressure**<br/>**Off** | Shows the selected indicator. | Modern<br/>Amoled |
-| Pressure&nbsp;Unit** | **mbar**<br/>mmHg<br/>inHg<br/>atm | The unit for the display of the atmospheric pressure: Millibars&nbsp;(mbar), millimeters of mercury&nbsp;(mmHg), inches of mercury&nbsp;(inHg) or atmospheres&nbsp;(atm) | Modern<br/>Amoled |
+| Pressure&nbsp;Unit** | **mbar**<br/>mmHg<br/>inHg<br/>atm | The unit for the display of the atmospheric pressure: Millibars&nbsp;(mbar), millimeters of mercury&nbsp;(mmHg), inches of mercury&nbsp;(inHg) or atmospheres&nbsp;(atm). | Modern<br/>Amoled |
 | Heart&nbsp;Rate | On<br/>**Off** | Shows the heart rate in beats per minute (bpm). | Legacy |
 | Recovery&nbsp;Time** | On<br/>**Off** | Shows the time to recovery from the last activity, in hours. | Legacy |
 | Steps | On<br/>**Off** | Shows the step count since midnight for the current day in number of steps. | Legacy |
@@ -74,10 +74,6 @@ The code for the different architectures is in the directories ```source-legacy`
 Besides the actual watchface, each also implements its own version of the global settings class and the on-device menu, as they provide slightly different options to cater for the capabilities of each class of devices.
 
 In some of the common code, [exclude annotations] are used to distinguish between code for modern and legacy devices and there are further exclude annotations to distinguish between legacy devices with more and less memory.
-
-A global instance of class ```Config``` maintains the settings and related information. It synchronises the selected menu options to [persistent storage] and makes them available across the app. It also manages all the colors for the watchface.
-
-The [on-device menu] implements three different types of menu items (```MenuItem```, ```ToggleMenuItem``` and ```IconMenuItem```) and uses a basic time [picker] for the user to configure dark mode start and end times.
 
 Symbols for active alarms, phone connection and notifications, as well as the various indicators use icons from a [custom font];
 
@@ -136,7 +132,7 @@ In `resources*/fonts/swissrailwayclock-icons-*`
 - Create one or more icons for the new indicator and add them to the Icons font.
 
 In `source-{amoled,modern}/Config.mc`
-- Add the new symbol to the `Config._options` arrays for the four complications. (Complications 1 and 2 are for indicators with up to 5 digits, the other two only have space for up to 4 digits.)
+- Add the new symbol to the `Config._options` arrays for the four complications. (Complications 1 and 2 are for indicators with up to 5 digits, the other two only have space for up to 4 digits);
 - Add a check to `Config._hasCapability` if the new indicator is not available on all supported devices.
 
 In `source/Indicators.mc`
@@ -145,6 +141,30 @@ In `source/Indicators.mc`
 Voilà.
 
 [^5]: Due to memory constraints, legacy watches have only four indicators, which are individually turned on or off (Heart rate, Recovery time, Steps, Calories). The quickest way to make changes to this would be to replace one of these existing indicators with a new one.
+
+## Adding a new Application Setting
+
+Application settings are managed by class ```Config```. A global instance of that class (```config```) maintains the settings and related information. It synchronises the selected menu options to [persistent storage] and makes them available across the app. Throughout the app, settings are generally identified and referred to by an enum value (e.g., ```I_PRESSURE_UNIT```). The existing settings are grouped into toggle items (configurations that are either on or off), list items (where the user selects an option from a list) and settings with a time picker (to set the start and end time of dark or dimmer mode). The [on-device menu] implements three different types of Connect IQ menu items: ```ToggleMenuItem``` for toggle items, ```MenuItem``` for simple list items and ```IconMenuItem``` for list items with an icon, and uses a basic time [picker] for the user to configure dark/dimmer mode start and end times.
+
+Introducing new toggle or list items and adding them to the settings menu is straightforward (altough not overly object-oriented - see [Optimizations](#optimizations) above) and requires changes like the following:
+
+In `source-*/Config.mc`
+- Add an enum name for the new setting to `enum Item`;
+- Add a symbol for the new setting, at the same position in the array, to `_itemSymbols`;
+- Add a (two letter) label for the new setting, also at the same position in the array, to `_itemLabels`;
+- For list items, add a list of options to the `_options` array. Again, the position within the array is critical;
+- Toggle items have a default value set in the local variable `defaults` in `Config.initialize()`.
+
+In `resources*/strings/strings.xml`
+- Add string resources for the new symbols, which will be shown in the menu.
+
+In `source-*/Settings.mc`
+- Add a menu item for the new setting to the menu in `SettingsView.buildMenu()`. Use `SettingsView.addToggleMenuItem()` for toggle items and `SettingsView.addMenuItem()` for simple list items (without an icon);
+- Add a call to delete the item to `SettingsView.deleteMenu()`.
+
+This introduces a new setting, which is synchronised to persistent storage, appears in the on-device menu, and can be accessed from anywhere in the app.
+
+The [code changes for the Pressure Unit setting](https://github.com/ahuggel/SwissRailwayClock/commit/d0435107df276390f4d5a07e48e8e978a4f4b8d6) are an example for a basic list item.
 
 ## Compatible devices
 
