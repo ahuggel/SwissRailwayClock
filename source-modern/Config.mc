@@ -33,9 +33,9 @@ var config as Config = new Config();
 // Application settings are synchronised to persistent storage.
 class Config {
     // Color configuration
-    enum ColorMode { M_LIGHT, M_DARK } // Color modes
+    public enum ColorMode { M_LIGHT, M_DARK } // Color modes
     // Indexes into the colors array
-    enum Color {
+    public enum Color {
         C_FOREGROUND, 
         C_BACKGROUND, 
         C_TEXT, 
@@ -52,11 +52,10 @@ class Config {
     // Colors. Read access is directly through this public variable to save the overhead of a
     // getColor() call, write access is only via setColors().
     public var colors as Array<Number> = new Array<Number>[C_SIZE];
-    private var _colorMode as Number = M_LIGHT;
 
     // Configuration item identifiers. Used throughout the app to refer to individual settings.
     // The last one must be I_SIZE, it is used like size(), those after I_SIZE are hacks
-    enum Item {
+    public enum Item {
         I_BATTERY, 
         I_DATE_DISPLAY, 
         I_DARK_MODE, 
@@ -305,19 +304,19 @@ class Config {
     // Determine the color mode and the colors to use, return the color mode
     public function setColors(isAwake as Boolean, doNotDisturb as Boolean, hour as Number, minute as Number) as Number {        
         // Determine if dark mode is on
-        _colorMode = M_LIGHT;
+        var colorMode = M_LIGHT;
         var darkMode = getOption(I_DARK_MODE);
         if (:DarkModeScheduled == darkMode) {
             var time = hour * 60 + minute;
             if (time >= getValue(I_DM_ON) or time < getValue(I_DM_OFF)) {
-                _colorMode = M_DARK;
+                colorMode = M_DARK;
             }
         } else if (   :On == darkMode
                    or (:DarkModeInDnD == darkMode and doNotDisturb)) {
-            _colorMode = M_DARK;
+            colorMode = M_DARK;
         }
 
-        if (M_LIGHT == _colorMode) {
+        if (M_LIGHT == colorMode) {
             colors = [
                 Graphics.COLOR_BLACK, // C_FOREGROUND
                 Graphics.COLOR_WHITE, // C_BACKGROUND 
@@ -355,7 +354,7 @@ class Config {
             }
         }
 
-        return _colorMode;
+        return colorMode;
     }
 
     // Return the accent color for the second hand. If the change color setting is enabled, the 
@@ -368,6 +367,9 @@ class Config {
         } else {
             aci = getValue(I_ACCENT_COLOR) * 2;
         }
+        if (Graphics.COLOR_BLACK == colors[C_BACKGROUND]) {
+            aci += 1;
+        }
         return [
             // Colors for the second hand, in pairs with one color for each color mode
             0xFF0000, 0xff0055, // red 
@@ -379,7 +381,7 @@ class Config {
             0x0000FF, 0x00AAFF, // blue
             0xaa00aa, 0xaa00ff, // purple
             0xff00aa, 0xff00aa  // pink
-        ][M_LIGHT == _colorMode ? aci : aci + 1];
+        ][aci];
     }
 
     // Helper function to load string resources, just to keep the code simpler and see only one compiler warning. 

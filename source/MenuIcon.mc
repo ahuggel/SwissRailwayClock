@@ -24,7 +24,7 @@ import Toybox.WatchUi;
 
 // Drawable used for menu icons (accent color and dark mode contrast / dimmer level)
 (:modern) class MenuIcon extends WatchUi.Drawable {
-    enum Type { T_CIRCLE, T_TRIANGLE }
+    public enum Type { T_CIRCLE, T_TRIANGLE }
     private var _type as Type;
     private var _fgColor as Number;
     private var _bgColor as Number;

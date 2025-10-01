@@ -76,7 +76,7 @@ class TimePicker extends WatchUi.Picker {
 }
 
 class TimeFactory extends WatchUi.PickerFactory {
-    enum Mode { T_HOUR, T_MINUTE }
+    public enum Mode { T_HOUR, T_MINUTE }
     private var _mode as Mode;
     private var _is24Hour as Boolean;
     private var _stop as Number;
