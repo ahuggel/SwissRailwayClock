@@ -678,6 +678,17 @@ class Indicators {
 */
                 }
                 break;
+            case :Temperature:
+                icon = "T";
+                var sample = SensorHistory.getTemperatureHistory({:period => 1, :order => SensorHistory.ORDER_NEWEST_FIRST}).next();
+                if (sample != null and sample.data != null) {
+                    v = sample.data as Number or Float;
+                    if (System.UNIT_STATUTE == deviceSettings.temperatureUnits) {
+                        v = v * 1.8 + 32.0; // convert degrees celsius to fahrenheit
+                    }
+                    value = v.format("%.0f"); // round v to an integer
+                }
+                break;
             default:
                 System.println("ERROR: Indicators.getDisplayValue() is not implemented for option = " + option);
                 break;
