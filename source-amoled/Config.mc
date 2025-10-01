@@ -33,9 +33,9 @@ var config as Config = new Config();
 // Application settings are synchronised to persistent storage.
 class Config {
     // Color configuration
-    enum ColorMode { M_LIGHT, M_DARK } // Color modes
+    private enum ColorMode { M_LIGHT, M_DARK } // Color modes
     // Indexes into the colors array
-    enum Color {
+    public enum Color {
         C_FOREGROUND, 
         C_BACKGROUND, 
         C_TEXT, 
@@ -55,7 +55,7 @@ class Config {
 
     // Configuration item identifiers. Used throughout the app to refer to individual settings.
     // The last one must be I_SIZE, it is used like size(), those after I_SIZE are hacks
-    enum Item {
+    public enum Item {
         I_BATTERY, 
         I_DATE_DISPLAY, 
         I_DARK_MODE, 
