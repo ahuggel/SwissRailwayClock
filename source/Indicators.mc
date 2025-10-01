@@ -628,7 +628,7 @@ class Indicators {
                     if (System.UNIT_STATUTE == deviceSettings.elevationUnits) {
 			            altitude *= 3.28084; // convert meters to feet
                     }
-                    value = Math.round(altitude).format("%d"); // Can be 0 or negative
+                    value = altitude.format("%.0f"); // Can be 0 or negative
                 }
                 break;
             case :Pressure:
@@ -683,7 +683,7 @@ class Indicators {
                 break;
         }
         if (value.equals("") and v != null and v > 0) {
-            value = v.format("%d");
+            value = v.format("%.0f");
         }
         return [icon, value];
     }
