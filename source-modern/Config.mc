@@ -145,10 +145,10 @@ class Config {
         [:AccentRed, :AccentOrange, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentLtBlue, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
         [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
         [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite], // I_DM_CONTRAST
-        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure], // I_COMPLICATION_1
-        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure], // I_COMPLICATION_2
-        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure], // I_COMPLICATION_3
-        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure], // I_COMPLICATION_4
+        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure, :Temperature], // I_COMPLICATION_1
+        [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure, :Temperature], // I_COMPLICATION_2
+        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure, :Temperature], // I_COMPLICATION_3
+        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure, :Temperature], // I_COMPLICATION_4
         [:PressureUnitMbar, :PressureUnitMmHg, :PressureUnitInHg, :PressureUnitAtm] // I_PRESSURE_UNIT
      ] as Array< Array<Symbol> >;
 
@@ -172,7 +172,9 @@ class Config {
             // Indicates if the device provides climbed floors
             :FloorsClimbed => (ActivityMonitor.Info has :floorsClimbed),
             // Indicates if the device provides pressure 
-            :Pressure => (SensorHistory has :getPressureHistory) 
+            :Pressure => (SensorHistory has :getPressureHistory),
+            // Indicates if the device provides temperature 
+            :Temperature => (SensorHistory has :getTemperatureHistory)
         };
 
         // Read the configuration values from persistent storage 
