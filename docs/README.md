@@ -10,13 +10,13 @@
 - On watches with an AMOLED display, the background is always black and there are two independent brightness settings, replacing the contrast and dark mode options of MIP watches. Always-on (low-power) mode uses the darkest dimmer level and has no second hand[^1];
 - On recent watches, it is possible to detect touch screen presses (touch and hold). This is used for a little gimmick to change the hour and minute hands and draw just their outlines for a few seconds after a screen press, so any indicator that is covered by the hands becomes readable (supported from the Forerunner 255, 955, fēnix 7 and 8 series, Enduro 2 and 3 and all AMOLED watches).
 
-This program reflects the progress of my ongoing journey to master [Monkey C] and the Garmin [Connect IQ ecosystem] to create an analog watchface. I am making it available to share what I've learned, in the hope that others will find it useful to grasp the necessary concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how.
+This program reflects the progress of my ongoing journey to master [Monkey C] and the Garmin [Connect IQ ecosystem] to create an analog watchface. What started as a simple program has grown into a complete application, with various features and support for all newer Garmin watch models. I am sharing it with developers to show what I've learned, in the hope that it will help others grasp the necessary programming concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how. This is an educational and non-commercial project and is not intended to compete with any licensed application of the original Swiss Railway Clock design, which belongs to the Swiss Federal Railways (SBB). Therefore, it is not published in the Garmin IQ store.
 
 [^1]: Newer AMOLED watches have burn-in protection requirements, which are easily and quite naturally addressed with the concept of a brightness setting. A few older AMOLED watches with more complex burn-in protection requirements are not supported.
 
 ### Settings
 
-This table details the available on-device settings and their options. The settings differ slightly between the three classes of supported devices. Use the [Compatible devices](#compatible-devices) table below to find out which architecture each device uses.
+Details of the available on-device settings and their options. The settings differ slightly between the three classes of supported devices. Use the [Compatible devices](#compatible-devices) table below to find out which architecture each device uses.
 
 | Name | Values* | Description | Architecture |
 | --- | --- | --- | ---|
@@ -139,6 +139,8 @@ In `source/Indicators.mc`
 - Implement the logic to determine the value and icon for the new indicator in `Indicators.getDisplayValues()`.
 
 Voilà.
+
+The [code changes for the Temperature indicator](https://github.com/ahuggel/SwissRailwayClock/pull/28/commits/d8b95e3d34813d1398e353c2621e541437623807) are an example for a new indicator.
 
 [^5]: Due to memory constraints, legacy watches have only four indicators, which are individually turned on or off (Heart rate, Recovery time, Steps, Calories). The quickest way to make changes to this would be to replace one of these existing indicators with a new one.
 
