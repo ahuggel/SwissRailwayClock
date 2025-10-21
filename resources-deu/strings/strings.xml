@@ -16,6 +16,7 @@
     <string id="Elevation">Höhe über Meer</string>
     <string id="Pressure">Atmosphärischer Druck</string>
     <string id="Temperature">Temperatur</string>
+    <string id="StressScore">Stress</string>
     <string id="MoveBar">Inaktivitätsstatus</string>
     <string id="DarkMode">Dunkelmodus</string>
     <string id="Brightness">Helligkeit</string>

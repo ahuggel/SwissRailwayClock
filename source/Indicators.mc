@@ -344,7 +344,8 @@ class Indicators {
     // Draw all the indicators, which are updated when the watch is awake or once a minute 
     // (all except the heart rate).
     // The modern version uses a helper function to determine if and where each indicator is drawn.
-    (:modern) public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
+    // Hack: Returns the stress score if it needs to be drawn or null if not.
+    (:modern) public function draw(dc as Dc, deviceSettings as DeviceSettings) as Number or Null {
         var activityMonitorInfo = ActivityMonitor.getInfo();
 
         // Helper - is the 4th complication at 6 o'clock?
@@ -422,6 +423,7 @@ class Indicators {
 
         // Draw the complications
         _drawHeartRate = -1;
+        var stressScore = null;
         _complication2Drawn = false;
         var dataField = [:dfComplication1, :dfComplication2, :dfComplication3, :dfComplication4];
         var complicationId = [Config.I_COMPLICATION_1, Config.I_COMPLICATION_2, Config.I_COMPLICATION_3, Config.I_COMPLICATION_4];
@@ -440,6 +442,9 @@ class Indicators {
                     // when the position always remains the same.
                     _drawHeartRate = idx;
                     ret = true;
+                } else if (:StressScore == option) {
+                    // Hack: Just return the stress score, the indicator will be drawn elsewhere.
+                    stressScore = activityMonitorInfo.stressScore;
                 } else {
                     var val = getDisplayValues(option, activityMonitorInfo, deviceSettings);
                     ret = drawIndicator(
@@ -454,6 +459,7 @@ class Indicators {
                 if (:dfComplication2 == dataField[i]) { _complication2Drawn = ret; }
             }
         }
+        return stressScore;
     }
 
     // Draw the heart rate if it is available, return true if it was drawn.

@@ -35,7 +35,7 @@ class ClockView extends WatchUi.WatchFace {
     private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
 
     // List of watchface shapes, used as indexes. Review optimizations in calcSecondData() et al. before changing the Shape enum.
-    private enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_SIZE }
+    private enum Shape { S_BIGTICKMARK, S_SMALLTICKMARK, S_HOURHAND, S_MINUTEHAND, S_SECONDHAND, S_GAUGEHAND, S_SIZE }
     // A 1 dimensional array for the coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
     private var _secondCircleRadius as Number = 0; // Radius of the second hand circle
@@ -148,6 +148,7 @@ class ClockView extends WatchUi.WatchFace {
         shapes[S_HOURHAND]      = [  44.0,    6.3,    5.1,  -12.0];
         shapes[S_MINUTEHAND]    = [  57.8,    5.2,    3.7,  -12.0];
         shapes[S_SECONDHAND]    = [  47.9,    1.4,    1.4,  -16.5];
+        shapes[S_GAUGEHAND]     = [   8.5,    2.5,    0.75,  -3.5];
 
         // Convert the clock geometry data to pixels
         for (var s = 0; s < S_SIZE; s++) {
@@ -336,8 +337,11 @@ class ClockView extends WatchUi.WatchFace {
         if (_isAwake or _doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand)) {
             // Draw the indicators and the heart rate on the background layer, 
             // every time onUpdate() is called and the second hand is drawn
-            _indicators.draw(_backgroundDc, deviceSettings);
+            var stressScore = _indicators.draw(_backgroundDc, deviceSettings);
             _indicators.drawHeartRate(_backgroundDc, _isAwake);
+            if (stressScore != null) {
+                drawStressScore(_backgroundDc, stressScore);
+            }
 
             // Clear the clip of the second layer to delete the second hand
             _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
@@ -351,6 +355,43 @@ class ClockView extends WatchUi.WatchFace {
             _accentColor = config.getAccentColor(hour, minute, second);
             drawSecondHand(_secondDc, second);
         }
+    }
+
+    private function drawStressScore(dc as Dc, stressScore as Number) as Void {
+        var x = (0.45 * _clockRadius).toNumber();
+        var y = _clockRadius;
+        var radius = (0.105 * _clockRadius).toNumber();
+        var penWidth1 = (0.03 * _clockRadius).toNumber();
+        if (1 == penWidth1 % 2) { penWidth1 += 1; } // make it even
+        dc.setColor(config.colors[Config.C_BACKGROUND], Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(x, y, radius);
+        dc.setColor(config.colors[Config.C_STRESS_SCORE], Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(penWidth1);
+        dc.drawCircle(x, y, radius);
+
+        var penWidth2 = (0.08 * _clockRadius).toNumber(); // was: 0.10
+        if (1 == penWidth2 % 2) { penWidth2 += 1; } // make it even
+        var arcRadius = radius + penWidth1 / 2 + penWidth2 / 2;
+        var colors = [
+            Config.C_MOVE_BAR,
+            Config.C_BATTERY_LEVEL_OK,        
+            Config.C_BATTERY_LEVEL_WARN,
+            Config.C_BATTERY_LEVEL_ALERT
+        ];
+        dc.setPenWidth(penWidth2);
+        for (var i = 0; i < 4; i++) {
+            dc.setColor(config.colors[colors[i]], Graphics.COLOR_TRANSPARENT);
+            dc.drawArc(x, y, arcRadius, Graphics.ARC_COUNTER_CLOCKWISE, (270 + i*45) % 360, (315 + i*45) % 360);
+        }
+
+        var sec = 30.0 - 0.3 * stressScore; // map stressScore 0-100 to angle (in sec) 30-0
+        var pts = rotateCoords(S_GAUGEHAND, sec / 60.0 * TWO_PI);
+        var offset = _clockRadius - x;
+        for (var i = 0; i < 4; i++) {
+            pts[i][0] -= offset;
+        }
+        dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+        dc.fillPolygon(pts);
     }
 
     // Handle the partial update event. This function is called every second when the device is
