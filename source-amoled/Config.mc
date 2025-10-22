@@ -47,6 +47,7 @@ class Config {
         C_BATTERY_LEVEL_OK,
         C_BATTERY_LEVEL_WARN,
         C_BATTERY_LEVEL_ALERT,
+        C_STRESS_SCORE,
         C_SIZE
     }
     // Colors. Read access is directly through this public variable to save the overhead of a
@@ -144,7 +145,7 @@ class Config {
         [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_DM_CONTRAST
         [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure, :Temperature], // I_COMPLICATION_1
         [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure, :Temperature], // I_COMPLICATION_2
-        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure, :Temperature], // I_COMPLICATION_3
+        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure, :Temperature, :StressScore], // I_COMPLICATION_3
         [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure, :Temperature], // I_COMPLICATION_4
         [:PressureUnitMbar, :PressureUnitMmHg, :PressureUnitInHg, :PressureUnitAtm] // I_PRESSURE_UNIT
      ] as Array< Array<Symbol> >;
@@ -162,16 +163,12 @@ class Config {
             // Indicates if the device supports an alpha channel; required for the wire hands.
             // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor.
             :Alpha => (Graphics has :createColor) and (Graphics.Dc has :setFill),
-            // Indicates if the device provides battery in days estimates 
             :BatteryInDays => (System.Stats has :batteryInDays), 
-            // Indicates if the device provides recovery time
             :RecoveryTime => (ActivityMonitor.Info has :timeToRecovery), 
-            // Indicates if the device provides climbed floors
             :FloorsClimbed => (ActivityMonitor.Info has :floorsClimbed),
-            // Indicates if the device provides pressure 
             :Pressure => (SensorHistory has :getPressureHistory),
-            // Indicates if the device provides temperature 
-            :Temperature => (SensorHistory has :getTemperatureHistory)
+            :Temperature => (SensorHistory has :getTemperatureHistory),
+            :StressScore => (ActivityMonitor.Info has :stressScore)
         };
         
         // Read the configuration values from persistent storage 
@@ -330,7 +327,8 @@ class Config {
             gray,                                                    // C_BATTERY_FRAME
             [0x00ff00, 0x00ec00, 0x00d900, 0x00bf00, 0x009900][lvl], // C_BATTERY_LEVEL_OK
             [0xff5500, 0xec4f00, 0xd94800, 0xbf4000, 0x993300][lvl], // C_BATTERY_LEVEL_WARN
-            red                                                      // C_BATTERY_LEVEL_ALERT
+            red,                                                     // C_BATTERY_LEVEL_ALERT
+            gray                                                     // C_STRESS_SCORE
         ];
     }
 
