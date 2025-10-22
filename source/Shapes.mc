@@ -118,7 +118,7 @@ import Toybox.System;
         // Calculate all numbers required to draw the second hand for every second
         for (var second = 0; second < 60; second++) {
             // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
-            var angle = second * 0.104719758; // TWO_PI / 60.0
+            var angle = second * 0.104719755; /* 2*pi/60 */
             var sin = Math.sin(angle);
             var cos = Math.cos(angle);
             var offsetX = screenCenter[0] + 0.5;

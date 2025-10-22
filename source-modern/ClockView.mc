@@ -29,7 +29,6 @@ var iconFont as FontResource?;
 
 // Implements the Swiss Railway Clock watch face for modern watches, using layers
 class ClockView extends WatchUi.WatchFace {
-    private const TWO_PI as Float = 2 * Math.PI;
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
 
     private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
@@ -226,7 +225,7 @@ class ClockView extends WatchUi.WatchFace {
             // Draw tick marks around the edge of the screen on the background layer
             _backgroundDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
             for (var i = 0; i < 60; i++) {
-                _backgroundDc.fillPolygon(shapes.rotate(i % 5 ? Shapes.S_SMALLTICKMARK : Shapes.S_BIGTICKMARK, i / 60.0 * TWO_PI, _screenCenter[0], _screenCenter[1]));
+                _backgroundDc.fillPolygon(shapes.rotate(i % 5 ? Shapes.S_SMALLTICKMARK : Shapes.S_BIGTICKMARK, i * 0.104719755 /* 2*pi/60 */, _screenCenter[0], _screenCenter[1]));
             }
 
             // Clear the layer used for the hour and minute hands
@@ -234,9 +233,9 @@ class ClockView extends WatchUi.WatchFace {
             _hourMinuteDc.clear();
 
             // Draw the hour and minute hands and their shadows
-            var hourHandAngle = ((hour % 12) * 60 + minute) / (12 * 60.0) * TWO_PI;
+            var hourHandAngle = ((hour % 12) * 60.0 + minute) / 12.0 * 0.104719755 /* 2*pi/60 */;
             var hourHandCoords = shapes.rotate(Shapes.S_HOURHAND, hourHandAngle, _screenCenter[0], _screenCenter[1]);
-            var minuteHandCoords = shapes.rotate(Shapes.S_MINUTEHAND, minute / 60.0 * TWO_PI, _screenCenter[0], _screenCenter[1]);
+            var minuteHandCoords = shapes.rotate(Shapes.S_MINUTEHAND, minute * 0.104719755 /* 2*pi/60 */, _screenCenter[0], _screenCenter[1]);
             if (_isAwake and _show3dEffects and 0 == _doWireHands) {
                 _hourMinuteDc.setFill(_shadowColor);
                 _hourMinuteDc.fillPolygon(shadowCoords(hourHandCoords, 7));

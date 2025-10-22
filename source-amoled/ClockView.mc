@@ -29,8 +29,6 @@ var iconFont as FontResource?;
 
 // Implements the Swiss Railway Clock watch face for watches with an AMOLED display.
 class ClockView extends WatchUi.WatchFace {
-    private const TWO_PI as Float = 2 * Math.PI;
-
     private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
     private var _doWireHands as Number = 0; // Number of seconds to show the minute and hour hands as wire hands after press
 
@@ -112,7 +110,7 @@ class ClockView extends WatchUi.WatchFace {
         // Draw tick marks around the edge of the screen
         dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < 60; i++) {
-            dc.fillPolygon(shapes.rotate(i % 5 ? Shapes.S_SMALLTICKMARK : Shapes.S_BIGTICKMARK, i / 60.0 * TWO_PI, _screenCenter[0], _screenCenter[1]));
+            dc.fillPolygon(shapes.rotate(i % 5 ? Shapes.S_SMALLTICKMARK : Shapes.S_BIGTICKMARK, i * 0.104719755 /* 2*pi/60 */, _screenCenter[0], _screenCenter[1]));
         }
 
         // Draw the indicators
@@ -120,9 +118,9 @@ class ClockView extends WatchUi.WatchFace {
         _indicators.drawHeartRate(dc, _isAwake);
 
         // Draw the hour and minute hands
-        var hourHandAngle = ((hour % 12) * 60 + minute) / (12 * 60.0) * TWO_PI;
+        var hourHandAngle = ((hour % 12) * 60.0 + minute) / 12.0 * 0.104719755 /* 2*pi/60 */;
         var hourHandCoords = shapes.rotate(Shapes.S_HOURHAND, hourHandAngle, _screenCenter[0], _screenCenter[1]);
-        var minuteHandCoords = shapes.rotate(Shapes.S_MINUTEHAND, minute / 60.0 * TWO_PI, _screenCenter[0], _screenCenter[1]);
+        var minuteHandCoords = shapes.rotate(Shapes.S_MINUTEHAND, minute * 0.104719755 /* 2*pi/60 */, _screenCenter[0], _screenCenter[1]);
         if (_doWireHands != 0) { _doWireHands -= 1; } // Update the wire hands timer
         if (0 == _doWireHands) { // draw regular hour and minute hands
             dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
