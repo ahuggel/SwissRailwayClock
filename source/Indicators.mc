@@ -493,7 +493,7 @@ class Indicators {
     }
 
     // Draw the stress score gauge
-    private function drawStressScore(dc as Dc, stressScore as Number?) as Boolean {
+    (:modern) private function drawStressScore(dc as Dc, stressScore as Number?) as Boolean {
         if (null == stressScore) { 
             return false;
         }
