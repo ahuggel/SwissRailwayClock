@@ -96,8 +96,8 @@ class Indicators {
     }
 
     // Update any indicator positions, which depend on numbers that are not available yet when the constructor is called
-    (:modern) public function updatePos(s0 as Float, s3 as Float) as Void {
-        _pos[6] = [(_width * 0.50).toNumber(), (_height * 0.50 + s3 + (s0 - Graphics.getFontHeight(iconFont as FontResource))/3).toNumber()];
+    (:modern) public function updatePos() as Void {
+        _pos[6] = [(_width * 0.50).toNumber(), (_height * 0.50 + shapes.s3 + (shapes.s0 - Graphics.getFontHeight(iconFont as FontResource))/3).toNumber()];
     }
 
     (:legacy) public function updatePos(s0 as Float, s3 as Float) as Void {
