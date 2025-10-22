@@ -344,8 +344,7 @@ class Indicators {
     // Draw all the indicators, which are updated when the watch is awake or once a minute 
     // (all except the heart rate).
     // The modern version uses a helper function to determine if and where each indicator is drawn.
-    // Hack: Returns the stress score if it needs to be drawn or null if not.
-    (:modern) public function draw(dc as Dc, deviceSettings as DeviceSettings) as Number or Null {
+    (:modern) public function draw(dc as Dc, deviceSettings as DeviceSettings) as Void {
         var activityMonitorInfo = ActivityMonitor.getInfo();
 
         // Helper - is the 4th complication at 6 o'clock?
@@ -423,7 +422,6 @@ class Indicators {
 
         // Draw the complications
         _drawHeartRate = -1;
-        var stressScore = null;
         _complication2Drawn = false;
         var dataField = [:dfComplication1, :dfComplication2, :dfComplication3, :dfComplication4];
         var complicationId = [Config.I_COMPLICATION_1, Config.I_COMPLICATION_2, Config.I_COMPLICATION_3, Config.I_COMPLICATION_4];
@@ -443,8 +441,8 @@ class Indicators {
                     _drawHeartRate = idx;
                     ret = true;
                 } else if (:StressScore == option) {
-                    // Hack: Just return the stress score, the indicator will be drawn elsewhere.
-                    stressScore = activityMonitorInfo.stressScore;
+                    // Currently always drawn at 9 o'clock (and only available on complication 3)
+                    ret = drawStressScore(dc, activityMonitorInfo.stressScore);                    
                 } else {
                     var val = getDisplayValues(option, activityMonitorInfo, deviceSettings);
                     ret = drawIndicator(
@@ -459,7 +457,6 @@ class Indicators {
                 if (:dfComplication2 == dataField[i]) { _complication2Drawn = ret; }
             }
         }
-        return stressScore;
     }
 
     // Draw the heart rate if it is available, return true if it was drawn.
@@ -493,6 +490,45 @@ class Indicators {
             }
         }
         return ret;
+    }
+
+    // Draw the stress score gauge
+    private function drawStressScore(dc as Dc, stressScore as Number?) as Boolean {
+        if (null == stressScore) { 
+            return false;
+        }
+        var x = (0.45 * _clockRadius).toNumber();
+        var y = _clockRadius;
+        var radius = (0.105 * _clockRadius).toNumber();
+        var penWidth1 = (0.03 * _clockRadius).toNumber();
+        if (1 == penWidth1 % 2) { penWidth1 += 1; } // make it even
+        dc.setColor(config.colors[Config.C_BACKGROUND], Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(x, y, radius);
+        dc.setColor(config.colors[Config.C_STRESS_SCORE], Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(penWidth1);
+        dc.drawCircle(x, y, radius);
+
+        var penWidth2 = (0.08 * _clockRadius).toNumber(); // was: 0.10
+        if (1 == penWidth2 % 2) { penWidth2 += 1; } // make it even
+        var arcRadius = radius + penWidth1 / 2 + penWidth2 / 2;
+        var colors = [
+            Config.C_MOVE_BAR,
+            Config.C_BATTERY_LEVEL_OK,        
+            Config.C_BATTERY_LEVEL_WARN,
+            Config.C_BATTERY_LEVEL_ALERT
+        ];
+        dc.setPenWidth(penWidth2);
+        for (var i = 0; i < 4; i++) {
+            dc.setColor(config.colors[colors[i]], Graphics.COLOR_TRANSPARENT);
+            dc.drawArc(x, y, arcRadius, Graphics.ARC_COUNTER_CLOCKWISE, (270 + i*45) % 360, (315 + i*45) % 360);
+        }
+
+        var sec = 30.0 - 0.3 * stressScore; // map stressScore 0-100 to angle (in sec) 30-0
+        var pts = shapes.rotate(Shapes.S_GAUGEHAND, sec * 0.104719758 /* TWO_PI / 60.0 */, x, _screenCenter[1]);
+        dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+        dc.fillPolygon(pts);
+
+        return true;
     }
 
     // Determine if a given data field should be drawn and its position on the screen. 

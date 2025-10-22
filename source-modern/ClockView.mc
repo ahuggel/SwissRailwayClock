@@ -263,11 +263,8 @@ class ClockView extends WatchUi.WatchFace {
         if (_isAwake or _doPartialUpdates and (_sleepTimer != 0 or !_hideSecondHand)) {
             // Draw the indicators and the heart rate on the background layer, 
             // every time onUpdate() is called and the second hand is drawn
-            var stressScore = _indicators.draw(_backgroundDc, deviceSettings);
+            _indicators.draw(_backgroundDc, deviceSettings);
             _indicators.drawHeartRate(_backgroundDc, _isAwake);
-            if (stressScore != null) {
-                drawStressScore(_backgroundDc, stressScore);
-            }
 
             // Clear the clip of the second layer to delete the second hand
             _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
@@ -281,39 +278,6 @@ class ClockView extends WatchUi.WatchFace {
             _accentColor = config.getAccentColor(hour, minute, second);
             drawSecondHand(_secondDc, second);
         }
-    }
-
-    private function drawStressScore(dc as Dc, stressScore as Number) as Void {
-        var x = (0.45 * _clockRadius).toNumber();
-        var y = _clockRadius;
-        var radius = (0.105 * _clockRadius).toNumber();
-        var penWidth1 = (0.03 * _clockRadius).toNumber();
-        if (1 == penWidth1 % 2) { penWidth1 += 1; } // make it even
-        dc.setColor(config.colors[Config.C_BACKGROUND], Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(x, y, radius);
-        dc.setColor(config.colors[Config.C_STRESS_SCORE], Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(penWidth1);
-        dc.drawCircle(x, y, radius);
-
-        var penWidth2 = (0.08 * _clockRadius).toNumber(); // was: 0.10
-        if (1 == penWidth2 % 2) { penWidth2 += 1; } // make it even
-        var arcRadius = radius + penWidth1 / 2 + penWidth2 / 2;
-        var colors = [
-            Config.C_MOVE_BAR,
-            Config.C_BATTERY_LEVEL_OK,        
-            Config.C_BATTERY_LEVEL_WARN,
-            Config.C_BATTERY_LEVEL_ALERT
-        ];
-        dc.setPenWidth(penWidth2);
-        for (var i = 0; i < 4; i++) {
-            dc.setColor(config.colors[colors[i]], Graphics.COLOR_TRANSPARENT);
-            dc.drawArc(x, y, arcRadius, Graphics.ARC_COUNTER_CLOCKWISE, (270 + i*45) % 360, (315 + i*45) % 360);
-        }
-
-        var sec = 30.0 - 0.3 * stressScore; // map stressScore 0-100 to angle (in sec) 30-0
-        var pts = shapes.rotate(Shapes.S_GAUGEHAND, sec / 60.0 * TWO_PI, x, _screenCenter[1]);
-        dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon(pts);
     }
 
     // Handle the partial update event. This function is called every second when the device is
