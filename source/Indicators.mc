@@ -483,7 +483,7 @@ class Indicators {
                     dc,
                     _pos[_drawHeartRate][0], 
                     _pos[_drawHeartRate][1],
-                    config.colors[Config.C_HEART_RATE],
+                    config.colors[Config.C_RED_ALERT],
                     isAwake ? "H" : "I",
                     heartRate.format("%d")
                 );
@@ -512,10 +512,10 @@ class Indicators {
         if (1 == penWidth2 % 2) { penWidth2 += 1; } // make it even
         var arcRadius = radius + penWidth1 / 2 + penWidth2 / 2;
         var colors = [
-            Config.C_MOVE_BAR,
-            Config.C_BATTERY_LEVEL_OK,        
-            Config.C_BATTERY_LEVEL_WARN,
-            Config.C_BATTERY_LEVEL_ALERT
+            Config.C_BLUE_NEUTRAL,
+            Config.C_YELLOW_WARN,
+            Config.C_ORANGE_WARN,
+            Config.C_RED_ALERT
         ];
         dc.setPenWidth(penWidth2);
         for (var i = 0; i < 4; i++) {
@@ -877,7 +877,7 @@ class Indicators {
             var bar = 0;
             for (var i = 1; i <= moveBarLevel; i++) {
                 bar = i == 1 ? 36 : 18; // bar length in degrees
-        	    dc.setColor(config.colors[Config.C_MOVE_BAR], Graphics.COLOR_TRANSPARENT);
+        	    dc.setColor(config.colors[Config.C_BLUE_NEUTRAL], Graphics.COLOR_TRANSPARENT);
                 dc.setPenWidth(width);
                 dc.drawArc(x, y, radius, Graphics.ARC_CLOCKWISE, angle, angle-bar);
 
@@ -890,7 +890,7 @@ class Indicators {
             }
             // Draw the arrow tips in a second loop, so they are drawn over the background color arrow tails 
             angle = 152;
-        	dc.setColor(config.colors[Config.C_MOVE_BAR], Graphics.COLOR_TRANSPARENT);
+        	dc.setColor(config.colors[Config.C_BLUE_NEUTRAL], Graphics.COLOR_TRANSPARENT);
             for (var i = 1; i <= moveBarLevel; i++) {
                 bar = i == 1 ? 36 : 18; // bar length in degrees
                 dc.setPenWidth(1);

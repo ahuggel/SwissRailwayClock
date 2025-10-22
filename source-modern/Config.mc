@@ -39,14 +39,14 @@ class Config {
         C_FOREGROUND, 
         C_BACKGROUND, 
         C_TEXT, 
+        C_BLUE_NEUTRAL,
+        C_GREEN_OK,
+        C_YELLOW_WARN,
+        C_ORANGE_WARN,
+        C_RED_ALERT,
         C_INDICATOR, 
-        C_HEART_RATE, 
         C_PHONECONN, 
-        C_MOVE_BAR,
         C_BATTERY_FRAME,
-        C_BATTERY_LEVEL_OK,
-        C_BATTERY_LEVEL_WARN,
-        C_BATTERY_LEVEL_ALERT,
         C_STRESS_SCORE,
         C_SIZE
     }
@@ -317,33 +317,33 @@ class Config {
 
         if (M_LIGHT == colorMode) {
             colors = [
-                Graphics.COLOR_BLACK, // C_FOREGROUND
-                Graphics.COLOR_WHITE, // C_BACKGROUND 
+                Graphics.COLOR_BLACK,   // C_FOREGROUND
+                Graphics.COLOR_WHITE,   // C_BACKGROUND 
                 Graphics.COLOR_DK_GRAY, // C_TEXT
+                Graphics.COLOR_BLUE,    // C_BLUE_NEUTRAL            C_MOVE_BAR
+                Graphics.COLOR_GREEN,   // C_GREEN_OK                C_BATTERY_LEVEL_OK
+                0xffff00,               // C_YELLOW_WARN
+                Graphics.COLOR_YELLOW,  // C_ORANGE_WARN             C_BATTERY_LEVEL_WARN
+                Graphics.COLOR_RED,     // C_RED_ALERT               C_BATTERY_LEVEL_ALERT
                 Graphics.COLOR_DK_BLUE, // C_INDICATOR 
-                Graphics.COLOR_RED, // C_HEART_RATE 
-                Graphics.COLOR_BLUE, // C_PHONECONN 
-                Graphics.COLOR_BLUE, // C_MOVE_BAR
+                Graphics.COLOR_BLUE,    // C_PHONECONN
                 Graphics.COLOR_LT_GRAY, // C_BATTERY_FRAME
-                Graphics.COLOR_GREEN, // C_BATTERY_LEVEL_OK
-                Graphics.COLOR_YELLOW, // C_BATTERY_LEVEL_WARN
-                Graphics.COLOR_RED, // C_BATTERY_LEVEL_ALERT
-                Graphics.COLOR_LT_GRAY // C_STRESS_SCORE
+                Graphics.COLOR_LT_GRAY  // C_STRESS_SCORE
             ];
         } else {
             colors = [
-                getContrastColor(), // C_FOREGROUND
-                Graphics.COLOR_BLACK, // C_BACKGROUND 
+                getContrastColor(),     // C_FOREGROUND
+                Graphics.COLOR_BLACK,   // C_BACKGROUND 
                 Graphics.COLOR_DK_GRAY, // C_TEXT
-                Graphics.COLOR_BLUE, // C_INDICATOR 
-                Graphics.COLOR_RED, // C_HEART_RATE 
-                Graphics.COLOR_BLUE, // C_PHONECONN 
-                Graphics.COLOR_DK_BLUE, // C_MOVE_BAR
+                0x0055ff,               // C_BLUE_NEUTRAL         <- Graphics.COLOR_DK_BLUE, // C_MOVE_BAR
+                Graphics.COLOR_GREEN,   // C_GREEN_OK             <- Graphics.COLOR_GREEN,   // C_BATTERY_LEVEL_OK
+                0xffff55,               // C_YELLOW_WARN
+                Graphics.COLOR_YELLOW,  // C_ORANGE_WARN          <- Graphics.COLOR_ORANGE,  // C_BATTERY_LEVEL_WARN
+                Graphics.COLOR_RED,     // C_RED_ALERT            <- C_BATTERY_LEVEL_ALERT
+                Graphics.COLOR_BLUE,    // C_INDICATOR 
+                Graphics.COLOR_BLUE,    // C_PHONECONN 
                 Graphics.COLOR_DK_GRAY, // C_BATTERY_FRAME
-                Graphics.COLOR_GREEN, // C_BATTERY_LEVEL_OK
-                Graphics.COLOR_ORANGE, // C_BATTERY_LEVEL_WARN
-                Graphics.COLOR_RED, // C_BATTERY_LEVEL_ALERT
-                Graphics.COLOR_BLACK // C_STRESS_SCORE
+                Graphics.COLOR_BLACK    // C_STRESS_SCORE
             ];
             // Text color depends on foreground
             if (Graphics.COLOR_WHITE == colors[C_FOREGROUND]) {
