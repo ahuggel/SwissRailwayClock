@@ -29,6 +29,7 @@
     <string id="Complication4">4th Indicator</string>
     <string id="PressureUnit">Pressure Unit</string>
     <string id="HideSeconds">Seconds Disappear</string>
+    <string id="HideIndicators">Indicators Disappear</string>
     <string id="AccentColor">Seconds Color</string>
     <string id="AccentCycle">Change Color</string>
     <string id="Shadows">3D Effects</string>
@@ -63,6 +64,9 @@
     <string id="HideSecondsInDm">In Dark Mode</string>
     <string id="HideSecondsAlways">Always</string>
     <string id="HideSecondsNever">Never</string>
+    <string id="HideIndicatorsInDm">In Dimmer Mode</string>
+    <string id="HideIndicatorsAlways">Always</string>
+    <string id="HideIndicatorsNever">Never</string>
     <string id="AccentRed">Red</string>
     <string id="AccentOrange">Orange</string>
     <string id="AccentYellow">Yellow</string>

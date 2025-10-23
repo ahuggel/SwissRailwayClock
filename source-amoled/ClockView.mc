@@ -99,7 +99,7 @@ class ClockView extends WatchUi.WatchFace {
         var deviceSettings = System.getDeviceSettings();
 
         // Determine all colors based on the relevant settings
-        config.setColors(_isAwake, deviceSettings.doNotDisturb, hour, minute);
+        var colorMode = config.setColors(_isAwake, deviceSettings.doNotDisturb, hour, minute);
 
         // Initialise the dc and fill the entire background with the background color (black)
         dc.clearClip(); // Still needed as the settings menu messes with the clip
@@ -113,7 +113,10 @@ class ClockView extends WatchUi.WatchFace {
             dc.fillPolygon(shapes.rotate(i % 5 ? Shapes.S_SMALLTICKMARK : Shapes.S_BIGTICKMARK, i * 0.104719755 /* 2*pi/60 */, _screenCenter[0], _screenCenter[1]));
         }
 
-        if (_isAwake) {
+        var indicatorOption = config.getOption(Config.I_HIDE_INDICATORS);
+        var hideIndicators = :HideIndicatorsAlways == indicatorOption 
+            or (:HideIndicatorsInDm == indicatorOption and Config.M_DARK == colorMode);
+        if (_isAwake or !hideIndicators) {
             // Draw the indicators
             _indicators.draw(dc, deviceSettings);
             _indicators.drawHeartRate(dc, _isAwake);

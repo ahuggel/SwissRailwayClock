@@ -29,6 +29,7 @@
     <string id="Complication4">4. Anzeige</string>
     <string id="PressureUnit">Druckeinheit</string>
     <string id="HideSeconds">Sekunden ausblenden</string>
+    <string id="HideIndicators">Anzeigen ausblenden</string>
     <string id="AccentColor">Sekunden Farbe</string>
     <string id="AccentCycle">Farbe wechseln</string>
     <string id="Shadows">3D Effekt</string>
@@ -63,6 +64,9 @@
     <string id="HideSecondsInDm">Im Dunkelmodus</string>
     <string id="HideSecondsAlways">Immer</string>
     <string id="HideSecondsNever">Nie</string>
+    <string id="HideIndicatorsInDm">Im Dimmermodus</string>
+    <string id="HideIndicatorsAlways">Immer</string>
+    <string id="HideIndicatorsNever">Nie</string>
     <string id="AccentRed">Rot</string>
     <string id="AccentOrange">Orange</string>
     <string id="AccentYellow">Gelb</string>

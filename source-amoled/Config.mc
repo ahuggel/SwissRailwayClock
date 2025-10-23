@@ -33,7 +33,7 @@ var config as Config = new Config();
 // Application settings are synchronised to persistent storage.
 class Config {
     // Color configuration
-    private enum ColorMode { M_LIGHT, M_DARK } // Color modes
+    public enum ColorMode { M_LIGHT, M_DARK } // Color modes
     // Indexes into the colors array
     public enum Color {
         C_FOREGROUND, 
@@ -60,6 +60,7 @@ class Config {
         I_BATTERY, 
         I_DATE_DISPLAY, 
         I_DARK_MODE, 
+        I_HIDE_INDICATORS, 
         I_ACCENT_COLOR,
         I_ACCENT_CYCLE,
         I_BRIGHTNESS,
@@ -88,6 +89,7 @@ class Config {
         :Battery, 
         :DateDisplay, 
         :Dimmer, 
+        :HideIndicators,
         :AccentColor, 
         :AccentCycle, 
         :Brightness,
@@ -114,6 +116,7 @@ class Config {
         "ba", // I_BATTERY
         "dd", // I_DATE_DISPLAY
         "dm", // I_DARK_MODE
+        "hs", // I_HIDE_INDICATORS
         "ac", // I_ACCENT_COLOR
         "ay", // I_ACCENT_CYCLE
         "br", // I_BRIGHTNESS
@@ -139,6 +142,7 @@ class Config {
         [:Off, :BatteryClassicWarnings, :BatteryModernWarnings, :BatteryClassic, :BatteryModern], // I_BATTERY
         [:Off, :DateDisplayDayOnly, :DateDisplayWeekdayAndDay], // I_DATE_DISPLAY
         [:DarkModeScheduled, :Off, :DarkModeInDnD], // I_DARK_MODE
+        [:HideIndicatorsInDm, :HideIndicatorsAlways, :HideIndicatorsNever], // I_HIDE_INDICATORS
         [:AccentRed, :AccentOrange, :AccentYellow, :AccentLtGreen, :AccentGreen, :AccentLtBlue, :AccentBlue, :AccentPurple, :AccentPink], // I_ACCENT_COLOR
         [:Off, :Hourly, :EveryMinute, :EverySecond], // I_ACCENT_CYCLE
         [:DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark], // I_BRIGHTNESS
@@ -293,8 +297,8 @@ class Config {
         return [Graphics.COLOR_WHITE, 0xd4d4d4, Graphics.COLOR_LT_GRAY, 0x808080, Graphics.COLOR_DK_GRAY][_values[id] % 5];
     }
 
-    // Determine the colors to use
-    public function setColors(isAwake as Boolean, doNotDisturb as Boolean, hour as Number, minute as Number) as Void {        
+    // Determine the colors to use, return the color mode
+    public function setColors(isAwake as Boolean, doNotDisturb as Boolean, hour as Number, minute as Number) as Number {        
         // Determine if dark/dimmer mode is on
         var colorMode = M_LIGHT;
         var darkMode = getOption(I_DARK_MODE);
@@ -329,6 +333,8 @@ class Config {
             gray,                                                    // C_BATTERY_FRAME
             gray                                                     // C_STRESS_SCORE
         ];
+
+        return colorMode;
     }
 
     // Return the accent color for the second hand. If the change color setting is enabled, the 
