@@ -96,8 +96,8 @@ class Indicators {
     }
 
     // Update any indicator positions, which depend on numbers that are not available yet when the constructor is called
-    (:modern) public function updatePos(s0 as Float, s3 as Float) as Void {
-        _pos[6] = [(_width * 0.50).toNumber(), (_height * 0.50 + s3 + (s0 - Graphics.getFontHeight(iconFont as FontResource))/3).toNumber()];
+    (:modern) public function updatePos() as Void {
+        _pos[6] = [(_width * 0.50).toNumber(), (_height * 0.50 + shapes.s3 + (shapes.s0 - Graphics.getFontHeight(iconFont as FontResource))/3).toNumber()];
     }
 
     (:legacy) public function updatePos(s0 as Float, s3 as Float) as Void {
@@ -203,7 +203,7 @@ class Indicators {
                 dc,
                 (_width * w).toNumber(),
                 (_height * h).toNumber(),
-                config.colors[Config.C_HEART_RATE],
+                config.colors[Config.C_RED_ALERT],
                 isAwake ? "H" : "I", 
                 heartRate
             );
@@ -440,6 +440,9 @@ class Indicators {
                     // when the position always remains the same.
                     _drawHeartRate = idx;
                     ret = true;
+                } else if (:StressScore == option) {
+                    // Currently always drawn at 9 o'clock (and only available on complication 3)
+                    ret = drawStressScore(dc, activityMonitorInfo.stressScore);                    
                 } else {
                     var val = getDisplayValues(option, activityMonitorInfo, deviceSettings);
                     ret = drawIndicator(
@@ -480,13 +483,52 @@ class Indicators {
                     dc,
                     _pos[_drawHeartRate][0], 
                     _pos[_drawHeartRate][1],
-                    config.colors[Config.C_HEART_RATE],
+                    config.colors[Config.C_RED_ALERT],
                     isAwake ? "H" : "I",
                     heartRate.format("%d")
                 );
             }
         }
         return ret;
+    }
+
+    // Draw the stress score gauge
+    (:modern) private function drawStressScore(dc as Dc, stressScore as Number?) as Boolean {
+        if (null == stressScore) { 
+            return false;
+        }
+        var x = (0.45 * _clockRadius).toNumber();
+        var y = _clockRadius;
+        var radius = (0.105 * _clockRadius).toNumber();
+        var penWidth1 = (0.03 * _clockRadius).toNumber();
+        if (1 == penWidth1 % 2) { penWidth1 += 1; } // make it even
+        dc.setColor(config.colors[Config.C_BACKGROUND], Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(x, y, radius);
+        dc.setColor(config.colors[Config.C_STRESS_SCORE], Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(penWidth1);
+        dc.drawCircle(x, y, radius);
+
+        var penWidth2 = (0.08 * _clockRadius).toNumber(); // was: 0.10
+        if (1 == penWidth2 % 2) { penWidth2 += 1; } // make it even
+        var arcRadius = radius + penWidth1 / 2 + penWidth2 / 2;
+        var colors = [
+            Config.C_BLUE_NEUTRAL,
+            Config.C_YELLOW_WARN,
+            Config.C_ORANGE_WARN,
+            Config.C_RED_ALERT
+        ];
+        dc.setPenWidth(penWidth2);
+        for (var i = 0; i < 4; i++) {
+            dc.setColor(config.colors[colors[i]], Graphics.COLOR_TRANSPARENT);
+            dc.drawArc(x, y, arcRadius, Graphics.ARC_COUNTER_CLOCKWISE, (270 + i*45) % 360, (315 + i*45) % 360);
+        }
+
+        var sec = 30.0 - 0.3 * stressScore; // map stressScore 0-100 to angle (in sec) 30-0
+        var pts = shapes.rotate(Shapes.S_GAUGEHAND, sec * 0.104719758 /* TWO_PI / 60.0 */, x, _screenCenter[1]);
+        dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
+        dc.fillPolygon(pts);
+
+        return true;
     }
 
     // Determine if a given data field should be drawn and its position on the screen. 
@@ -835,7 +877,7 @@ class Indicators {
             var bar = 0;
             for (var i = 1; i <= moveBarLevel; i++) {
                 bar = i == 1 ? 36 : 18; // bar length in degrees
-        	    dc.setColor(config.colors[Config.C_MOVE_BAR], Graphics.COLOR_TRANSPARENT);
+        	    dc.setColor(config.colors[Config.C_BLUE_NEUTRAL], Graphics.COLOR_TRANSPARENT);
                 dc.setPenWidth(width);
                 dc.drawArc(x, y, radius, Graphics.ARC_CLOCKWISE, angle, angle-bar);
 
@@ -848,7 +890,7 @@ class Indicators {
             }
             // Draw the arrow tips in a second loop, so they are drawn over the background color arrow tails 
             angle = 152;
-        	dc.setColor(config.colors[Config.C_MOVE_BAR], Graphics.COLOR_TRANSPARENT);
+        	dc.setColor(config.colors[Config.C_BLUE_NEUTRAL], Graphics.COLOR_TRANSPARENT);
             for (var i = 1; i <= moveBarLevel; i++) {
                 bar = i == 1 ? 36 : 18; // bar length in degrees
                 dc.setPenWidth(1);

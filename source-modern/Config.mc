@@ -39,14 +39,15 @@ class Config {
         C_FOREGROUND, 
         C_BACKGROUND, 
         C_TEXT, 
+        C_BLUE_NEUTRAL,
+        C_GREEN_OK,
+        C_YELLOW_WARN,
+        C_ORANGE_WARN,
+        C_RED_ALERT,
         C_INDICATOR, 
-        C_HEART_RATE, 
         C_PHONECONN, 
-        C_MOVE_BAR,
         C_BATTERY_FRAME,
-        C_BATTERY_LEVEL_OK,
-        C_BATTERY_LEVEL_WARN,
-        C_BATTERY_LEVEL_ALERT,
+        C_STRESS_SCORE,
         C_SIZE
     }
     // Colors. Read access is directly through this public variable to save the overhead of a
@@ -147,7 +148,7 @@ class Config {
         [:DmContrastLtGray, :DmContrastDkGray, :DmContrastWhite], // I_DM_CONTRAST
         [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure, :Temperature], // I_COMPLICATION_1
         [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure, :Temperature], // I_COMPLICATION_2
-        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure, :Temperature], // I_COMPLICATION_3
+        [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure, :Temperature, :StressScore], // I_COMPLICATION_3
         [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure, :Temperature], // I_COMPLICATION_4
         [:PressureUnitMbar, :PressureUnitMmHg, :PressureUnitInHg, :PressureUnitAtm] // I_PRESSURE_UNIT
      ] as Array< Array<Symbol> >;
@@ -165,16 +166,12 @@ class Config {
             // Indicates if the device supports an alpha channel; required for the wire hands.
             // Both should be available from API Level 4.0.0, but the Venu Sq 2 only has :createColor.
             :Alpha => (Graphics has :createColor) and (Graphics.Dc has :setFill),
-            // Indicates if the device provides battery in days estimates 
             :BatteryInDays => (System.Stats has :batteryInDays), 
-            // Indicates if the device provides recovery time
             :RecoveryTime => (ActivityMonitor.Info has :timeToRecovery), 
-            // Indicates if the device provides climbed floors
             :FloorsClimbed => (ActivityMonitor.Info has :floorsClimbed),
-            // Indicates if the device provides pressure 
             :Pressure => (SensorHistory has :getPressureHistory),
-            // Indicates if the device provides temperature 
-            :Temperature => (SensorHistory has :getTemperatureHistory)
+            :Temperature => (SensorHistory has :getTemperatureHistory),
+            :StressScore => (ActivityMonitor.Info has :stressScore)
         };
 
         // Read the configuration values from persistent storage 
@@ -320,31 +317,33 @@ class Config {
 
         if (M_LIGHT == colorMode) {
             colors = [
-                Graphics.COLOR_BLACK, // C_FOREGROUND
-                Graphics.COLOR_WHITE, // C_BACKGROUND 
+                Graphics.COLOR_BLACK,   // C_FOREGROUND
+                Graphics.COLOR_WHITE,   // C_BACKGROUND
                 Graphics.COLOR_DK_GRAY, // C_TEXT
-                Graphics.COLOR_DK_BLUE, // C_INDICATOR 
-                Graphics.COLOR_RED, // C_HEART_RATE 
-                Graphics.COLOR_BLUE, // C_PHONECONN 
-                Graphics.COLOR_BLUE, // C_MOVE_BAR
+                Graphics.COLOR_BLUE,    // C_BLUE_NEUTRAL
+                Graphics.COLOR_GREEN,   // C_GREEN_OK
+                0xffff00,               // C_YELLOW_WARN
+                Graphics.COLOR_YELLOW,  // C_ORANGE_WARN
+                Graphics.COLOR_RED,     // C_RED_ALERT
+                Graphics.COLOR_DK_BLUE, // C_INDICATOR
+                Graphics.COLOR_BLUE,    // C_PHONECONN
                 Graphics.COLOR_LT_GRAY, // C_BATTERY_FRAME
-                Graphics.COLOR_GREEN, // C_BATTERY_LEVEL_OK
-                Graphics.COLOR_YELLOW, // C_BATTERY_LEVEL_WARN
-                Graphics.COLOR_RED // C_BATTERY_LEVEL_ALERT
+                Graphics.COLOR_LT_GRAY  // C_STRESS_SCORE
             ];
         } else {
             colors = [
-                getContrastColor(), // C_FOREGROUND
-                Graphics.COLOR_BLACK, // C_BACKGROUND 
+                getContrastColor(),     // C_FOREGROUND
+                Graphics.COLOR_BLACK,   // C_BACKGROUND
                 Graphics.COLOR_DK_GRAY, // C_TEXT
-                Graphics.COLOR_BLUE, // C_INDICATOR 
-                Graphics.COLOR_RED, // C_HEART_RATE 
-                Graphics.COLOR_BLUE, // C_PHONECONN 
-                Graphics.COLOR_DK_BLUE, // C_MOVE_BAR
+                0x0055ff,               // C_BLUE_NEUTRAL
+                Graphics.COLOR_GREEN,   // C_GREEN_OK
+                0xffff55,               // C_YELLOW_WARN
+                Graphics.COLOR_YELLOW,  // C_ORANGE_WARN
+                Graphics.COLOR_RED,     // C_RED_ALERT
+                Graphics.COLOR_BLUE,    // C_INDICATOR
+                Graphics.COLOR_BLUE,    // C_PHONECONN
                 Graphics.COLOR_DK_GRAY, // C_BATTERY_FRAME
-                Graphics.COLOR_GREEN, // C_BATTERY_LEVEL_OK
-                Graphics.COLOR_ORANGE, // C_BATTERY_LEVEL_WARN
-                Graphics.COLOR_RED // C_BATTERY_LEVEL_ALERT
+                Graphics.COLOR_BLACK    // C_STRESS_SCORE
             ];
             // Text color depends on foreground
             if (Graphics.COLOR_WHITE == colors[C_FOREGROUND]) {
@@ -353,6 +352,7 @@ class Config {
             // Phone connected icon color depends on foreground
             if (Graphics.COLOR_DK_GRAY != colors[C_FOREGROUND]) {
                 colors[C_PHONECONN] = Graphics.COLOR_DK_BLUE;
+                colors[C_STRESS_SCORE] = Graphics.COLOR_DK_GRAY;
             }
         }
 

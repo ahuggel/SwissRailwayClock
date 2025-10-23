@@ -31,7 +31,6 @@ var iconFont as FontResource?;
 
 // Implements the Swiss Railway Clock watch face for legacy watches, using a buffered bitmap
 class ClockView extends WatchUi.WatchFace {
-    private const TWO_PI as Float = 2 * Math.PI;
     private const SECOND_HAND_TIMER as Number = 30; // Number of seconds in low-power mode, before the second hand disappears
 
     private var _isAwake as Boolean = true; // Assume we start awake and depend on onEnterSleep() to fall asleep
@@ -250,17 +249,17 @@ class ClockView extends WatchUi.WatchFace {
             // Draw tick marks around the edge of the screen
             targetDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
             for (var i = 0; i < 60; i++) {
-                targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i / 60.0 * TWO_PI));
+                targetDc.fillPolygon(rotateCoords(i % 5 ? S_SMALLTICKMARK : S_BIGTICKMARK, i * 0.104719755 /* 2*pi/60 */));
             }
 
             // Draw the indicators
             _indicators.draw(targetDc, deviceSettings, _isAwake);
 
             // Draw the hour and minute hands
-            var hourHandAngle = ((hour % 12) * 60 + minute) / (12 * 60.0) * TWO_PI;
+            var hourHandAngle = ((hour % 12) * 60.0 + minute) / 12.0 * 0.104719755 /* 2*pi/60 */;
             targetDc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
             targetDc.fillPolygon(rotateCoords(S_HOURHAND, hourHandAngle));
-            targetDc.fillPolygon(rotateCoords(S_MINUTEHAND, minute / 60.0 * TWO_PI));
+            targetDc.fillPolygon(rotateCoords(S_MINUTEHAND, minute * 0.104719755 /* 2*pi/60 */));
         } // if (_lastDrawnMin != minute)
 
         // Output the offscreen buffer to the main display
@@ -318,7 +317,7 @@ class ClockView extends WatchUi.WatchFace {
         for (var second = 0; second < 60; second++) {
 
             // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
-            var angle = second * 0.104719758; // TWO_PI / 60.0
+            var angle = second * 0.104719755; /* 2*pi/60 */
             var sin = Math.sin(angle);
             var cos = Math.cos(angle);
             var offsetX = _screenCenter[0] + 0.5;
@@ -374,7 +373,7 @@ class ClockView extends WatchUi.WatchFace {
     (:memory)
     private function drawSecondHand(dc as Dc, second as Number) as Void {
         // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
-        var angle = second * 0.104719758; // TWO_PI / 60.0
+        var angle = second * 0.104719755; /* 2*pi/60 */
         var sin = Math.sin(angle);
         var cos = Math.cos(angle);
         var offsetX = _screenCenter[0] + 0.5;

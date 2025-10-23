@@ -75,9 +75,9 @@ class BatteryLevel {
             warnLevel = level / levelInDays * 6.0; // If the device has battery in days, use 6 days
  */
         }
-        var levelColor = config.colors[Config.C_BATTERY_LEVEL_OK];
-        if (level < warnLevel / 2) { levelColor = config.colors[Config.C_BATTERY_LEVEL_WARN]; }
-        if (level < warnLevel / 4) { levelColor = config.colors[Config.C_BATTERY_LEVEL_ALERT]; }
+        var levelColor = config.colors[Config.C_GREEN_OK];
+        if (level < warnLevel / 2) { levelColor = config.colors[Config.C_ORANGE_WARN]; }
+        if (level < warnLevel / 4) { levelColor = config.colors[Config.C_RED_ALERT]; }
 
         // level \ Setting   Classic ClassicWarnings Modern ModernWarnings
         // < warnLevel          C          C           M          M       
