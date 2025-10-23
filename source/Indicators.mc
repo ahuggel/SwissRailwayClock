@@ -203,7 +203,7 @@ class Indicators {
                 dc,
                 (_width * w).toNumber(),
                 (_height * h).toNumber(),
-                config.colors[Config.C_HEART_RATE],
+                config.colors[Config.C_RED_ALERT],
                 isAwake ? "H" : "I", 
                 heartRate
             );
