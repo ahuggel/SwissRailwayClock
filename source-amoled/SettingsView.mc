@@ -97,6 +97,7 @@ class SettingsView extends WatchUi.Menu2 {
                         {}
                     ));
                 }
+                addMenuItem(Config.I_HIDE_INDICATORS);
                 Menu2.addItem(new WatchUi.IconMenuItem(
                     config.getName(Config.I_ACCENT_COLOR), 
                     config.getLabel(Config.I_ACCENT_COLOR), 
@@ -134,6 +135,7 @@ class SettingsView extends WatchUi.Menu2 {
                 deleteAnyItem(Config.I_DM_ON);
                 deleteAnyItem(Config.I_DM_OFF);
                 deleteAnyItem(Config.I_DM_CONTRAST);
+                deleteAnyItem(Config.I_HIDE_INDICATORS);
                 deleteAnyItem(Config.I_ACCENT_COLOR);
                 deleteAnyItem(Config.I_ACCENT_CYCLE);
                 deleteAnyItem(Config.I_DONE);

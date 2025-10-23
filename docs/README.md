@@ -45,6 +45,7 @@ Details of the available on-device settings and their options. The settings diff
 | Level | White<br/>Silver<br/>**Gray**<br/>Slate<br/>Dark | Determines the foreground color in Dimmer mode. | Amoled |
 | Contrast | White<br/>**Light&nbsp;Gray**<br/>Dark&nbsp;Gray | Determines the foreground color in Dark Mode. | Modern |
 | Seconds&nbsp;Disappear | **In&nbsp;Dark&nbsp;Mode**<br/>Always<br/>Never | Disables the second hand in low-power mode, after about 30s to save battery. With the _In Dark Mode_ option, the second hand only disappears when Dark Mode is enabled. From the next full minute after the second hand disappeared, only the hour and minute hands are drawn. | Legacy<br/>Modern |
+| Indicators&nbsp;Disappear | **In&nbsp;Dimmer&nbsp;Mode**<br/>Always<br/>Never | Disables all indicators in always-on (low-power) mode, only the hour and minute hands are drawn, to save battery. With the _In Dimmer Mode_ option, the indicators are only disabled when Dimmer mode is active. | Amoled |
 | Seconds&nbsp;Color | **Red**<br/>Orange<br/>Yellow<br/>Light&nbsp;Green<br/>Green<br/>Light&nbsp;Blue<br/>Blue<br/>Purple<br/>Pink | The color of the second hand. | Legacy<br/>Modern<br/>Amoled |
 | Change&nbsp;Color | Hourly<br/>Every&nbsp;Minute<br/>Every&nbsp;Second<br/>**Off** | Cycles the second hand color _Hourly_, _Every Minute_ or _Every Second_. | Legacy<br/>Modern<br/>Amoled |
 | 3D&nbsp;Effects** | **On**<br/>Off | Shows a semi-transparent shadow for the watch hands. | Modern |
@@ -154,7 +155,7 @@ In `source-*/Config.mc`
 - Add an enum name for the new setting to `enum Item`;
 - Add a symbol for the new setting, at the same position in the array, to `_itemSymbols`;
 - Add a (two letter) label for the new setting, also at the same position in the array, to `_itemLabels`;
-- For list items, add a list of options to the `_options` array. Again, the position within the array is critical;
+- For list items, add a list of options to the `_options` array. The first option in the list is the default value. Again, the position within the array is critical;
 - Toggle items have a default value set in the local variable `defaults` in `Config.initialize()`.
 
 In `resources*/strings/strings.xml`
