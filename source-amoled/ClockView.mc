@@ -113,9 +113,11 @@ class ClockView extends WatchUi.WatchFace {
             dc.fillPolygon(shapes.rotate(i % 5 ? Shapes.S_SMALLTICKMARK : Shapes.S_BIGTICKMARK, i * 0.104719755 /* 2*pi/60 */, _screenCenter[0], _screenCenter[1]));
         }
 
-        // Draw the indicators
-        _indicators.draw(dc, deviceSettings);
-        _indicators.drawHeartRate(dc, _isAwake);
+        if (_isAwake) {
+            // Draw the indicators
+            _indicators.draw(dc, deviceSettings);
+            _indicators.drawHeartRate(dc, _isAwake);
+        }
 
         // Draw the hour and minute hands
         var hourHandAngle = ((hour % 12) * 60.0 + minute) / 12.0 * 0.104719755 /* 2*pi/60 */;
