@@ -383,17 +383,27 @@ class ClockView extends WatchUi.WatchFace {
         var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + offsetX).toNumber();
         var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + offsetY).toNumber();
 
-        // Rotate the rectangular portion of the second hand, using inlined code from rotateCoords() to improve performance
+        // Rotate the rectangular portion of the second hand
         // Optimized: idx = S_SECONDHAND * 8; idy = idx + 1; and etc.
-        var x0 = (_coords[32] * cos - _coords[33] * sin + offsetX).toNumber();
-        var y0 = (_coords[32] * sin + _coords[33] * cos + offsetY).toNumber();
-        var x1 = (_coords[34] * cos - _coords[35] * sin + offsetX).toNumber();
-        var y1 = (_coords[34] * sin + _coords[35] * cos + offsetY).toNumber();
-        var x2 = (_coords[36] * cos - _coords[37] * sin + offsetX).toNumber();
-        var y2 = (_coords[36] * sin + _coords[37] * cos + offsetY).toNumber();
-        var x3 = (_coords[38] * cos - _coords[39] * sin + offsetX).toNumber();
-        var y3 = (_coords[38] * sin + _coords[39] * cos + offsetY).toNumber();
-        var coords = [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] as Array<Point2D>;
+        var coords = new Array<Point2D>[4];
+        var coordX = _coords[32];
+        var coordY = _coords[33];
+        var x0 = (coordX * cos - coordY * sin + offsetX).toNumber();
+        var y0 = (coordX * sin + coordY * cos + offsetY).toNumber();
+        coords[0] = [x0, y0];
+        coordX = _coords[34];
+        coordY = _coords[35];
+        coords[1] = [(coordX * cos - coordY * sin + offsetX).toNumber(),
+                     (coordX * sin + coordY * cos + offsetY).toNumber()];
+        coordX = _coords[36];
+        coordY = _coords[37];
+        coords[2] = [(coordX * cos - coordY * sin + offsetX).toNumber(),
+                     (coordX * sin + coordY * cos + offsetY).toNumber()];
+        coordX = _coords[38];
+        coordY = _coords[39];
+        var x3 = (coordX * cos - coordY * sin + offsetX).toNumber();
+        var y3 = (coordX * sin + coordY * cos + offsetY).toNumber();
+        coords[3] = [x3, y3];
 
         // Set the clipping region
         var xx1 = x - _secondCircleRadius;
