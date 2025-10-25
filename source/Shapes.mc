@@ -110,23 +110,19 @@ import Toybox.System;
 
         // The radius of the second hand circle in pixels, calculated from the percentage of the clock face diameter
         secondCircleRadius = ((5.1 * clockRadius / 50.0) + 0.5).toNumber();
-        var secondCircleCenter = [ 0, _coords[S_SECONDHAND * 8 + 3]] as Array<Number>;
+        var secondCircleY = _coords[S_SECONDHAND * 8 + 3];
         // Shorten the second hand from the circle center to the edge of the circle to avoid a dark shadow
         _coords[S_SECONDHAND * 8 + 3] += secondCircleRadius - 1;
         _coords[S_SECONDHAND * 8 + 5] += secondCircleRadius - 1;
 
         // Calculate all numbers required to draw the second hand for every second
+        var offsetX = screenCenter[0] + 0.5;
+        var offsetY = screenCenter[1] + 0.5;
         for (var second = 0; second < 60; second++) {
             // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
             var angle = second * 0.104719755; /* 2*pi/60 */
             var sin = Math.sin(angle);
             var cos = Math.cos(angle);
-            var offsetX = screenCenter[0] + 0.5;
-            var offsetY = screenCenter[1] + 0.5;
-
-            // Rotate the center of the second hand circle
-            var x = (secondCircleCenter[0] * cos - secondCircleCenter[1] * sin + offsetX).toNumber();
-            var y = (secondCircleCenter[0] * sin + secondCircleCenter[1] * cos + offsetY).toNumber();
 
             // Rotate the rectangular portion of the second hand, using inlined code from rotateCoords() to improve performance
             // Optimized: idx = S_SECONDHAND * 8; idy = idx + 1; and etc.
@@ -138,6 +134,10 @@ import Toybox.System;
             var y2 = (_coords[36] * sin + _coords[37] * cos + offsetY).toNumber();
             var x3 = (_coords[38] * cos - _coords[39] * sin + offsetX).toNumber();
             var y3 = (_coords[38] * sin + _coords[39] * cos + offsetY).toNumber();
+
+            // Rotate the center of the second hand circle
+            var x = (-secondCircleY * sin + offsetX).toNumber();
+            var y = (secondCircleY * cos + offsetY).toNumber();
 
             // Set the clipping region
             var xx1 = x - secondCircleRadius;
@@ -164,7 +164,7 @@ import Toybox.System;
             if (yy2 > maxY) { maxY = yy2; }
 
             // Save the calculated numbers, add two pixels on each side of the clipping region for good measure
-            //              Index: 0  1   2   3   4   5   6   7   8   9        10        11               12               13
+            //             Index: 0  1   2   3   4   5   6   7   8   9        10        11               12               13
             secondData[second] = [x, y, x0, y0, x1, y1, x2, y2, x3, y3, minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4];
         }
 
@@ -186,23 +186,24 @@ import Toybox.System;
         // Optimized: Expanded the loop and avoid repeating the same operations (Thanks Inigo Tolosa for the tip!)
         var offsetX = xpos + 0.5;
 		var offsetY = ypos + 0.5;
+        var coords = new Array<Point2D>[4];
         var idx = shape * 8;
         var idy = idx + 1;
-        var x0 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y0 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        coords[0] = [(_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber(),
+                     (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber()];
         idx += 2;
         idy += 2;
-        var x1 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y1 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        coords[1] = [(_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber(),
+                     (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber()];
         idx += 2;
         idy += 2;
-        var x2 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y2 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        coords[2] = [(_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber(),
+                     (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber()];
         idx += 2;
         idy += 2;
-        var x3 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y3 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        coords[3] = [(_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber(),
+                     (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber()];
 
-        return [[x0, y0], [x1, y1], [x2, y2], [x3, y3]];
+        return coords;
     }
 }

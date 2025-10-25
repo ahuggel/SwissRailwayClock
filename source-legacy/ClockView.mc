@@ -40,7 +40,7 @@ class ClockView extends WatchUi.WatchFace {
     // A 1 dimensional array for the shape coordinates, size: S_SIZE (shapes) * 4 (points) * 2 (coordinates) - that's supposed to be more efficient
     private var _coords as Array<Number> = new Array<Number>[S_SIZE * 8];
     private var _secondCircleRadius as Number = 0; // Radius of the second hand circle
-    private var _secondCircleCenter as Array<Number> = new Array<Number>[2]; // Center of the second hand circle
+    private var _secondCircleY as Number = 0;
 
     // Cache for all numbers required to draw the second hand. These are pre-calculated in onLayout().
     (:performance)
@@ -144,7 +144,7 @@ class ClockView extends WatchUi.WatchFace {
 
         // The radius of the second hand circle in pixels, calculated from the percentage of the clock face diameter
         _secondCircleRadius = ((5.1 * _clockRadius / 50.0) + 0.5).toNumber();
-        _secondCircleCenter = [ 0, _coords[S_SECONDHAND * 8 + 3]] as Array<Number>;
+        _secondCircleY = _coords[S_SECONDHAND * 8 + 3];
         // Shorten the second hand from the circle center to the edge of the circle to avoid a dark shadow
         _coords[S_SECONDHAND * 8 + 3] += _secondCircleRadius - 1;
         _coords[S_SECONDHAND * 8 + 5] += _secondCircleRadius - 1;
@@ -314,18 +314,13 @@ class ClockView extends WatchUi.WatchFace {
     // Calculate all numbers required to draw the second hand for every second.
     (:performance)
     private function calcSecondData() as Void {
+        var offsetX = _screenCenter[0] + 0.5;
+        var offsetY = _screenCenter[1] + 0.5;
         for (var second = 0; second < 60; second++) {
-
             // Interestingly, lookup tables for the angle or sin/cos don't make this any faster.
             var angle = second * 0.104719755; /* 2*pi/60 */
             var sin = Math.sin(angle);
             var cos = Math.cos(angle);
-            var offsetX = _screenCenter[0] + 0.5;
-            var offsetY = _screenCenter[1] + 0.5;
-
-            // Rotate the center of the second hand circle
-            var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + offsetX).toNumber();
-            var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + offsetY).toNumber();
 
             // Rotate the rectangular portion of the second hand, using inlined code from rotateCoords() to improve performance
             // Optimized: idx = S_SECONDHAND * 8; idy = idx + 1; and etc.
@@ -337,6 +332,10 @@ class ClockView extends WatchUi.WatchFace {
             var y2 = (_coords[36] * sin + _coords[37] * cos + offsetY).toNumber();
             var x3 = (_coords[38] * cos - _coords[39] * sin + offsetX).toNumber();
             var y3 = (_coords[38] * sin + _coords[39] * cos + offsetY).toNumber();
+
+            // Rotate the center of the second hand circle
+            var x = (-_secondCircleY * sin + offsetX).toNumber();
+            var y = (_secondCircleY * cos + offsetY).toNumber();
 
             // Set the clipping region
             var xx1 = x - _secondCircleRadius;
@@ -379,10 +378,6 @@ class ClockView extends WatchUi.WatchFace {
         var offsetX = _screenCenter[0] + 0.5;
 		var offsetY = _screenCenter[1] + 0.5;
 
-        // Rotate the center of the second hand circle
-        var x = (_secondCircleCenter[0] * cos - _secondCircleCenter[1] * sin + offsetX).toNumber();
-        var y = (_secondCircleCenter[0] * sin + _secondCircleCenter[1] * cos + offsetY).toNumber();
-
         // Rotate the rectangular portion of the second hand
         // Optimized: idx = S_SECONDHAND * 8; idy = idx + 1; and etc.
         var coords = new Array<Point2D>[4];
@@ -404,6 +399,10 @@ class ClockView extends WatchUi.WatchFace {
         var x3 = (coordX * cos - coordY * sin + offsetX).toNumber();
         var y3 = (coordX * sin + coordY * cos + offsetY).toNumber();
         coords[3] = [x3, y3];
+
+        // Rotate the center of the second hand circle
+        var x = (-_secondCircleY * sin + offsetX).toNumber();
+        var y = (_secondCircleY * cos + offsetY).toNumber();
 
         // Set the clipping region
         var xx1 = x - _secondCircleRadius;
@@ -453,24 +452,25 @@ class ClockView extends WatchUi.WatchFace {
         // Optimized: Expanded the loop and avoid repeating the same operations (Thanks Inigo Tolosa for the tip!)
         var offsetX = _screenCenter[0] + 0.5;
 		var offsetY = _screenCenter[1] + 0.5;
+        var coords = new Array<Point2D>[4];
         var idx = shape * 8;
         var idy = idx + 1;
-        var x0 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y0 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
-        idx = idy + 1;
+        coords[0] = [(_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber(),
+                     (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber()];
+        idx += 2;
         idy += 2;
-        var x1 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y1 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
-        idx = idy + 1;
+        coords[1] = [(_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber(),
+                     (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber()];
+        idx += 2;
         idy += 2;
-        var x2 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y2 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
-        idx = idy + 1;
+        coords[2] = [(_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber(),
+                     (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber()];
+        idx += 2;
         idy += 2;
-        var x3 = (_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber();
-        var y3 = (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber();
+        coords[3] = [(_coords[idx] * cos - _coords[idy] * sin + offsetX).toNumber(),
+                     (_coords[idx] * sin + _coords[idy] * cos + offsetY).toNumber()];
 
-        return [[x0, y0], [x1, y1], [x2, y2], [x3, y3]];
+        return coords;
     }
 } // class ClockView
 
