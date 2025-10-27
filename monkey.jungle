@@ -9,6 +9,7 @@ base.sourcePath = source
 descentmk2s.sourcePath = $(descentmk2s.sourcePath);source-legacy
 descentmk2s.excludeAnnotations = performance;modern
 fenix5plus.sourcePath = $(fenix5plus.sourcePath);source-legacy
+fenix5plus.resourcePath = $(fenix5plus.resourcePath);resources-round-240x240-legacy
 fenix5plus.excludeAnnotations = performance;modern
 fenix5splus.sourcePath = $(fenix5splus.sourcePath);source-legacy
 fenix5splus.excludeAnnotations = performance;modern
