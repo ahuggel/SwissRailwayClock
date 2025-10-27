@@ -55,10 +55,12 @@ descentmk2.sourcePath = $(descentmk2.sourcePath);source-legacy
 descentmk2.excludeAnnotations = memory;modern
 fenix6.sourcePath = $(fenix6.sourcePath);source-legacy
 fenix6.excludeAnnotations = memory;modern
+fenix6.resourcePath = $(fenix6.resourcePath);resources-round-260x260-legacy
 fenix6pro.sourcePath = $(fenix6pro.sourcePath);source-legacy
 fenix6pro.excludeAnnotations = memory;modern
 fenix6xpro.sourcePath = $(fenix6xpro.sourcePath);source-legacy
 fenix6xpro.excludeAnnotations = memory;modern
+fenix6xpro.resourcePath = $(fenix6xpro.resourcePath);resources-round-280x280-legacy
 
 # Newer watches with layer support and sufficient memory or a graphics pool use layers.
 # They also pre-calculate the numbers for the second hand.
