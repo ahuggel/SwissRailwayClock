@@ -160,7 +160,9 @@ class Config {
                     value = 420; // Default time to turn dark more off: 07:00
                 }
             }
-            _values[id] = value;
+            if (value != null) { // Just to make the type checker happy
+                _values[id] = value;
+            }
         }
     }
 

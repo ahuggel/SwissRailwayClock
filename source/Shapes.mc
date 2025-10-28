@@ -81,7 +81,7 @@ import Toybox.System;
         // Convert the clock geometry data to pixels
         for (var s = 0; s < S_SIZE; s++) {
             for (var i = 0; i < 4; i++) {
-                shapes[s][i] = Math.round(shapes[s][i] * clockRadius / 50.0);
+                shapes[s][i] = Math.round(shapes[s][i] * clockRadius / 50.0) as Float;
             }
         }
 
