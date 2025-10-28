@@ -6,61 +6,87 @@ base.sourcePath = source
 # Older devices without layer support or insufficient memory use a buffered bitmap.
 # Models with very limited memory do not pre-calculate the numbers for the display of the
 # second hand, i.e., they exclude that performance optimisation.
+# They also have a dedicated resource path with a font that only contains the necessary
+# icons to save memory.
 descentmk2s.sourcePath = $(descentmk2s.sourcePath);source-legacy
+descentmk2s.resourcePath = $(descentmk2s.resourcePath);resources-round-240x240-legacy
 descentmk2s.excludeAnnotations = performance;modern
 fenix5plus.sourcePath = $(fenix5plus.sourcePath);source-legacy
 fenix5plus.resourcePath = $(fenix5plus.resourcePath);resources-round-240x240-legacy
 fenix5plus.excludeAnnotations = performance;modern
 fenix5splus.sourcePath = $(fenix5splus.sourcePath);source-legacy
+fenix5splus.resourcePath = $(fenix5splus.resourcePath);resources-round-240x240-legacy
 fenix5splus.excludeAnnotations = performance;modern
 fenix5xplus.sourcePath = $(fenix5xplus.sourcePath);source-legacy
+fenix5xplus.resourcePath = $(fenix5xplus.resourcePath);resources-round-240x240-legacy
 fenix5xplus.excludeAnnotations = performance;modern
 fenix6s.sourcePath = $(fenix6s.sourcePath);source-legacy
+fenix6s.resourcePath = $(fenix6s.resourcePath);resources-round-240x240-legacy
 fenix6s.excludeAnnotations = performance;modern
 fenix6spro.sourcePath = $(fenix6spro.sourcePath);source-legacy
+fenix6spro.resourcePath = $(fenix6spro.resourcePath);resources-round-240x240-legacy
 fenix6spro.excludeAnnotations = performance;modern
 fr245.sourcePath = $(fr245.sourcePath);source-legacy
+fr245.resourcePath = $(fr245.resourcePath);resources-round-240x240-legacy
 fr245.excludeAnnotations = performance;modern
 fr245m.sourcePath = $(fr245m.sourcePath);source-legacy
+fr245m.resourcePath = $(fr245m.resourcePath);resources-round-240x240-legacy
 fr245m.excludeAnnotations = performance;modern
 fr645m.sourcePath = $(fr645m.sourcePath);source-legacy
+fr645m.resourcePath = $(fr645m.resourcePath);resources-round-240x240-legacy
 fr645m.excludeAnnotations = performance;modern
 fr745.sourcePath = $(fr745.sourcePath);source-legacy
+fr745.resourcePath = $(fr745.resourcePath);resources-round-240x240-legacy
 fr745.excludeAnnotations = performance;modern
 fr945.sourcePath = $(fr945.sourcePath);source-legacy
+fr945.resourcePath = $(fr945.resourcePath);resources-round-240x240-legacy
 fr945.excludeAnnotations = performance;modern
 fr945lte.sourcePath = $(fr945lte.sourcePath);source-legacy
+fr945lte.resourcePath = $(fr945lte.resourcePath);resources-round-240x240-legacy
 fr945lte.excludeAnnotations = performance;modern
 marqadventurer.sourcePath = $(marqadventurer.sourcePath);source-legacy
+marqadventurer.resourcePath = $(marqadventurer.resourcePath);resources-round-240x240-legacy
 marqadventurer.excludeAnnotations = performance;modern
 marqathlete.sourcePath = $(marqathlete.sourcePath);source-legacy
+marqathlete.resourcePath = $(marqathlete.resourcePath);resources-round-240x240-legacy
 marqathlete.excludeAnnotations = performance;modern
 marqaviator.sourcePath = $(marqaviator.sourcePath);source-legacy
+marqaviator.resourcePath = $(marqaviator.resourcePath);resources-round-240x240-legacy
 marqaviator.excludeAnnotations = performance;modern
 marqcaptain.sourcePath = $(marqcaptain.sourcePath);source-legacy
+marqcaptain.resourcePath = $(marqcaptain.resourcePath);resources-round-240x240-legacy
 marqcaptain.excludeAnnotations = performance;modern
 marqcommander.sourcePath = $(marqcommander.sourcePath);source-legacy
+marqcommander.resourcePath = $(marqcommander.resourcePath);resources-round-240x240-legacy
 marqcommander.excludeAnnotations = performance;modern
 marqdriver.sourcePath = $(marqdriver.sourcePath);source-legacy
+marqdriver.resourcePath = $(marqdriver.resourcePath);resources-round-240x240-legacy
 marqdriver.excludeAnnotations = performance;modern
 marqexpedition.sourcePath = $(marqexpedition.sourcePath);source-legacy
+marqexpedition.resourcePath = $(marqexpedition.resourcePath);resources-round-240x240-legacy
 marqexpedition.excludeAnnotations = performance;modern
 marqgolfer.sourcePath = $(marqgolfer.sourcePath);source-legacy
+marqgolfer.resourcePath = $(marqgolfer.resourcePath);resources-round-240x240-legacy
 marqgolfer.excludeAnnotations = performance;modern
 vivoactive3m.sourcePath = $(vivoactive3m.sourcePath);source-legacy
+vivoactive3m.resourcePath = $(vivoactive3m.resourcePath);resources-round-240x240-legacy
 vivoactive3m.excludeAnnotations = performance;modern
 # Models with a bit more memory pre-calculate the numbers for the display of the second
 # hand and exclude the memory saving code which calculates the numbers every second.
+# They also have a dedicated resource path with a font that only contains the necessary
+# icons to save memory.
 descentmk2.sourcePath = $(descentmk2.sourcePath);source-legacy
+descentmk2.resourcePath = $(descentmk2.resourcePath);resources-round-280x280-legacy
 descentmk2.excludeAnnotations = memory;modern
 fenix6.sourcePath = $(fenix6.sourcePath);source-legacy
-fenix6.excludeAnnotations = memory;modern
 fenix6.resourcePath = $(fenix6.resourcePath);resources-round-260x260-legacy
+fenix6.excludeAnnotations = memory;modern
 fenix6pro.sourcePath = $(fenix6pro.sourcePath);source-legacy
+fenix6pro.resourcePath = $(fenix6pro.resourcePath);resources-round-260x260-legacy
 fenix6pro.excludeAnnotations = memory;modern
 fenix6xpro.sourcePath = $(fenix6xpro.sourcePath);source-legacy
-fenix6xpro.excludeAnnotations = memory;modern
 fenix6xpro.resourcePath = $(fenix6xpro.resourcePath);resources-round-280x280-legacy
+fenix6xpro.excludeAnnotations = memory;modern
 
 # Newer watches with layer support and sufficient memory or a graphics pool use layers.
 # They also pre-calculate the numbers for the second hand.
