@@ -74,7 +74,7 @@ Either one of these two concepts, together with a "clipping area", is required i
 The code for the different architectures is in the directories ```source-legacy```, ```source-modern``` and ```source-amoled```.
 Besides the actual watchface, each also implements its own version of the global settings class and the on-device menu, as they provide slightly different options to cater for the capabilities of each class of devices.
 
-In some of the common code, [exclude annotations] are used to distinguish between code for modern and legacy devices and there are further exclude annotations to distinguish between legacy devices with more and less memory.
+In some of the common code, [exclude annotations] are used to distinguish between code for modern (incl. AMOLED) and legacy devices with more and less memory. Modern and AMOLED devices use a global instance of ```class Shapes```, which deals with the coordinates of the watchface shapes, i.e., the hands and tickmarks. Legacy watches don't use this class because of the memory overhead it adds.
 
 Symbols for active alarms, phone connection and notifications, as well as the various indicators use icons from a [custom font];
 
