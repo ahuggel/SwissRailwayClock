@@ -181,6 +181,7 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | Captain Marvel | legacyherocaptainmarvel | Modern |
 | D2™ Air X10 | d2airx10 | Amoled |
 | D2™ Mach 1 | d2mach1 | Amoled |
+| D2™ Mach 2 | d2mach2 | Amoled |
 | Darth Vader™ | legacysagadarthvader | Modern |
 | Descent™ G2 | descentg2 | Amoled |
 | Descent™ Mk2 / Descent™ Mk2i | descentmk2 | Legacy |
@@ -252,6 +253,8 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | Venu® 2S | venu2s | Amoled |
 | Venu® 3 | venu3 | Amoled |
 | Venu® 3S | venu3s | Amoled |
+| Venu® 4 41mm | venu441mm | Amoled |
+| Venu® 4 45mm / D2™ Air X15 | venu445mm | Amoled |
 | Venu® Sq 2 | venusq2 | Amoled |
 | Venu® Sq 2 Music | venusq2m | Amoled |
 | Venu® X1 | venux1 | Amoled |

@@ -163,6 +163,8 @@ marq2aviator.sourcePath = $(marq2aviator.sourcePath);source-amoled
 marq2aviator.excludeAnnotations = legacy
 venu3s.sourcePath = $(venu3s.sourcePath);source-amoled
 venu3s.excludeAnnotations = legacy
+venu441mm.sourcePath = $(venu441mm.sourcePath);source-amoled
+venu441mm.excludeAnnotations = legacy
 vivoactive5.sourcePath = $(vivoactive5.sourcePath);source-amoled
 vivoactive5.excludeAnnotations = legacy
 vivoactive6.sourcePath = $(vivoactive6.sourcePath);source-amoled
@@ -191,6 +193,8 @@ venu2plus.excludeAnnotations = legacy
 # Round 454x454 displays
 approachs7047mm.sourcePath = $(approachs7047mm.sourcePath);source-amoled
 approachs7047mm.excludeAnnotations = legacy
+d2mach2.sourcePath = $(d2mach2.sourcePath);source-amoled
+d2mach2.excludeAnnotations = legacy
 descentmk351mm.sourcePath = $(descentmk351mm.sourcePath);source-amoled
 descentmk351mm.excludeAnnotations = legacy
 epix2pro51mm.sourcePath = $(epix2pro51mm.sourcePath);source-amoled
@@ -207,6 +211,8 @@ fr970.sourcePath = $(fr970.sourcePath);source-amoled
 fr970.excludeAnnotations = legacy
 venu3.sourcePath = $(venu3.sourcePath);source-amoled
 venu3.excludeAnnotations = legacy
+venu445mm.sourcePath = $(venu445mm.sourcePath);source-amoled
+venu445mm.excludeAnnotations = legacy
 # Round 360x360 displays
 fr265s.sourcePath = $(fr265s.sourcePath);source-amoled
 fr265s.excludeAnnotations = legacy

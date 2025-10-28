@@ -19,6 +19,7 @@
             <iq:product id="approachs7047mm"/>
             <iq:product id="d2airx10"/>
             <iq:product id="d2mach1"/>
+            <iq:product id="d2mach2"/>
             <iq:product id="descentg2"/>
             <iq:product id="descentmk2"/>
             <iq:product id="descentmk2s"/>
@@ -91,6 +92,8 @@
             <iq:product id="venu2s"/>
             <iq:product id="venu3"/>
             <iq:product id="venu3s"/>
+            <iq:product id="venu441mm"/>
+            <iq:product id="venu445mm"/>
             <iq:product id="venusq2"/>
             <iq:product id="venusq2m"/>
             <iq:product id="venux1"/>
