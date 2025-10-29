@@ -2,6 +2,20 @@
 
 ![image](configurable-clutter.gif)
 
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <img src="venu4.png" alt="Venu 4" width="100%">
+    </td>
+    <td valign="top">
+      <p>
+        A newer watch (Venu® 4 41mm, picture from the simulator) showing some of the newer indicators for stress, pressure, altitude and temperature.<br/>
+        The altitude and temperature values are in the units set in the system (°C or °F and m or ft) and for the pressure unit there is a setting in the watch menu (since there isn't a system setting).
+      </p>
+    </td>
+  </tr>
+</table>
+
 # Swiss Railway Clock - An analog watchface for Garmin smartwatches
 
 - This analog watchface is an implementation of the iconic [Swiss railway clock] design for Garmin smartwatches, with an always-on second hand on watches with a MIP display;
