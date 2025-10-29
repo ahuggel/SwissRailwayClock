@@ -498,7 +498,7 @@ class Indicators {
             return false;
         }
         var x = (0.45 * _clockRadius).toNumber();
-        var y = _clockRadius;
+        var y = _screenCenter[1];
         var radius = (0.105 * _clockRadius).toNumber();
         var penWidth1 = (0.03 * _clockRadius).toNumber();
         if (1 == penWidth1 % 2) { penWidth1 += 1; } // make it even
