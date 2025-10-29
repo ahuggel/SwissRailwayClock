@@ -3,6 +3,7 @@
 ![image](configurable-clutter.gif)
 
 <img src="venu4.png" alt="Venu 4" align="left" width="30%">
+
 _More "Configurable Clutter"_
 
 A newer AMOLED watch (Venu® 4 41mm, picture from the simulator) showing some of the newer indicators for stress, pressure, altitude and temperature, and a purple second hand.
