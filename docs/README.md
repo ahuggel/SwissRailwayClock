@@ -1,7 +1,8 @@
 ![image](WatchFace.png)
 
 ![image](configurable-clutter.gif)
-<table border="0" cellpadding="0" cellspacing="0">  <tr>
+<table border="0" cellpadding="0" cellspacing="0">
+  <tr>
     <td width="33%" valign="top">
       <img src="venu4.png" alt="Venu 4" width="100%">
     </td>
