@@ -1,27 +1,14 @@
 ![image](WatchFace.png)
 
 ![image](configurable-clutter.gif)
+
 <img src="venu4.png" alt="Venu 4" align="left" width="30%">
 _More "Configurable Clutter"_
 
-A newer watch (Venu® 4 41mm, picture from the simulator) showing some of the newer indicators for stress, pressure, altitude and temperature.
+A newer AMOLED watch (Venu® 4 41mm, picture from the simulator) showing some of the newer indicators for stress, pressure, altitude and temperature, and a purple second hand.
 
-The altitude and temperature values are in the units set in the system (°C or °F and m or ft) and for the pressure unit there is a setting in the watch menu (since there isn't a system setting).
+The altitude and temperature values are in the units set in the system (°C or °F and m or ft) and for the pressure unit there is a setting in the watch menu (since there isn't a system setting for this).
 <br clear="left" />
-
-<table border="0" cellpadding="0" cellspacing="0">
-  <tr>
-    <td width="33%" valign="top">
-      <img src="venu4.png" alt="Venu 4" width="100%">
-    </td>
-    <td valign="top">
-      <p>
-        More "Configurable Clutter"<br/>A newer watch (Venu® 4 41mm, picture from the simulator) showing some of the newer indicators for stress, pressure, altitude and temperature.<br/>
-        The altitude and temperature values are in the units set in the system (°C or °F and m or ft) and for the pressure unit there is a setting in the watch menu (since there isn't a system setting).
-      </p>
-    </td>
-  </tr>
-</table>
 
 # Swiss Railway Clock - An analog watchface for Garmin smartwatches
 
