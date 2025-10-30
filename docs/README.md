@@ -2,7 +2,7 @@
 
 ![image](configurable-clutter.gif)
 
-<img src="venu4.png" alt="Venu 4" align="left" width="30%">
+<img src="venu4.png" alt="Venu 4" align="left" width="34%">
 
 _More "Configurable Clutter"_
 
