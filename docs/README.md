@@ -125,7 +125,9 @@ As the number of supported optional indicators (or "Configurable Clutter") grew,
 - replacing more complex variable types with simpler ones (e.g., use array instead of dictionary); and
 - introducing local variables to avoid repeating any, even minor, repeated expressions (e.g., instead of ```a=b+c+2; d=e+c+2;```, write ```var f=c+2; a=b+f; d=e+f;```).
 
-For more ideas how to save memory, search the [Garmin Developer forum]. Also, keep in mind that the resulting optimized design and code to save a few bytes here and there often violates common software development best practices. The optimized design and code may not look right.
+More recently, the number of custom icons (being characters of a custom font) continued to increase only for modern and AMOLED watches. As each new icon requires memory and the new icons are not used on legacy watches, a way to load different font resources for different watches was needed. With additional resource-path definitions in the ```monkey.jungle``` file, legacy watches now use a legacy custom font with only a handful of icons, while the other two architectures get all the icons.
+
+For additional strategies on saving memory, check the [Garmin Developer forum]. Also, keep in mind that the resulting optimized design and code to save a few bytes here and there often violates common software development best practices. The optimized design and code may not look right.
 
 Memory optimizations can be measured with the simulator's "Active Memory" utility, which reports the size of the application code and data as well as other useful information.
 
@@ -133,7 +135,7 @@ Memory optimizations can be measured with the simulator's "Active Memory" utilit
 
 On AMOLED and Modern watches, four complications are available and each can display one of a list of supported indicators. New indicators can be added with minimal code changes. These are the steps to add a new indicator for AMOLED and Modern watches[^5]:
 
-- Choose a new symbol name for the new indicator (like `:Elevation`, `:Pressure`).
+- Choose a new symbol name for the new indicator (like `:Temperature`).
 
 In `resources*/strings/strings.xml`
 - Add string resources for the new symbol.
