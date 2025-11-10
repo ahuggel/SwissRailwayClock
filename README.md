@@ -1,4 +1,4 @@
-![image](docs/watchface.png)
+![image](docs/WatchFace.png)
 
 ![image](docs/configurable-clutter.gif)
 
