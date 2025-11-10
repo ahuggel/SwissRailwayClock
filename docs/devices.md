@@ -92,3 +92,5 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | vívoactive® 4S | vivoactive4s | Modern |
 | vívoactive® 5 | vivoactive5 | Amoled |
 | vívoactive® 6 | vivoactive6 | Amoled |
+
+[compatible devices]: https://developer.garmin.com/connect-iq/compatible-devices/

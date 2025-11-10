@@ -1,6 +1,6 @@
 ### Settings
 
-Details of the available on-device settings and their options. The settings differ slightly between the three classes of supported devices. Use the [Compatible devices](#compatible-devices) table below to find out which architecture each device uses.
+Details of the available on-device settings and their options. The settings differ slightly between the three classes of supported devices. Use the [Compatible devices](devices.md) table to find out which architecture each device uses.
 
 | Name | Values* | Description | Architecture |
 | --- | --- | --- | ---|
