@@ -129,6 +129,7 @@ The [code changes for the Pressure Unit setting](https://github.com/ahuggel/Swis
 [Toybox APIs]: https://developer.garmin.com/connect-iq/api-docs/
 [Prettier Monkey C]: https://marketplace.visualstudio.com/items?itemName=markw65.prettier-extension-monkeyc
 [second hand]: https://developer.garmin.com/connect-iq/connect-iq-faq/how-do-i-get-my-watch-face-to-update-every-second/
+[Garmin Developer forum]: https://forums.garmin.com/developer/connect-iq/f/discussion
 [persistent storage]: https://developer.garmin.com/connect-iq/api-docs/Toybox/Application/Storage.html
 [on-device menu]: https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/Menu2.html
 [picker]: https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/Picker.html
