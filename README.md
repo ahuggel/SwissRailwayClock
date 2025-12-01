@@ -21,13 +21,13 @@ The altitude and temperature values are in the units set in the system (Â°C or Â
 
 This program reflects the progress of my ongoing journey to master [Monkey C] and the Garmin [Connect IQ ecosystem] to create an analog watchface. What started as a simple program has grown into a complete application over time, with numerous features and support for all newer Garmin watch models. I am sharing it with developers to showcase what I've learned, in the hope that it will help others grasp the relevant programming concepts more quickly than I did, and to perhaps get some feedback on what could be done better and how. This is an educational and non-commercial project and is not intended to compete with any licensed application of the original Swiss railway clock design, which belongs to the Swiss Federal Railways (SBB). As such, it is not published in the Garmin Connect IQ store.
 
-For further information, refer to these documents:
+For further information, refer to the following sections:
 
-| Page | Content |
+| Topic | Content |
 | :--- | :--- |
-| [**On-device settings**](docs/settings.md) | How to configure the watchface's various application settings, personalization options, and data fields. |
-| [**Architecture&nbsp;& development**](docs/architecture.md) | An overview of the watchface architecture, design notes, optimization strategies, and guides on how to implement new settings and indicators. |
-| [**Compatible Devices**](docs/devices.md) | The list of all supported Garmin devices. |
+| [**Settings**](docs/settings.md) | Details of all on-device settings and personalization options. |
+| [**Architecture**](docs/architecture.md) | An overview of the watchface architecture, optimization techniques used, and guides for implementing new settings and indicators. |
+| [**Devices**](docs/devices.md) | The list of all supported Garmin devices. |
 
 [^1]: Newer AMOLED watches have burn-in protection requirements, which are easily and quite naturally addressed with the concept of a brightness setting. A few older AMOLED watches with more complex burn-in protection requirements are not supported.
 
