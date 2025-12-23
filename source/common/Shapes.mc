@@ -206,4 +206,14 @@ import Toybox.System;
 
         return coords;
     }
+
+    // Draw the edges of a polygon
+    public function drawPolygon(dc as Dc, pts as Array<Point2D>) as Void {
+        var size = pts.size();
+        for (var i = 0; i < size; i++) {
+            var startPoint = pts[i];
+            var endPoint = pts[(i + 1) % size];
+            dc.drawLine(startPoint[0], startPoint[1], endPoint[0], endPoint[1]);
+        }
+    }
 }

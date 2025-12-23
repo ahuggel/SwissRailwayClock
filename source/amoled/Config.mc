@@ -37,6 +37,7 @@ class Config {
     // Indexes into the colors array
     public enum Color {
         C_FOREGROUND, 
+        C_OUTLINE,
         C_BACKGROUND, 
         C_TEXT, 
         C_BLUE_NEUTRAL,
@@ -293,10 +294,14 @@ class Config {
         return ret;
     }
 
-    // Return the color (shade of gray) for the current I_BRIGHTNESS or I_DM_CONTRAST (dimmer level) setting
-    public function getSettingColor(id as Item) as Number {
+    // Return the foreground or outline color (shade of gray) for the current I_BRIGHTNESS or I_DM_CONTRAST (dimmer level) setting
+    // Param color: C_FOREGROUND or C_OUTLINE (0 or 1)
+    // Param id: I_BRIGHTNESS or I_DM_CONTRAST
+    public function getSettingColor(color as Color, id as Item) as Number {
+        var idx = color * 5 + _values[id] % 5;
         // Graphics.COLOR_WHITE = 0xffffff, Graphics.COLOR_LT_GRAY = 0xaaaaaa, Graphics.COLOR_DK_GRAY = 0x555555
-        return [Graphics.COLOR_WHITE, 0xd4d4d4, Graphics.COLOR_LT_GRAY, 0x808080, Graphics.COLOR_DK_GRAY][_values[id] % 5];
+        return [Graphics.COLOR_WHITE, 0xd4d4d4, Graphics.COLOR_LT_GRAY, 0x808080, Graphics.COLOR_DK_GRAY,
+                0xd4d4d4, Graphics.COLOR_LT_GRAY, 0x808080, Graphics.COLOR_DK_GRAY, 0x333333][idx];
     }
 
     // Determine the colors to use, return the color mode
@@ -314,15 +319,18 @@ class Config {
         }
         // Foreground color is based on display mode and the brightness or dimmer setting
         var foreground = Graphics.COLOR_DK_GRAY;
+        var outline = 0x333333;
         var lvl = 4;
         if (isAwake) {
             var id = M_LIGHT == colorMode ? I_BRIGHTNESS : I_DM_CONTRAST;
-            foreground = getSettingColor(id);
+            foreground = getSettingColor(C_FOREGROUND, id);
+            outline = getSettingColor(C_OUTLINE, id);
             lvl = getValue(id) % 5;
         }
         var gray = [0xaaaaaa, 0x9f9f9f, 0x8e8e8e, 0x9a9a9a, 0x777777][lvl];
         colors = [
             foreground,                                              // C_FOREGROUND
+            outline,                                                 // C_OUTLINE
             Graphics.COLOR_BLACK,                                    // C_BACKGROUND
             gray,                                                    // C_TEXT
             [0x0000ff, 0x0000ec, 0x0000d9, 0x0000bf, 0x000099][lvl], // C_BLUE_NEUTRAL

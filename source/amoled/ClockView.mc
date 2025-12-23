@@ -126,37 +126,40 @@ class ClockView extends WatchUi.WatchFace {
         var hourHandAngle = ((hour % 12) * 60.0 + minute) / 12.0 * 0.104719755 /* 2*pi/60 */;
         var hourHandCoords = shapes.rotate(Shapes.S_HOURHAND, hourHandAngle, _screenCenter[0], _screenCenter[1]);
         var minuteHandCoords = shapes.rotate(Shapes.S_MINUTEHAND, minute * 0.104719755 /* 2*pi/60 */, _screenCenter[0], _screenCenter[1]);
+        var hasAlpha = config.hasCapability(:Alpha);
+        var pw = (_clockRadius * 0.015 + 0.5).toNumber();
+        var outlineColor = 0x80000000 | config.colors[Config.C_OUTLINE];
         if (_doWireHands != 0) { _doWireHands -= 1; } // Update the wire hands timer
         if (0 == _doWireHands) { // draw regular hour and minute hands
+            if (hasAlpha) {
+                dc.setPenWidth(pw);
+                dc.setStroke(outlineColor);
+                shapes.drawPolygon(dc, hourHandCoords);
+            }
             dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
             dc.fillPolygon(hourHandCoords);
+            if (hasAlpha) {
+                dc.setPenWidth(pw);
+                dc.setStroke(outlineColor);
+                shapes.drawPolygon(dc, minuteHandCoords);
+            }
+            dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
             dc.fillPolygon(minuteHandCoords);
         } else { // draw only the outline of the hands
-            var pw = 3;
-            if (config.hasCapability(:Alpha)) {
+            if (hasAlpha) {
                 dc.setStroke(Graphics.createColor(0x80, 0x80, 0x80, 0x80));
             } else {
                 dc.setColor(config.colors[Config.C_FOREGROUND], Graphics.COLOR_TRANSPARENT);
                 pw = 1;
             }
-            dc.setPenWidth(pw); // TODO: Should be a percentage of the clock radius
-            drawPolygon(dc, hourHandCoords);
-            drawPolygon(dc, minuteHandCoords);
+            dc.setPenWidth(pw);
+            shapes.drawPolygon(dc, hourHandCoords);
+            shapes.drawPolygon(dc, minuteHandCoords);
         }
 
         if (_isAwake) {
             var accentColor = config.getAccentColor(hour, minute, second);
             drawSecondHand(dc, second, accentColor);
-        }
-    }
-
-    // Draw the edges of a polygon
-    private function drawPolygon(dc as Dc, pts as Array<Point2D>) as Void {
-        var size = pts.size();
-        for (var i = 0; i < size; i++) {
-            var startPoint = pts[i];
-            var endPoint = pts[(i + 1) % size];
-            dc.drawLine(startPoint[0], startPoint[1], endPoint[0], endPoint[1]);
         }
     }
 
@@ -171,6 +174,9 @@ class ClockView extends WatchUi.WatchFace {
         dc.setColor(accentColor, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(coords);
         dc.fillCircle(sd[0], sd[1], shapes.secondCircleRadius);
+        // TODO: Add a dot or not?
+        // dc.setColor(config.colors[Config.C_BACKGROUND], Graphics.COLOR_TRANSPARENT);
+        // dc.fillCircle(_screenCenter[0], _screenCenter[1], _clockRadius * 0.01);
     }
 } // class ClockView
 
@@ -191,46 +197,3 @@ class ClockDelegate extends WatchUi.WatchFaceDelegate {
     }
 }
 
-/*
-    // DEBUG
-    (:typecheck(false))
-    function typeName(obj) {
-        if (obj instanceof Toybox.Lang.Number) {
-            return "Number";
-        } else if (obj instanceof Toybox.Lang.Long) {
-            return "Long";
-        } else if (obj instanceof Toybox.Lang.Float) {
-            return "Float";
-        } else if (obj instanceof Toybox.Lang.Double) {
-            return "Double";
-        } else if (obj instanceof Toybox.Lang.Boolean) {
-            return "Boolean";
-        } else if (obj instanceof Toybox.Lang.String) {
-            return "String";
-        } else if (obj instanceof Toybox.Lang.Array) {
-            var s = "Array [";
-            for (var i = 0; i < obj.size(); ++i) {
-                s += typeName(obj);
-                s += ", ";
-            }
-            s += "]";
-            return s;
-        } else if (obj instanceof Toybox.Lang.Dictionary) {
-            var s = "Dictionary{";
-            var keys = obj.keys();
-            var vals = obj.values();
-            for (var i = 0; i < keys.size(); ++i) {
-                s += keys;
-                s += ": ";
-                s += vals;
-                s += ", ";
-            }
-            s += "}";
-            return s;
-        } else if (obj instanceof Toybox.Time.Gregorian.Info) {
-            return "Gregorian.Info";
-        } else {
-            return "???";
-        }
-    }
-//*/

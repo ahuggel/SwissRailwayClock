@@ -254,8 +254,8 @@ class ClockView extends WatchUi.WatchFace {
                     pw = 1;
                 }
                 _hourMinuteDc.setPenWidth(pw); // TODO: Should be a percentage of the clock radius
-                drawPolygon(_hourMinuteDc, hourHandCoords);
-                drawPolygon(_hourMinuteDc, minuteHandCoords);
+                shapes.drawPolygon(_hourMinuteDc, hourHandCoords);
+                shapes.drawPolygon(_hourMinuteDc, minuteHandCoords);
             }
         } // if (_lastDrawnMin != minute)
 
@@ -311,16 +311,6 @@ class ClockView extends WatchUi.WatchFace {
             _secondDc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
             _secondDc.clear();
             drawSecondHand(_secondDc, second);
-        }
-    }
-
-    // Draw the edges of a polygon
-    private function drawPolygon(dc as Dc, pts as Array<Point2D>) as Void {
-        var size = pts.size();
-        for (var i = 0; i < size; i++) {
-            var startPoint = pts[i];
-            var endPoint = pts[(i + 1) % size];
-            dc.drawLine(startPoint[0], startPoint[1], endPoint[0], endPoint[1]);
         }
     }
 
@@ -391,47 +381,3 @@ class ClockDelegate extends WatchUi.WatchFaceDelegate {
         _view.stopPartialUpdates();
     }
 }
-
-/*
-    // DEBUG
-    (:typecheck(false))
-    function typeName(obj) {
-        if (obj instanceof Toybox.Lang.Number) {
-            return "Number";
-        } else if (obj instanceof Toybox.Lang.Long) {
-            return "Long";
-        } else if (obj instanceof Toybox.Lang.Float) {
-            return "Float";
-        } else if (obj instanceof Toybox.Lang.Double) {
-            return "Double";
-        } else if (obj instanceof Toybox.Lang.Boolean) {
-            return "Boolean";
-        } else if (obj instanceof Toybox.Lang.String) {
-            return "String";
-        } else if (obj instanceof Toybox.Lang.Array) {
-            var s = "Array [";
-            for (var i = 0; i < obj.size(); ++i) {
-                s += typeName(obj);
-                s += ", ";
-            }
-            s += "]";
-            return s;
-        } else if (obj instanceof Toybox.Lang.Dictionary) {
-            var s = "Dictionary{";
-            var keys = obj.keys();
-            var vals = obj.values();
-            for (var i = 0; i < keys.size(); ++i) {
-                s += keys;
-                s += ": ";
-                s += vals;
-                s += ", ";
-            }
-            s += "}";
-            return s;
-        } else if (obj instanceof Toybox.Time.Gregorian.Info) {
-            return "Gregorian.Info";
-        } else {
-            return "???";
-        }
-    }
-//*/
