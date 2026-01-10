@@ -69,9 +69,11 @@ class TimePicker extends WatchUi.Picker {
         Picker.initialize({:title=>title, :pattern=>factories, :defaults=>defaults});
     }
 
-    // This is needed to show the title (on both, the watch and the sim) and clear the background (sim)
-    public function onLayout(dc as Dc) as Void {
+    public function onUpdate(dc as Dc) as Void {
+        // Clearing the clip seems necessary to show the title (on both, the watch and the sim)
         dc.clearClip();
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.clear();
     }
 }
 
