@@ -26,12 +26,14 @@ import Toybox.WatchUi;
 class SettingsView extends WatchUi.Menu2 {
     // Constructor
     public function initialize() {
+        System.println("DEBUG: SettingsView.initialize()");
         Menu2.initialize({:title=>Rez.Strings.Settings});
         buildMenu(Config.I_ALL);
     }
 
     // Called when the menu is brought into the foreground
     public function onShow() as Void {
+        System.println("DEBUG: SettingsView.onShow()");
         Menu2.onShow();
         // Update sub labels in case the dark mode on or off time changed
         var idx = findItemById(Config.I_DM_ON);
@@ -48,6 +50,7 @@ class SettingsView extends WatchUi.Menu2 {
 
     // Build the menu from a given menu item onwards
     public function buildMenu(id as Config.Item) as Void {
+        System.println("DEBUG: SettingsView.buildMenu(): id=" + id);
         switch (id) {
             case Config.I_ALL:
                 addMenuItem(Config.I_BATTERY);
@@ -113,6 +116,7 @@ class SettingsView extends WatchUi.Menu2 {
 
     // Delete the menu from a given menu item onwards
     public function deleteMenu(id as Config.Item) as Void {
+        System.println("DEBUG: SettingsView.deleteMenu(): id=" + id);
         switch (id) {
             case Config.I_BATTERY:
                 deleteAnyItem(Config.I_BATTERY_PCT);
@@ -145,11 +149,13 @@ class SettingsView extends WatchUi.Menu2 {
 
     // Add a MenuItem to the menu.
     private function addMenuItem(item as Config.Item) as Void {
+        System.println("DEBUG: SettingsView.addMenuItem(): id=" + item);
         Menu2.addItem(new WatchUi.MenuItem(config.getName(item), config.getLabel(item), item, {}));
     }
 
     // Add a ToggleMenuItem to the menu.
     private function addToggleMenuItem(item as Config.Item) as Void {
+        System.println("DEBUG: SettingsView.addToggleMenuItem(): id=" + item);
         Menu2.addItem(new WatchUi.ToggleMenuItem(
             config.getName(item), 
             {:enabled=>Rez.Strings.On, :disabled=>Rez.Strings.Off},
@@ -164,6 +170,7 @@ class SettingsView extends WatchUi.Menu2 {
         var idx = findItemById(item);
         var del = -1 != idx;
         if (del) { Menu2.deleteItem(idx); }
+        System.println("DEBUG: SettingsView.deleteAnyItem(): id=" + item + ", del=" + del);
         return del;
     }
 } // class SettingsView
@@ -174,17 +181,20 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
 
     // Constructor
     public function initialize(menu as SettingsView) {
+        System.println("DEBUG: SettingsDelegate.initialize()");
         Menu2InputDelegate.initialize();
         _menu = menu;
     }
 
   	public function onBack() as Void {
+        System.println("DEBUG: SettingsDelegate.onBack()");
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
 
     // Handle a menu item being selected
     public function onSelect(menuItem as MenuItem) as Void {
         var id = menuItem.getId() as Config.Item;
+        System.println("DEBUG: SettingsDelegate.onSelect(): id=" + id);
         if (Config.I_DONE == id) {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         } else if (id >= Config.I_ALARMS) { // toggle items

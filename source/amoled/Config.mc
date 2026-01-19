@@ -210,6 +210,7 @@ class Config {
                 }
             }
             if (value != null) { // Just to make the type checker happy
+                System.println("DEBUG: Config.initialize() Read setting: id=" + id + ", key='" + _itemLabels[id] + "', value=" + value);
                 _values[id] = value;
             }
         }
@@ -275,12 +276,14 @@ class Config {
         }
         var value = (_values[id] + 1) % d;
         _values[id] = value;
+        System.println("DEBUG: Config.setNext() Write setting: id=" + id + ", key='" + _itemLabels[id] + "', value=" + value);
         Storage.setValue(_itemLabels[id], value);
     }
 
     // Set the value of a setting. Only used for I_DM_ON and I_DM_OFF.
     public function setValue(id as Item, value as Number) as Void {
         _values[id] = value;
+        System.println("DEBUG: Config.setValue() Write setting: id=" + id + ", key='" + _itemLabels[id] + "', value=" + value);
         Storage.setValue(_itemLabels[id], value);
     }
 
