@@ -28,6 +28,11 @@ import Toybox.WatchUi;
     private var _type as Type;
     private var _fgColor as Number;
     private var _bgColor as Number;
+    private var _width as Number = 0;
+    private var _height as Number = 0;
+    private var _length as Number = 0;
+    private var _sx0 as Number = 0;
+    private var _sy0 as Number = 0;
 
     // Constructor
     public function initialize(type as Type, fgColor as Number, bgColor as Number) {
@@ -44,20 +49,23 @@ import Toybox.WatchUi;
 
     // Draw the icon
     public function draw(dc as Dc) as Void {
-        var width = dc.getWidth();
-        var height = dc.getHeight();
-        var length = width < height ? width : height;
-        var sx0 = (width - length)/2;
-        var sy0 = (height - length)/2;
-        dc.setAntiAlias(true); // Graphics.Dc has :setAntiAlias since API Level 3.2.0
-        dc.setClip(sx0, sy0, length, length);
+        if (0 == _width) {
+            // Only initialize the dc once to limit the number of system calls
+            dc.setAntiAlias(true); // Graphics.Dc has :setAntiAlias since API Level 3.2.0
+            _width = dc.getWidth();
+            _height = dc.getHeight();
+            _length = _width < _height ? _width : _height; // min
+            _sx0 = (_width - _length)/2;
+            _sy0 = (_height - _length)/2;
+            dc.setClip(_sx0, _sy0, _length, _length);
+        }
         dc.setColor(_bgColor, _bgColor);
         dc.clear();
         dc.setColor(_fgColor, _fgColor);
         if (T_CIRCLE == _type) {
-            dc.fillCircle(width/2, height/2, length/2.6);
+            dc.fillCircle(_width/2, _height/2, _length/2.6);
         } else {
-            dc.fillPolygon([[sx0, sy0], [sx0 + length, sy0 + length], [sx0 + length, sy0]]);
+            dc.fillPolygon([[_sx0, _sy0], [_sx0 + _length, _sy0 + _length], [_sx0 + _length, _sy0]]);
         }
     }
 }
