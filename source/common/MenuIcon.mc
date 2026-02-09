@@ -49,23 +49,29 @@ import Toybox.WatchUi;
 
     // Draw the icon
     public function draw(dc as Dc) as Void {
-        if (0 == _width) {
-            // Only initialize the dc once to limit the number of system calls
-            dc.setAntiAlias(true); // Graphics.Dc has :setAntiAlias since API Level 3.2.0
-            _width = dc.getWidth();
-            _height = dc.getHeight();
-            _length = _width < _height ? _width : _height; // min
-            _sx0 = (_width - _length)/2;
-            _sy0 = (_height - _length)/2;
-            dc.setClip(_sx0, _sy0, _length, _length);
+        try {
+            if (0 == _width) {
+                // Only initialize the dc once to limit the number of system calls
+                dc.setAntiAlias(true); // Graphics.Dc has :setAntiAlias since API Level 3.2.0
+                _width = dc.getWidth();
+                _height = dc.getHeight();
+                _length = _width < _height ? _width : _height; // min
+                _sx0 = (_width - _length)/2;
+                _sy0 = (_height - _length)/2;
+            }
+            // Instead of setClip() and clear(), just fill a polygon with the background color
+            dc.setColor(_bgColor, _bgColor);
+            dc.fillPolygon([[_sx0, _sy0], [_sx0 + _length, _sy0], [_sx0 + _length, _sy0 + _length], [_sx0, _sy0 + _length]]);
+            // Then draw the circle or triangle depending on the type of the icon
+            dc.setColor(_fgColor, _fgColor);
+            if (T_CIRCLE == _type) {
+                dc.fillCircle(_width/2, _height/2, _length/2.6);
+            } else {
+                dc.fillPolygon([[_sx0, _sy0], [_sx0 + _length, _sy0 + _length], [_sx0 + _length, _sy0]]);
+            }
         }
-        dc.setColor(_bgColor, _bgColor);
-        dc.clear();
-        dc.setColor(_fgColor, _fgColor);
-        if (T_CIRCLE == _type) {
-            dc.fillCircle(_width/2, _height/2, _length/2.6);
-        } else {
-            dc.fillPolygon([[_sx0, _sy0], [_sx0 + _length, _sy0 + _length], [_sx0 + _length, _sy0]]);
+        catch (e) {
+            // ignore the exception
         }
     }
 }
