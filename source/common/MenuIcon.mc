@@ -69,9 +69,9 @@ import Toybox.WatchUi;
             } else {
                 dc.fillPolygon([[_sx0, _sy0], [_sx0 + _length, _sy0 + _length], [_sx0 + _length, _sy0]]);
             }
-        }
-        catch (e) {
-            // ignore the exception
+        } catch (e) {
+            // Ignore the exception, just print the error message
+            System.println(e.getErrorMessage());
         }
     }
 }
