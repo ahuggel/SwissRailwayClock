@@ -45,8 +45,11 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | fēnix® 8 Solar 51mm / tactix® 8 Solar 51mm | fenix8solar51mm | Modern |
 | fēnix® E | fenixe | Amoled |
 | First Avenger | legacyherofirstavenger | Modern |
+| Forerunner® 70 | fr70 | Amoled |
 | Forerunner® 165 | fr165 | Amoled |
 | Forerunner® 165 Music | fr165m | Amoled |
+| Forerunner® 170 | fr170 | Amoled |
+| Forerunner® 170 Music | fr170m | Amoled |
 | Forerunner® 245 | fr245 | Legacy |
 | Forerunner® 245 Music | fr245m | Legacy |
 | Forerunner® 255 | fr255 | Modern |
