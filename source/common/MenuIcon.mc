@@ -69,9 +69,19 @@ import Toybox.WatchUi;
             } else {
                 dc.fillPolygon([[_sx0, _sy0], [_sx0 + _length, _sy0 + _length], [_sx0 + _length, _sy0]]);
             }
-        } catch (e) {
-            // Ignore the exception, just print the error message
-            System.println(e.getErrorMessage());
+        } catch (ex) {
+            // Print the error message and some debug output
+            System.println("EXCEPTION: MenuIcon.draw(): " + ex.getErrorMessage());
+            System.println("DEBUG: MenuIcon.draw(): _bgColor = " + _bgColor);
+            System.println("DEBUG: MenuIcon.draw(): _fgColor = " + _fgColor);
+            System.println("DEBUG: MenuIcon.draw(): _type = " + _type);
+            System.println("DEBUG: MenuIcon.draw(): dc.fillPolygon([[" + _sx0 + ", " + _sy0 + "], [" + (_sx0 + _length) + ", " + _sy0 + "], [" + (_sx0 + _length) + ", " + (_sy0 + _length) + "], [" + _sx0 + ", " + (_sy0 + _length) + "]])");
+            if (T_CIRCLE == _type) {
+                System.println("DEBUG: MenuIcon.draw(): dc.fillCircle(" + _width/2 + ", " + _height/2 + ", " + _length/2.6 + ")");
+            } else {
+                System.println("DEBUG: MenuIcon.draw(): dc.fillPolygon([[" + _sx0 + ", " + _sy0 + "], [" + (_sx0 + _length) + ", " + (_sy0 + _length) + "], [" + (_sx0 + _length) + ", " + _sy0 + "]])");
+            }
+            throw(ex as Lang.Exception);
         }
     }
 }

@@ -160,6 +160,8 @@ class Config {
 
     // Constructor
     public function initialize() {
+        System.println("DEBUG: Config.initialize()");
+
         // Default values for toggle items, each bit is one. I_ALARMS and I_CONNECTED are on by default.
         var defaults = 0x005; // 0b0000 0101
 
