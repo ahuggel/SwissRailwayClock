@@ -43,6 +43,13 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | fēnix® 8 Pro 47mm / 51mm / MicroLED | fenix8pro47mm | Amoled |
 | fēnix® 8 Solar 47mm | fenix8solar47mm | Modern |
 | fēnix® 8 Solar 51mm / tactix® 8 Solar 51mm | fenix8solar51mm | Modern |
+| fēnix® 9 43mm | fenix943mm | Amoled |
+| fēnix® 9 47mm / 51mm | fenix947mm | Amoled |
+| fēnix® 9 Pro 43mm | fenix9pro43mm | Amoled |
+| fēnix® 9 Pro 47mm | fenix9pro47mm | Amoled |
+| fēnix® 9 Pro 51mm | fenix9pro51mm | Amoled |
+| fēnix® 9 Pro Solar 47mm | fenix9prosolar47mm | Modern |
+| fēnix® 9 Pro Solar 51mm | fenix9prosolar51mm | Modern |
 | fēnix® E | fenixe | Amoled |
 | First Avenger | legacyherofirstavenger | Modern |
 | Forerunner® 70 | fr70 | Amoled |
