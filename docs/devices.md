@@ -7,6 +7,8 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | Approach® S50 | approachs50 | Amoled |
 | Approach® S70 42mm | approachs7042mm | Amoled |
 | Approach® S70 47mm | approachs7047mm | Amoled |
+| Approach® S72 43mm | approachs7243mm | Amoled |
+| Approach® S72 47mm | approachs7247mm | Amoled |
 | Captain Marvel | legacyherocaptainmarvel | Modern |
 | D2™ Air X10 | d2airx10 | Amoled |
 | D2™ Mach 1 | d2mach1 | Amoled |
@@ -18,6 +20,7 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | Descent™ Mk3 43mm / Mk3i 43mm | descentmk343mm | Amoled |
 | Descent™ Mk3i 51mm | descentmk351mm | Amoled |
 | Enduro™ 3 | enduro3 | Modern |
+| Enduro™ 4 | enduro4 | Modern |
 | epix™ (Gen 2) / quatix® 7 Sapphire | epix2 | Amoled |
 | epix™ Pro (Gen 2) 42mm | epix2pro42mm | Amoled |
 | epix™ Pro (Gen 2) 47mm / quatix® 7 Pro | epix2pro47mm | Amoled |
