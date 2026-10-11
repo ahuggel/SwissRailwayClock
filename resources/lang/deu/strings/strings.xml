@@ -23,10 +23,10 @@
     <string id="Dimmer">Dimmer</string>
     <string id="DmContrast">Kontrast</string>
     <string id="DimmerLevel">Stufe</string>
-    <string id="Complication1">1. Anzeige</string>
-    <string id="Complication2">2. Anzeige</string>
-    <string id="Complication3">3. Anzeige</string>
-    <string id="Complication4">4. Anzeige</string>
+    <string id="Complication1">12:00 Anzeige</string>
+    <string id="Complication2">6:00 Anzeige</string>
+    <string id="Complication3">9:00 Anzeige</string>
+    <string id="Complication4">3:00 Anzeige</string>
     <string id="PressureUnit">Druckeinheit</string>
     <string id="HideSeconds">Sekunden ausblenden</string>
     <string id="HideIndicators">Anzeigen ausblenden</string>
