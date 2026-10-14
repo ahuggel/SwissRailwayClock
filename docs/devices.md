@@ -86,9 +86,10 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | MARQ® Commander | marqcommander | Legacy |
 | MARQ® Driver | marqdriver | Legacy |
 | MARQ® Expedition | marqexpedition | Legacy |
+| MARQ® Golfer | marqgolfer | Legacy |
 | MARQ® (Gen 2) Athlete / Adventurer / Captain / Golfer / Carbon Edition / Commander - Carbon Edition | marq2 | Amoled |
 | MARQ® (Gen 2) Aviator | marq2aviator | Amoled |
-| MARQ® Golfer | marqgolfer | Legacy |
+| MARQ® (Gen 3) Athlete / Adventurer / Aviator / Commander / Golfer / Diver / Carbon | marq3 | Amoled |
 | Rey™ | legacysagarey | Modern |
 | Venu® 2 Plus | venu2plus | Amoled |
 | Venu® 2 | venu2 | Amoled |
