@@ -30,7 +30,7 @@
     <string id="PressureUnit">Druckeinheit</string>
     <string id="HideSeconds">Sekunden ausblenden</string>
     <string id="HideIndicators">Anzeigen ausblenden</string>
-    <string id="AccentColor">Sekunden Farbe</string>
+    <string id="AccentColor">Sekunden-Farbe</string>
     <string id="AccentCycle">Farbe wechseln</string>
     <string id="Shadows">3D Effekt</string>
     <string id="DmOn">Einschalten</string>
@@ -43,8 +43,8 @@
     <string id="BatteryModernWarnings">Modern/Warnungen</string>
     <string id="BatteryClassic">Klassisch</string>
     <string id="BatteryModern">Modern</string>
-    <string id="BatteryPct">Batterie Prozente</string>
-    <string id="BatteryDays">Batterie Tage</string>
+    <string id="BatteryPct">Batterie-Prozente</string>
+    <string id="BatteryDays">Batterie-Tage</string>
     <string id="DateDisplayDayOnly">Tag</string>
     <string id="DateDisplayWeekdayAndDay">Wochentag und Tag</string>
     <string id="DarkModeScheduled">Nach Uhrzeit</string>
