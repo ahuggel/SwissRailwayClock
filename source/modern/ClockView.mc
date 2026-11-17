@@ -111,7 +111,7 @@ class ClockView extends WatchUi.WatchFace {
     // Load resources and configure the layout of the watchface for this device
     public function onLayout(dc as Dc) as Void {
         // Load the custom font with the symbols
-        if (Graphics has :FontReference) {
+        if (Graphics has :FontReference && Graphics has :ResourceReference) {
             var fontRef = WatchUi.loadResource(Rez.Fonts.Icons) as FontReference;
             iconFont = fontRef.get() as FontResource;
         } else {

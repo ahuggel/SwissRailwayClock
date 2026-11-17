@@ -9,11 +9,11 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | Approach® S70 47mm | approachs7047mm | Amoled |
 | Approach® S72 43mm | approachs7243mm | Amoled |
 | Approach® S72 47mm | approachs7247mm | Amoled |
-| Captain Marvel | legacyherocaptainmarvel | Modern |
+| Captain Marvel | legacyherocaptainmarvel | Legacy |
 | D2™ Air X10 | d2airx10 | Amoled |
 | D2™ Mach 1 | d2mach1 | Amoled |
 | D2™ Mach 2 | d2mach2 | Amoled |
-| Darth Vader™ | legacysagadarthvader | Modern |
+| Darth Vader™ | legacysagadarthvader | Legacy |
 | Descent™ G2 | descentg2 | Amoled |
 | Descent™ Mk2 / Descent™ Mk2i | descentmk2 | Legacy |
 | Descent™ Mk2 S | descentmk2s | Legacy |
@@ -54,7 +54,7 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | fēnix® 9 Pro Solar 47mm | fenix9prosolar47mm | Modern |
 | fēnix® 9 Pro Solar 51mm | fenix9prosolar51mm | Modern |
 | fēnix® E | fenixe | Amoled |
-| First Avenger | legacyherofirstavenger | Modern |
+| First Avenger | legacyherofirstavenger | Legacy |
 | Forerunner® 70 | fr70 | Amoled |
 | Forerunner® 165 | fr165 | Amoled |
 | Forerunner® 165 Music | fr165m | Amoled |
@@ -90,7 +90,7 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | MARQ® (Gen 2) Athlete / Adventurer / Captain / Golfer / Carbon Edition / Commander - Carbon Edition | marq2 | Amoled |
 | MARQ® (Gen 2) Aviator | marq2aviator | Amoled |
 | MARQ® (Gen 3) Athlete / Adventurer / Aviator / Commander / Golfer / Diver / Carbon | marq3 | Amoled |
-| Rey™ | legacysagarey | Modern |
+| Rey™ | legacysagarey | Legacy |
 | Venu® 2 Plus | venu2plus | Amoled |
 | Venu® 2 | venu2 | Amoled |
 | Venu® 2S | venu2s | Amoled |
@@ -102,8 +102,8 @@ The Architecture column shows for each of the [compatible devices], if it suppor
 | Venu® Sq 2 Music | venusq2m | Amoled |
 | Venu® X1 | venux1 | Amoled |
 | vívoactive® 3 Music | vivoactive3m | Legacy |
-| vívoactive® 4 | vivoactive4 | Modern |
-| vívoactive® 4S | vivoactive4s | Modern |
+| vívoactive® 4 | vivoactive4 | Legacy |
+| vívoactive® 4S | vivoactive4s | Legacy |
 | vívoactive® 5 | vivoactive5 | Amoled |
 | vívoactive® 6 | vivoactive6 | Amoled |
 

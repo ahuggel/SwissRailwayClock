@@ -91,21 +91,27 @@ fenix6pro.excludeAnnotations = memory;modern
 fenix6xpro.sourcePath = $(fenix6xpro.sourcePath);source/legacy
 fenix6xpro.resourcePath = $(fenix6xpro.resourcePath);resources/family/round-280x280-legacy
 fenix6xpro.excludeAnnotations = memory;modern
+legacyherocaptainmarvel.sourcePath = $(legacyherocaptainmarvel.sourcePath);source/legacy
+legacyherocaptainmarvel.resourcePath = $(legacyherocaptainmarvel.resourcePath);resources/family/round-218x218
+legacyherocaptainmarvel.excludeAnnotations = memory;modern
+legacyherofirstavenger.sourcePath = $(legacyherofirstavenger.sourcePath);source/legacy
+legacyherofirstavenger.resourcePath = $(legacyherofirstavenger.resourcePath);resources/family/round-260x260
+legacyherofirstavenger.excludeAnnotations = memory;modern
+legacysagadarthvader.sourcePath = $(legacysagadarthvader.sourcePath);source/legacy
+legacysagadarthvader.resourcePath = $(legacysagadarthvader.resourcePath);resources/family/round-260x260
+legacysagadarthvader.excludeAnnotations = memory;modern
+legacysagarey.sourcePath = $(legacysagarey.sourcePath);source/legacy
+legacysagarey.resourcePath = $(legacysagarey.resourcePath);resources/family/round-218x218
+legacysagarey.excludeAnnotations = memory;modern
+vivoactive4.sourcePath = $(vivoactive4.sourcePath);source/legacy
+vivoactive4.resourcePath = $(vivoactive4.resourcePath);resources/family/round-260x260
+vivoactive4.excludeAnnotations = memory;modern
+vivoactive4s.sourcePath = $(vivoactive4s.sourcePath);source/legacy
+vivoactive4s.resourcePath = $(vivoactive4s.resourcePath);resources/family/round-218x218
+vivoactive4s.excludeAnnotations = memory;modern
 
 # Newer watches with layer support and sufficient memory or a graphics pool use layers.
 # They also pre-calculate the numbers for the second hand.
-legacyherocaptainmarvel.sourcePath = $(legacyherocaptainmarvel.sourcePath);source/modern
-legacyherocaptainmarvel.resourcePath = $(legacyherocaptainmarvel.resourcePath);resources/family/round-218x218
-legacyherocaptainmarvel.excludeAnnotations = legacy
-legacyherofirstavenger.sourcePath = $(legacyherofirstavenger.sourcePath);source/modern
-legacyherofirstavenger.resourcePath = $(legacyherofirstavenger.resourcePath);resources/family/round-260x260
-legacyherofirstavenger.excludeAnnotations = legacy
-legacysagadarthvader.sourcePath = $(legacysagadarthvader.sourcePath);source/modern
-legacysagadarthvader.resourcePath = $(legacysagadarthvader.resourcePath);resources/family/round-260x260
-legacysagadarthvader.excludeAnnotations = legacy
-legacysagarey.sourcePath = $(legacysagarey.sourcePath);source/modern
-legacysagarey.resourcePath = $(legacysagarey.resourcePath);resources/family/round-218x218
-legacysagarey.excludeAnnotations = legacy
 enduro3.sourcePath = $(enduro3.sourcePath);source/modern
 enduro3.resourcePath = $(enduro3.resourcePath);resources/family/round-280x280
 enduro3.excludeAnnotations = legacy
@@ -163,12 +169,6 @@ fr255sm.excludeAnnotations = legacy
 fr955.sourcePath = $(fr955.sourcePath);source/modern
 fr955.resourcePath = $(fr955.resourcePath);resources/family/round-260x260
 fr955.excludeAnnotations = legacy
-vivoactive4.sourcePath = $(vivoactive4.sourcePath);source/modern
-vivoactive4.resourcePath = $(vivoactive4.resourcePath);resources/family/round-260x260
-vivoactive4.excludeAnnotations = legacy
-vivoactive4s.sourcePath = $(vivoactive4s.sourcePath);source/modern
-vivoactive4s.resourcePath = $(vivoactive4s.resourcePath);resources/family/round-218x218
-vivoactive4s.excludeAnnotations = legacy
 
 # Support for AMOLED devices is based on the modern architecture of newer watches. 
 # They have their own code to deal with their inherent properties (only black 
