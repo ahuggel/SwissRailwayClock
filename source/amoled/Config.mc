@@ -71,6 +71,7 @@ class Config {
         I_COMPLICATION_3,
         I_COMPLICATION_4,
         I_PRESSURE_UNIT,
+        I_MARKER_COLOR,
         I_DM_ON, // the first item that is not a list item
         I_DM_OFF, 
         I_ALARMS, // the first toggle item (see defaults)
@@ -100,6 +101,7 @@ class Config {
         :Complication3,
         :Complication4,
         :PressureUnit,
+        :MarkerColor,
         :DmOn, 
         :DmOff,
         :Alarms,
@@ -127,6 +129,7 @@ class Config {
         "c3", // I_COMPLICATION_3
         "c4", // I_COMPLICATION_4
         "pu", // I_PRESSURE_UNIT
+        "mc", // I_MARKER_COLOR
         "dn", // I_DM_ON
         "df", // I_DM_OFF
         "al", // I_ALARMS
@@ -152,11 +155,13 @@ class Config {
         [:Off, :HeartRate, :RecoveryTime, :Calories, :Steps, :FloorsClimbed, :Elevation, :Pressure, :Temperature], // I_COMPLICATION_2
         [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure, :Temperature, :StressScore], // I_COMPLICATION_3
         [:Off, :HeartRate, :RecoveryTime, :FloorsClimbed, :Pressure, :Temperature], // I_COMPLICATION_4
-        [:PressureUnitMbar, :PressureUnitMmHg, :PressureUnitInHg, :PressureUnitAtm] // I_PRESSURE_UNIT
+        [:PressureUnitMbar, :PressureUnitMmHg, :PressureUnitInHg, :PressureUnitAtm], // I_PRESSURE_UNIT
+        [:MarkerDefault, :DimmerLevelWhite, :DimmerLevelLight, :DimmerLevelMedium, :DimmerLevelSlate, :DimmerLevelDark] // I_MARKER_COLOR
      ] as Array< Array<Symbol> >;
 
     private var _values as Array<Number> = new Array<Number>[I_SIZE]; // Values for the configuration items
     private var _hasCapability as Dictionary<Symbol, Boolean>; // Device capabilities
+    private var _foregroundLevel as Number = 0; // Gray level (0-4) of the current foreground color, set in setColors()
 
     // Constructor
     public function initialize() {
@@ -327,6 +332,7 @@ class Config {
             outline = getSettingColor(C_OUTLINE, id);
             lvl = getValue(id) % 5;
         }
+        _foregroundLevel = lvl;
         var gray = [0xaaaaaa, 0x9f9f9f, 0x8e8e8e, 0x9a9a9a, 0x777777][lvl];
         colors = [
             foreground,                                              // C_FOREGROUND
@@ -345,6 +351,22 @@ class Config {
         ];
 
         return colorMode;
+    }
+
+    // Return the color for the hour and minute tick marks. With "Same as Hands", this is the
+    // foreground color, else the selected shade of gray. If clamp is true, the markers are never
+    // brighter than the hands, so they dim along with them in dark mode and always-on mode.
+    public function getMarkerColor(clamp as Boolean) as Number {
+        var value = getValue(I_MARKER_COLOR);
+        if (0 == value) {
+            return colors[C_FOREGROUND];
+        }
+        var lvl = value - 1;
+        if (clamp and _foregroundLevel > lvl) {
+            lvl = _foregroundLevel;
+        }
+        // Same shades of gray as getSettingColor() uses for the hands
+        return [Graphics.COLOR_WHITE, 0xd4d4d4, Graphics.COLOR_LT_GRAY, 0x808080, Graphics.COLOR_DK_GRAY][lvl];
     }
 
     // Return the accent color for the second hand. If the change color setting is enabled, the 

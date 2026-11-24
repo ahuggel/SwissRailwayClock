@@ -32,6 +32,7 @@
     <string id="HideIndicators">Indicators Disappear</string>
     <string id="AccentColor">Seconds Color</string>
     <string id="AccentCycle">Change Color</string>
+    <string id="MarkerColor">Marker Color</string>
     <string id="Shadows">3D Effects</string>
     <string id="DmOn">Turn On</string>
     <string id="DmOff">Turn Off</string>
@@ -67,6 +68,7 @@
     <string id="HideIndicatorsInDm">In Dimmer Mode</string>
     <string id="HideIndicatorsAlways">Always</string>
     <string id="HideIndicatorsNever">Never</string>
+    <string id="MarkerDefault">Same as Hands</string>
     <string id="AccentRed">Red</string>
     <string id="AccentOrange">Orange</string>
     <string id="AccentYellow">Yellow</string>

@@ -32,6 +32,7 @@
     <string id="HideIndicators">Anzeigen ausblenden</string>
     <string id="AccentColor">Sekunden-Farbe</string>
     <string id="AccentCycle">Farbe wechseln</string>
+    <string id="MarkerColor">Markierungen-Farbe</string>
     <string id="Shadows">3D Effekt</string>
     <string id="DmOn">Einschalten</string>
     <string id="DmOff">Ausschalten</string>
@@ -67,6 +68,7 @@
     <string id="HideIndicatorsInDm">Im Dimmermodus</string>
     <string id="HideIndicatorsAlways">Immer</string>
     <string id="HideIndicatorsNever">Nie</string>
+    <string id="MarkerDefault">Wie Zeiger</string>
     <string id="AccentRed">Rot</string>
     <string id="AccentOrange">Orange</string>
     <string id="AccentYellow">Gelb</string>

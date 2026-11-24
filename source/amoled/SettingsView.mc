@@ -106,6 +106,13 @@ class SettingsView extends WatchUi.Menu2 {
                     {}
                 ));
                 addMenuItem(Config.I_ACCENT_CYCLE);
+                Menu2.addItem(new WatchUi.IconMenuItem(
+                    config.getName(Config.I_MARKER_COLOR), 
+                    config.getLabel(Config.I_MARKER_COLOR), 
+                    Config.I_MARKER_COLOR,
+                    new MenuIcon(MenuIcon.T_TRIANGLE, config.getMarkerColor(false), Graphics.COLOR_BLACK),
+                    {}
+                ));
                 Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.Done, Rez.Strings.DoneLabel, Config.I_DONE, {}));
                 break;
         }
@@ -138,6 +145,7 @@ class SettingsView extends WatchUi.Menu2 {
                 deleteAnyItem(Config.I_HIDE_INDICATORS);
                 deleteAnyItem(Config.I_ACCENT_COLOR);
                 deleteAnyItem(Config.I_ACCENT_CYCLE);
+                deleteAnyItem(Config.I_MARKER_COLOR);
                 deleteAnyItem(Config.I_DONE);
                 break;
         }
@@ -217,6 +225,11 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
                 // Update the color of the icon
                 var menuIcon = menuItem.getIcon() as MenuIcon;
                 menuIcon.setColor(config.getAccentColor(-1, -1, -1));
+            }
+            if (Config.I_MARKER_COLOR == id) {
+                // Update the color of the icon
+                var menuIcon = menuItem.getIcon() as MenuIcon;
+                menuIcon.setColor(config.getMarkerColor(false));
             }
         } else { // I_DM_ON or I_DM_OFF
             // Let the user select the time
